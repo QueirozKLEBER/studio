@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '../icons/logo';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Dumbbell,
@@ -36,6 +36,8 @@ import {
 } from '../ui/sheet';
 import React from 'react';
 import { Button } from '../ui/button';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -46,7 +48,26 @@ const menuItems = [
 
 const SidebarNav = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = useAuth();
+  const { user } = useUser();
   const avatarImage = placeHolderImages.find(p => p.id === 'avatar-placeholder');
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+  };
+
+  const getAvatarFallback = () => {
+    if (user?.displayName) {
+      return user.displayName.charAt(0).toUpperCase();
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+    return 'U';
+  }
+
 
   return (
     <>
@@ -79,19 +100,17 @@ const SidebarNav = () => {
             <SidebarMenuButton asChild isActive={pathname === '/profile'}>
               <Link href="/profile">
                 <Avatar className="h-8 w-8">
-                  {avatarImage && <AvatarImage src={avatarImage.imageUrl} />}
-                  <AvatarFallback>U</AvatarFallback>
+                  {user?.photoURL ? <AvatarImage src={user.photoURL} /> : avatarImage && <AvatarImage src={avatarImage.imageUrl} />}
+                  <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
                 </Avatar>
-                <span>Meu Perfil</span>
+                <span>{user?.displayName || 'Meu Perfil'}</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/">
-                <LogOut className="h-5 w-5" />
-                <span>Sair</span>
-              </Link>
+            <SidebarMenuButton onClick={handleLogout}>
+              <LogOut className="h-5 w-5" />
+              <span>Sair</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

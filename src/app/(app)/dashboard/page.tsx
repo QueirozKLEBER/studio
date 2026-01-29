@@ -94,8 +94,8 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-5">
-        <Card className="md:col-span-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="font-headline">Progresso Semanal</CardTitle>
             <CardDescription>
@@ -137,7 +137,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 flex flex-col">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="font-headline">Treino do Dia</CardTitle>
             <CardDescription>

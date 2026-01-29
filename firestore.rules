@@ -1,0 +1,211 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict security model that segregates user-private data from globally public content. User-specific information, such as profiles and training plans, is protected using a path-based ownership model, ensuring users can only access their own data. Globally shared content, like exercises and nutrition tips, is publicly readable by anyone but write-protected to prevent unauthorized modification.
+ *
+ * Data Structure: User data is hierarchically organized under the /users/{userId} path. For example, a user's training plans are located at /users/{userId}/trainingPlans/{trainingPlanId}. This structure provides inherent, path-based security. Public data, such as /exercises and /nutritionTips, resides in top-level collections for easy, global access.
+ *
+ * Key Security Decisions:
+ * - User data is strictly private. A user can only access documents within their own /users/{userId} data tree.
+ * - User enumeration is disallowed. The top-level /users collection cannot be listed by any client.
+ * - Global content (Exercises, NutritionTips, SubscriptionPlans) is publicly readable to support the application's core functionality for all users, including those not signed in. Writes to these collections are disallowed pending the implementation of an admin role.
+ * - User subscriptions are stored in a top-level collection and secured using a denormalized 'userId' field within each document, rather than path-based ownership. Listing the entire collection is prohibited to protect user privacy.
+ *
+ * Denormalization for Authorization: The rules heavily rely on denormalized data to ensure fast and secure authorization checks without costly `get()` calls. For user-specific data, the document's path (/users/{userId}) provides the necessary ownership context. For user subscriptions, an explicit `userId` field is stored on each document, allowing rules to verify ownership directly.
+ *
+ * Structural Segregation: The data model clearly separates private user data (nested under /users) from public, shared data (e.g., /exercises). This segregation simplifies security rules and improves query performance, as access controls are applied at the collection level rather than on a per-document basis with boolean flags.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------
+    // Helper Functions
+    // --------------------------------
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the core of the ownership model.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Checks for ownership on an existing document. Used for update and delete operations.
+     */
+    function isExistingOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && resource != null;
+    }
+
+    /**
+     * On create, validates that the user document's internal `id` field
+     * matches the document ID from the path, ensuring relational integrity.
+     */
+    function hasValidUserDataOnCreate(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * On update, ensures the user document's internal `id` field is immutable.
+     */
+    function hasImmutableUserId() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * On create, validates that the TrainingPlan's internal `userId` field
+     * matches the user ID from the path.
+     */
+    function hasValidTrainingPlanDataOnCreate(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /**
+     * On update, ensures the TrainingPlan's internal `userId` is immutable.
+     */
+    function hasImmutableTrainingPlanOwner() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    /**
+     * On create, validates that the Workout's internal `trainingPlanId` field
+     * matches the ID from the path.
+     */
+    function hasValidWorkoutDataOnCreate(trainingPlanId) {
+      return request.resource.data.trainingPlanId == trainingPlanId;
+    }
+
+    /**
+     * On update, ensures the Workout's internal `trainingPlanId` is immutable.
+     */
+    function hasImmutableWorkoutParent() {
+      return request.resource.data.trainingPlanId == resource.data.trainingPlanId;
+    }
+
+    // --------------------------------
+    // User Data Rules
+    // --------------------------------
+
+    /**
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}
+     * @allow (create) An authenticated user can create their own profile document.
+     * @deny (get) A user cannot read another user's profile.
+     * @principle Restricts access to a user's own data tree and allows self-creation of a profile.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
+      allow update: if isExistingOwner(userId) && hasImmutableUserId();
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Controls access to user-specific training plans.
+       * @path /users/{userId}/trainingPlans/{trainingPlanId}
+       * @allow (create) An authenticated user can create a training plan for themselves.
+       * @deny (list) A user cannot list another user's training plans.
+       * @principle Enforces document ownership for all operations based on the nested path.
+       */
+      match /trainingPlans/{trainingPlanId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && hasValidTrainingPlanDataOnCreate(userId);
+        allow update: if isExistingOwner(userId) && hasImmutableTrainingPlanOwner();
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Controls access to workouts within a specific training plan.
+         * @path /users/{userId}/trainingPlans/{trainingPlanId}/workouts/{workoutId}
+         * @allow (get) An authenticated user can read a workout in their own plan.
+         * @deny (update) A user cannot update a workout in someone else's plan.
+         * @principle Enforces document ownership for all operations based on the nested path.
+         */
+        match /workouts/{workoutId} {
+          allow get: if isOwner(userId);
+          allow list: if isOwner(userId);
+          allow create: if isOwner(userId) && hasValidWorkoutDataOnCreate(trainingPlanId);
+          allow update: if isExistingOwner(userId) && hasImmutableWorkoutParent();
+          allow delete: if isExistingOwner(userId);
+        }
+      }
+    }
+
+    // --------------------------------
+    // Global Read-Only Data
+    // --------------------------------
+
+    /**
+     * @description Controls access to the global list of exercises.
+     * @path /exercises/{exerciseId}
+     * @allow (get, list) Any user, including anonymous ones, can read the list of exercises.
+     * @deny (create, update, delete) No user can write to this collection.
+     * @principle Provides public read access for shared application content while denying all writes until an admin role is defined.
+     */
+    match /exercises/{exerciseId} {
+      allow get: if true;
+      allow list: if true;
+      // CRITICAL: Cannot implement owner-only writes. The 'Exercise' entity is missing an 'ownerId' or 'authorId' field.
+      allow create: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow update: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow delete: if false; // TODO: Add admin-only validation once an admin role is implemented.
+    }
+
+    /**
+     * @description Controls access to the global list of nutrition tips.
+     * @path /nutritionTips/{nutritionTipId}
+     * @allow (get, list) Any user, including anonymous ones, can read nutrition tips.
+     * @deny (create, update, delete) No user can write to this collection.
+     * @principle Provides public read access for shared application content while denying all writes until an admin role is defined.
+     */
+    match /nutritionTips/{nutritionTipId} {
+      allow get: if true;
+      allow list: if true;
+      // CRITICAL: Cannot implement owner-only writes. The 'NutritionTip' entity is missing an 'ownerId' or 'authorId' field.
+      allow create: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow update: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow delete: if false; // TODO: Add admin-only validation once an admin role is implemented.
+    }
+
+    /**
+     * @description Controls access to the global list of subscription plans.
+     * @path /subscriptionPlans/{subscriptionPlanId}
+     * @allow (get, list) Any user, including anonymous ones, can view available subscription plans.
+     * @deny (create, update, delete) No user can write to this collection.
+     * @principle Provides public read access for shared application content while denying all writes until an admin role is defined.
+     */
+    match /subscriptionPlans/{subscriptionPlanId} {
+      allow get: if true;
+      allow list: if true;
+      // CRITICAL: Cannot implement owner-only writes. The 'SubscriptionPlan' entity is missing an 'ownerId' or 'authorId' field.
+      allow create: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow update: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow delete: if false; // TODO: Add admin-only validation once an admin role is implemented.
+    }
+
+    // --------------------------------
+    // User-Specific Top-Level Data
+    // --------------------------------
+
+    /**
+     * @description Controls access to user subscription documents.
+     * @path /userSubscriptions/{userSubscriptionId}
+     * @allow (create) An authenticated user can create a subscription for themselves, setting their own UID in the `userId` field.
+     * @deny (list) No user can list the entire subscriptions collection to prevent privacy leaks.
+     * @principle Enforces document ownership for writes using a denormalized `userId` field on the document itself.
+     */
+    match /userSubscriptions/{userSubscriptionId} {
+      allow get: if isOwner(resource.data.userId);
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(resource.data.userId);
+    }
+  }
+}

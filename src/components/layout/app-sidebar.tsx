@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarProvider,
-  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '../icons/logo';
 import Link from 'next/link';
@@ -25,13 +25,9 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { placeHolderImages } from '@/lib/placeholder-data';
-import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from '../ui/sheet';
 import React from 'react';
@@ -120,10 +116,34 @@ const SidebarNav = () => {
 };
 
 
+const AppSidebarContent = () => {
+  const { isMobile, openMobile, setOpenMobile } = useSidebar();
+
+  if (isMobile) {
+      return (
+          <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+              <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm">
+                      <Menu className="h-6 w-6" />
+                  </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+                 <SidebarNav />
+              </SheetContent>
+          </Sheet>
+      );
+  }
+
+  return (
+      <Sidebar className="border-r">
+          <SidebarNav />
+      </Sidebar>
+  );
+}
+
+
 export const AppSidebar = () => {
     const [mounted, setMounted] = React.useState(false);
-    const isMobile = useIsMobile();
-    const [open, setOpen] = React.useState(false);
 
     React.useEffect(() => {
         setMounted(true);
@@ -133,26 +153,9 @@ export const AppSidebar = () => {
         return null;
     }
 
-    if (isMobile) {
-        return (
-            <Sheet open={open} onOpenChange={setOpen}>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm">
-                        <Menu className="h-6 w-6" />
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
-                   <SidebarNav />
-                </SheetContent>
-            </Sheet>
-        );
-    }
-
     return (
         <SidebarProvider>
-            <Sidebar className="border-r">
-                <SidebarNav />
-            </Sidebar>
+            <AppSidebarContent />
         </SidebarProvider>
     );
 };

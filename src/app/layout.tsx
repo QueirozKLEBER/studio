@@ -32,10 +32,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={cn('font-body antialiased min-h-screen bg-background')}>
-        <FirebaseClientProvider>
-          {children}
-        </FirebaseClientProvider>
+      <body
+        className={cn('font-body antialiased min-h-screen bg-background')}
+        suppressHydrationWarning
+      >
+        <FirebaseClientProvider>{children}</FirebaseClientProvider>
         <Toaster />
       </body>
     </html>

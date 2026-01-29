@@ -9,7 +9,6 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarProvider,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { Logo } from '../icons/logo';
 import Link from 'next/link';
@@ -30,7 +29,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from '../ui/sheet';
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -117,35 +116,37 @@ const SidebarNav = () => {
 
 
 const AppSidebarContent = () => {
-  const { isMobile, openMobile, setOpenMobile } = useSidebar();
+    const [openMobile, setOpenMobile] = useState(false);
 
-  if (isMobile) {
-      return (
-          <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-              <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm">
-                      <Menu className="h-6 w-6" />
-                  </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
-                 <SidebarNav />
-              </SheetContent>
-          </Sheet>
-      );
-  }
+    return (
+        <>
+            {/* Mobile Sidebar - Hidden on medium screens and up */}
+            <div className="md:hidden">
+                <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm">
+                            <Menu className="h-6 w-6" />
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+                       <SidebarNav />
+                    </SheetContent>
+                </Sheet>
+            </div>
 
-  return (
-      <Sidebar className="border-r">
-          <SidebarNav />
-      </Sidebar>
-  );
+            {/* Desktop Sidebar - Hidden on small screens */}
+            <div className="hidden md:block">
+                <SidebarProvider>
+                    <Sidebar className="border-r">
+                        <SidebarNav />
+                    </Sidebar>
+                </SidebarProvider>
+            </div>
+        </>
+    );
 }
 
 
 export const AppSidebar = () => {
-    return (
-        <SidebarProvider>
-            <AppSidebarContent />
-        </SidebarProvider>
-    );
+    return <AppSidebarContent />;
 };

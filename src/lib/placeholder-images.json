@@ -1,3 +1,76 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-1",
+      "description": "A person working out in a modern gym, embodying strength and focus.",
+      "imageUrl": "https://images.unsplash.com/photo-1599058917212-d750089bc07e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxneW0lMjB3b3Jrb3V0fGVufDB8fHx8MTc2OTY3MTg0M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gym workout"
+    },
+    {
+      "id": "chest-muscle",
+      "description": "Anatomical illustration of the chest muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725399078960-7bb17a7d1653?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "back-muscle",
+      "description": "Anatomical illustration of the back muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725398753254-fa28d7f4944e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "shoulders-muscle",
+      "description": "Anatomical illustration of the shoulder muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725399078960-7bb17a7d1653?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "biceps-muscle",
+      "description": "Anatomical illustration of the bicep muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725399078960-7bb17a7d1653?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "triceps-muscle",
+      "description": "Anatomical illustration of the tricep muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725399078936-0b3a854a502f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "legs-muscle",
+      "description": "Anatomical illustration of the leg muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725398753275-74ed4c65ffc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "glutes-muscle",
+      "description": "Anatomical illustration of the gluteal muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725398753254-fa28d7f4944e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "abs-muscle",
+      "description": "Anatomical illustration of the abdominal muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725398467967-c27544f7a4b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "calves-muscle",
+      "description": "Anatomical illustration of the calf muscles.",
+      "imageUrl": "https://images.unsplash.com/photo-1725398753254-fa28d7f4944e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhbmF0b215JTIwaWxsdXN0cmF0aW9ufGVufDB8fHx8MTc2OTY4OTMzM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "anatomy illustration"
+    },
+    {
+      "id": "exercise-video-placeholder",
+      "description": "Placeholder for an exercise demonstration video.",
+      "imageUrl": "https://images.unsplash.com/photo-1750432215919-228924d7ae9c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmaXRuZXNzJTIwdmlkZW98ZW58MHx8fHwxNzY5Njg5MzMzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fitness video"
+    },
+    {
+      "id": "avatar-placeholder",
+      "description": "Placeholder for a user avatar.",
+      "imageUrl": "https://images.unsplash.com/photo-1590086782792-42dd2350140d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3Njk2MzQxMjd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    }
+  ]
 }

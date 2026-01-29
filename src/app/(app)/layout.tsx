@@ -1,0 +1,13 @@
+import React from 'react';
+import { AppSidebar } from '@/components/layout/app-sidebar';
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen">
+      <AppSidebar />
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  );
+}

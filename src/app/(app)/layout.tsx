@@ -19,7 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
-      <main className="flex-1 bg-background overflow-y-auto px-4 pt-20 pb-4 sm:px-6 sm:pb-6 md:p-8">
+      <main className="flex-1 bg-background overflow-y-auto min-w-0 px-4 pt-20 pb-4 sm:px-6 sm:pb-6 md:p-8">
         {isUserLoading || !user ? (
             <div>
                 {/* This is a skeleton for the content of a page, e.g. the PageHeader and the content grid */}

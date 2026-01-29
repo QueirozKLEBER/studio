@@ -16,36 +16,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
-    return (
-      <div className="flex min-h-screen">
-        <div className="hidden md:block border-r p-4">
-            <div className="flex flex-col gap-4">
-                <Skeleton className="h-10 w-48" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-            </div>
-        </div>
-        <main className="flex-1 p-8">
-            <Skeleton className="h-12 w-64 mb-8" />
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-            </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
       <main className="flex-1 bg-background overflow-y-auto px-4 pt-20 pb-4 sm:px-6 sm:pb-6 md:p-8">
-        {children}
+        {isUserLoading || !user ? (
+            <div>
+                {/* This is a skeleton for the content of a page, e.g. the PageHeader and the content grid */}
+                <div className="mb-4">
+                    <Skeleton className="h-10 md:h-12 w-48 md:w-64" />
+                    <Skeleton className="h-5 md:h-6 w-72 md:w-96 mt-2" />
+                </div>
+                {/* A generic content skeleton */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <Skeleton className="h-36 w-full" />
+                    <Skeleton className="h-36 w-full" />
+                    <Skeleton className="h-36 w-full" />
+                    <Skeleton className="h-36 w-full" />
+                    <Skeleton className="h-36 w-full" />
+                    <Skeleton className="h-36 w-full" />
+                </div>
+            </div>
+        ) : (
+          children
+        )}
       </main>
     </div>
   );

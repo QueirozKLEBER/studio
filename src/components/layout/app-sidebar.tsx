@@ -121,8 +121,17 @@ const SidebarNav = () => {
 
 
 export const AppSidebar = () => {
+    const [mounted, setMounted] = React.useState(false);
     const isMobile = useIsMobile();
     const [open, setOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
 
     if (isMobile) {
         return (

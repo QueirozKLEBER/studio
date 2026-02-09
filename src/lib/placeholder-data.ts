@@ -129,6 +129,9 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('encolhe-atras-halter', 'Encolhimento atrás com Halteres', 'Trapézio', 'Halteres', 'Avançado'),
     createEx('encolhe-unilateral-cabo', 'Encolhimento Unilateral no Cabo', 'Trapézio', 'Cabo/Polia', 'Intermediário'),
     createEx('clean-shrug', 'Clean Shrug', 'Trapézio', 'Barra', 'Avançado'),
+    createEx('encolhe-sentado', 'Encolhimento Sentado com Halteres', 'Trapézio', 'Halteres', 'Iniciante'),
+    createEx('encolhe-anilhas', 'Encolhimento com Anilhas', 'Trapézio', 'Livre', 'Iniciante'),
+    createEx('remada-alta-cabo-trap', 'Remada Alta no Cabo', 'Trapézio', 'Cabo/Polia', 'Intermediário'),
   ],
   lombar: [
     createEx('hiperextensao-lombar-v2', 'Hiperextensão Lombar', 'Lombar', 'Máquina', 'Iniciante'),
@@ -140,6 +143,9 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('deadlift-parcial', 'Deadlift Parcial', 'Lombar', 'Barra', 'Avançado'),
     createEx('prancha-lombar', 'Prancha Lombar (Erectors)', 'Lombar', 'Peso do corpo', 'Intermediário'),
     createEx('ponte-lombar', 'Ponte para Lombar', 'Lombar', 'Peso do corpo', 'Iniciante'),
+    createEx('stiff-lombar', 'Stiff (Foco Lombar)', 'Lombar', 'Barra', 'Intermediário'),
+    createEx('ponte-gluteo-lombar', 'Ponte de Glúteo (Estabilidade Lombar)', 'Lombar', 'Peso do corpo', 'Iniciante'),
+    createEx('remada-curvada-lombar', 'Remada Curvada (Isometria Lombar)', 'Lombar', 'Barra', 'Intermediário'),
   ],
   ombros: [
     createEx('desenv-barra', 'Desenvolvimento com Barra', 'Ombros', 'Barra', 'Intermediário', ['Tríceps']),

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -19,8 +20,10 @@ export default function TrainerDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const studentsQuery = useMemoFirebase(() => {
+    // Defensive check: Only initiate query if profile (and auth) is ready
+    if (!profile) return null;
     return query(collection(db, 'users'), where('userType', '==', 'student'));
-  }, [db]);
+  }, [db, profile]);
 
   const { data: students, isLoading } = useCollection(studentsQuery);
 
@@ -35,13 +38,13 @@ export default function TrainerDashboard() {
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full max-w-none">
       <PageHeader 
-        title={`Olá, Prof. ${profile?.firstName}`} 
+        title={`Olá, Prof. ${profile?.firstName || '...'}`} 
         subtitle="Gerencie seus alunos e monte treinos personalizados com facilidade." 
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {stats.map((stat, i) => (
           <Card key={i} className="rounded-3xl border-none shadow-sm bg-white overflow-hidden">
             <CardContent className="p-6 flex items-center gap-4">
@@ -57,8 +60,8 @@ export default function TrainerDashboard() {
         ))}
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 w-full">
+        <div className="flex items-center justify-between gap-4 px-1">
           <h2 className="text-xl font-bold font-headline">Gerenciar Alunos</h2>
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -71,7 +74,7 @@ export default function TrainerDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4 w-full">
           {isLoading ? (
             [1, 2, 3].map(i => <Card key={i} className="h-24 rounded-3xl animate-pulse" />)
           ) : filteredStudents && filteredStudents.length > 0 ? (
@@ -79,7 +82,7 @@ export default function TrainerDashboard() {
               <Card key={student.id} className="rounded-[2rem] border-none shadow-sm hover:shadow-md transition-all bg-white overflow-hidden">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center font-black text-xl text-primary">
-                    {student.firstName[0]}
+                    {student.firstName?.[0] || 'A'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-lg leading-none">{student.firstName} {student.lastName}</h3>

@@ -1,28 +1,34 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useCollection } from '@/firebase';
+import { useCollection, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
 import { Users, Mail, Activity, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminStudentsPage() {
+  const { profile } = useUser();
   const db = useFirestore();
-  const studentsQuery = useMemoFirebase(() => query(collection(db, 'users'), where('userType', '==', 'student')), [db]);
+  const studentsQuery = useMemoFirebase(() => {
+    if (!profile) return null;
+    return query(collection(db, 'users'), where('userType', '==', 'student'));
+  }, [db, profile]);
+  
   const { data: students, isLoading } = useCollection(studentsQuery);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full max-w-none">
       <PageHeader 
         title="Gestão de Alunos" 
         subtitle="Controle global de todos os alunos da plataforma." 
       />
 
-      <div className="space-y-4">
+      <div className="space-y-4 w-full">
         {isLoading ? (
           [1, 2, 3].map(i => <Card key={i} className="h-20 rounded-2xl animate-pulse bg-muted" />)
         ) : students?.map((student) => (
@@ -30,7 +36,7 @@ export default function AdminStudentsPage() {
             <CardContent className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                  {student.firstName[0]}
+                  {student.firstName?.[0] || 'A'}
                 </div>
                 <div>
                   <h3 className="font-bold">{student.firstName} {student.lastName}</h3>

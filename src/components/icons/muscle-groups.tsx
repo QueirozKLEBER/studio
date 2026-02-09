@@ -27,3 +27,12 @@ export const Abs = (props: React.SVGProps<SVGSVGElement>) => (
 export const Calves = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 100 100" {...props}><path d="M40,70 C30,80 30,95 40,95 L60,95 C70,95 70,80 60,70 Z" fill="currentColor" /></svg>
 );
+export const Forearms = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 100 100" {...props}><path d="M35,40 L65,40 L60,90 L40,90 Z M45,20 L55,20 L55,35 L45,35 Z" fill="currentColor" /></svg>
+);
+export const Traps = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 100 100" {...props}><path d="M20,30 Q50,10 80,30 L70,50 L30,50 Z" fill="currentColor" /></svg>
+);
+export const LowerBack = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 100 100" {...props}><path d="M30,60 L70,60 L65,95 L35,95 Z" fill="currentColor" /></svg>
+);

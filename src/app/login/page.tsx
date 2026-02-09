@@ -7,150 +7,110 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
 import { useAuth, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { FirebaseError } from 'firebase/app';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg role="img" viewBox="0 0 24 24" {...props}>
-      <path
-        fill="currentColor"
-        d="M12.48 10.92v3.28h7.84c-.24 1.84-.854 3.185-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12.027s5.56 12.027 12.173 12.027c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.133H12.48z"
-      ></path>
-    </svg>
-  );
+import { UserCircle, ShieldAlert, GraduationCap } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loginRole, setLoginRole] = useState<'student' | 'trainer' | 'admin'>('student');
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+  const { user, profile, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isUserLoading && user) {
-      router.push('/dashboard');
+    if (!isUserLoading && user && profile) {
+      if (profile.userType === 'admin') router.push('/admin/dashboard');
+      else if (profile.userType === 'trainer') router.push('/trainer/dashboard');
+      else router.push('/dashboard');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, profile, isUserLoading, router]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email || !password) {
-        toast({
-            variant: 'destructive',
-            title: 'Campos obrigatórios',
-            description: 'Por favor, preencha e-mail e senha.',
-        });
-        return;
+      toast({ variant: 'destructive', title: 'Campos obrigatórios', description: 'Preencha e-mail e senha.' });
+      return;
     }
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Redirect is handled by useEffect
     } catch (error) {
-        let description = 'Ocorreu um erro inesperado. Tente novamente.';
-        if (error instanceof FirebaseError) {
-             switch (error.code) {
-                case 'auth/user-not-found':
-                case 'auth/wrong-password':
-                case 'auth/invalid-credential':
-                    description = 'E-mail ou senha inválidos.';
-                    break;
-                case 'auth/invalid-email':
-                    description = 'O formato do e-mail é inválido.';
-                    break;
-                default:
-                    description = 'Ocorreu um erro ao tentar fazer login.';
-                    break;
-            }
-        }
-        toast({
-            variant: "destructive",
-            title: "Erro no Login",
-            description,
-        });
-        setIsLoading(false);
+      let description = 'E-mail ou senha inválidos.';
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/user-not-found') description = 'Usuário não encontrado.';
+      }
+      toast({ variant: "destructive", title: "Erro no Login", description });
+      setIsLoading(false);
     }
   };
 
-  if (isUserLoading || user) {
+  if (isUserLoading || (user && profile)) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-           <AuthCard
-              title="Entrar"
-              description="Acesse sua conta para continuar sua jornada."
-              footerText="Não tem uma conta?"
-              footerLink="/signup"
-              footerLinkText="Cadastre-se"
-            >
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-full" />
-                    <div className="flex items-center space-x-2">
-                        <Separator className="flex-1" />
-                        <span className="text-xs text-muted-foreground">OU</span>
-                        <Separator className="flex-1" />
-                    </div>
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <Skeleton className="h-4 w-12" />
-                            <Skeleton className="h-4 w-24" />
-                        </div>
-                         <Skeleton className="h-10 w-full" />
-                    </div>
-                    <Skeleton className="h-10 w-full" />
-                </div>
-            </AuthCard>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Skeleton className="h-[400px] w-full max-w-md rounded-3xl" />
+      </div>
     );
   }
 
   return (
     <AuthCard
-      title="Entrar"
-      description="Acesse sua conta para continuar sua jornada."
+      title="Entrar no MFIT"
+      description="Escolha seu tipo de acesso para continuar."
       footerText="Não tem uma conta?"
       footerLink="/signup"
       footerLinkText="Cadastre-se"
     >
+      <div className="mb-6">
+        <Tabs value={loginRole} onValueChange={(v) => setLoginRole(v as any)} className="w-full">
+          <TabsList className="grid grid-cols-3 w-full h-12 rounded-2xl bg-muted p-1">
+            <TabsTrigger value="student" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <UserCircle className="h-4 w-4 mr-2" />
+              Aluno
+            </TabsTrigger>
+            <TabsTrigger value="trainer" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Prof
+            </TabsTrigger>
+            <TabsTrigger value="admin" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <ShieldAlert className="h-4 w-4 mr-2" />
+              ADM
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       <form className="space-y-4" onSubmit={handleLogin}>
-        <Button variant="outline" className="w-full" type="button" disabled={isLoading}>
-          <GoogleIcon className="mr-2 h-4 w-4" />
-          Entrar com Google
-        </Button>
-        <div className="flex items-center space-x-2">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">OU</span>
-            <Separator className="flex-1" />
-        </div>
         <div className="space-y-2">
           <Label htmlFor="email">E-mail</Label>
-          <Input id="email" type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
+          <Input id="email" type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className="rounded-xl" />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Senha</Label>
-            <Link
-              href="/forgot-password"
-              className="text-sm underline text-muted-foreground"
-            >
-              Esqueceu sua senha?
-            </Link>
+            <Link href="/forgot-password" className="text-xs underline text-muted-foreground">Esqueceu a senha?</Link>
           </div>
-          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
+          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className="rounded-xl" />
         </div>
-        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-          {isLoading ? 'Entrando...' : 'Entrar'}
+        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-2xl font-bold shadow-lg" disabled={isLoading}>
+          {isLoading ? 'Entrando...' : 'Entrar Agora'}
         </Button>
       </form>
+
+      <div className="mt-6">
+        <Separator className="mb-4" />
+        <Button variant="outline" className="w-full rounded-2xl h-11" type="button" disabled={isLoading}>
+          Entrar com Google
+        </Button>
+      </div>
     </AuthCard>
   );
 }

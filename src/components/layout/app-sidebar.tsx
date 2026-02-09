@@ -11,39 +11,58 @@ import {
   Bot,
   CreditCard,
   LogOut,
-  User,
+  Users,
+  ShieldCheck,
+  Settings,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { placeHolderImages } from '@/lib/placeholder-data';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { cn } from '@/lib/utils';
-
-const menuItems = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/workouts', label: 'Treinos', icon: Dumbbell },
-  { href: '/assessment', label: 'Avaliação Física', icon: Activity },
-  { href: '/blog', label: 'Blog MFIT', icon: BookOpen },
-  { href: '/ai', label: 'IA Professor', icon: Bot },
-  { href: '/pricing', label: 'Planos', icon: CreditCard },
-];
 
 export const AppSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
-  const { user } = useUser();
-  const avatarImage = placeHolderImages.find(p => p.id === 'avatar-placeholder');
+  const { user, profile } = useUser();
 
   const handleLogout = async () => {
     await signOut(auth);
     router.push('/');
   };
 
-  const getAvatarFallback = () => {
-    if (user?.displayName) return user.displayName.charAt(0).toUpperCase();
-    return 'U';
-  }
+  const getMenuItems = () => {
+    if (!profile) return [];
+    
+    if (profile.userType === 'admin') {
+      return [
+        { href: '/admin/dashboard', label: 'Painel ADM', icon: ShieldCheck },
+        { href: '/admin/trainers', label: 'Professores', icon: Users },
+        { href: '/admin/students', label: 'Alunos', icon: Users },
+        { href: '/admin/settings', label: 'Configurações', icon: Settings },
+      ];
+    }
+    
+    if (profile.userType === 'trainer') {
+      return [
+        { href: '/trainer/dashboard', label: 'Dashboard Prof', icon: LayoutDashboard },
+        { href: '/trainer/students', label: 'Meus Alunos', icon: Users },
+        { href: '/trainer/workouts/builder', label: 'Montar Treino', icon: Dumbbell },
+        { href: '/trainer/tips', label: 'Dicas Prof', icon: BookOpen },
+      ];
+    }
+
+    return [
+      { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
+      { href: '/workouts', label: 'Meus Treinos', icon: Dumbbell },
+      { href: '/assessment', label: 'Avaliação Física', icon: Activity },
+      { href: '/blog', label: 'Blog MFIT', icon: BookOpen },
+      { href: '/ai', label: 'IA Professor', icon: Bot },
+      { href: '/pricing', label: 'Planos', icon: CreditCard },
+    ];
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div className="flex flex-col h-full bg-card">
@@ -52,13 +71,13 @@ export const AppSidebar = () => {
           <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
             <Logo className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-headline font-bold tracking-tight">MFIT</span>
+          <span className="text-xl font-headline font-bold tracking-tight">MFIT Personal</span>
         </Link>
       </div>
 
       <nav className="flex-1 px-4 space-y-1">
         {menuItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
@@ -86,14 +105,16 @@ export const AppSidebar = () => {
           )}
         >
           <Avatar className="h-9 w-9 rounded-xl border-2 border-primary/10">
-            <AvatarImage src={user?.photoURL || avatarImage?.imageUrl} />
+            <AvatarImage src={user?.photoURL || ''} />
             <AvatarFallback className="rounded-xl bg-blue-50 text-primary font-bold">
-              {getAvatarFallback()}
+              {profile?.firstName?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-bold truncate">{user?.displayName || 'Usuário'}</span>
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Ver Perfil</span>
+            <span className="text-sm font-bold truncate">{profile?.firstName || 'Usuário'}</span>
+            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+              {profile?.userType === 'trainer' ? 'Professor' : profile?.userType === 'admin' ? 'Administrador' : 'Aluno'}
+            </span>
           </div>
         </Link>
         <button 

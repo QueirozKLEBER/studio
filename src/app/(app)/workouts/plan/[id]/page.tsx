@@ -47,24 +47,24 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
   /**
    * getEnrichedExercise
-   * Cruza o exercício do plano com o catálogo mestre.
-   * FORÇA a mídia (GIF) a vir do catálogo se disponível, ignorando o snapshot antigo.
+   * Cruza o exercício do plano com o catálogo mestre (FONTE DA VERDADE).
+   * FORÇA a mídia (GIF) a vir do catálogo ignorando o snapshot.
    */
   const getEnrichedExercise = (planEx: any) => {
-    // Busca o registro mestre no catálogo usando o ID
-    const catalogMatch = flatCatalog.find(ex => ex.id === (planEx.id || planEx.exerciseId));
+    const exerciseId = planEx.id || planEx.exerciseId;
+    const catalogMatch = flatCatalog.find(ex => ex.id === exerciseId);
     
+    // Log de diagnóstico para o teste
+    const resolvedUrl = catalogMatch?.gifPrincipalUrl || planEx.gifPrincipalUrl;
+    const source = catalogMatch?.gifPrincipalUrl ? 'MASTER_CATALOG' : 'PLAN_SNAPSHOT';
+    console.log(`[MFIT TEST] Rendering Exercise: ID=${exerciseId}, GIF=${resolvedUrl}, Source=${source}`);
+
     if (!catalogMatch) return planEx;
 
-    // Lógica de Prioridade:
-    // 1. Informações técnicas (mídia, descrição, biomecânica) vêm SEMPRE do catálogo.
-    // 2. Customizações (séries, reps, descanso, notas do professor) vêm do plano salvo.
     return {
-      ...catalogMatch,       // Registro mestre (Mídia, GIF, Instruções atualizadas)
+      ...catalogMatch,       // Registro mestre (Mídia atualizada)
       ...planEx,             // Dados do plano (Preservar customizações do professor)
-      // FORÇA explicitamente a mídia do catálogo se o link existir
-      gifPrincipalUrl: catalogMatch.gifPrincipalUrl || planEx.gifPrincipalUrl,
-      // Garantir que o nome e campos oficiais reflitam o catálogo
+      gifPrincipalUrl: catalogMatch.gifPrincipalUrl || planEx.gifPrincipalUrl, // Forçar catálogo
       name: catalogMatch.name,
       equipmentType: catalogMatch.equipmentType,
       muscleGroup: catalogMatch.muscleGroup,
@@ -120,14 +120,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   const selectedExercise = selectedExerciseId 
     ? getEnrichedExercise(plan.exercises.find((ex: any) => (ex.id === selectedExerciseId || ex.exerciseId === selectedExerciseId)))
     : null;
-
-  if (selectedExercise) {
-    console.log("MFIT Diagnostic - Rendering Modal (Plan Context):", {
-      id: selectedExercise.id,
-      gifPrincipalUrl: selectedExercise.gifPrincipalUrl,
-      source: flatCatalog.some(ex => ex.id === selectedExercise.id) ? 'Catalog Master' : 'Plan Snapshot Only'
-    });
-  }
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-none">
@@ -190,9 +182,8 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                         {index + 1}
                       </div>
                       <div>
-                        <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                        <h3 className="text-xl font-black uppercase tracking-tight">
                           {enrichedEx.name}
-                          {!gifUrl && <PlayCircle className="h-4 w-4 text-primary opacity-50 transition-opacity" />}
                         </h3>
                         <div className="flex gap-2 mt-1">
                           <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">

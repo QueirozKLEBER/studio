@@ -40,6 +40,8 @@ export const muscleGroups = [
   { id: 'lombar', name: 'Lombar', icon: 'LowerBack' },
 ];
 
+const TEST_GIF_URL = "https://res.cloudinary.com/dih8ff2oi/image/upload/v1770663853/supino-reto-com-barra_elkdmq.gif";
+
 const createEx = (
   id: string, 
   name: string, 
@@ -48,7 +50,7 @@ const createEx = (
   move: Exercise['movement'],
   diff: Exercise['difficulty'] = 'Iniciante', 
   sec: string[] = [],
-  gifUrl: string = ''
+  gifUrl: string = TEST_GIF_URL
 ): Exercise => {
   const basePrompt = `3D realistic anatomical human body performing ${name} with ${equip}. Clean studio background, neutral grey setting, bright clear lighting, fixed camera angle, 4 seconds duration, perfect seamless loop, full range of motion, professional fitness demonstration style, no text, no music.`;
   
@@ -67,7 +69,7 @@ const createEx = (
     safetyTips: ['Mantenha as articulações seguras.', 'Verifique as travas.', 'Respire corretamente.'],
     variations: ['Unilateral', 'Com pausa', 'Explosivo'],
     tags: [muscle.toLowerCase(), move.toLowerCase(), equip.toLowerCase(), 'elite', 'mfit'],
-    gifPrincipalUrl: gifUrl,
+    gifPrincipalUrl: TEST_GIF_URL, // Forcing global test URL
     gifVariationUrl: '',
     gifErrorUrl: '',
     thumbnailUrl: '',
@@ -82,7 +84,7 @@ const createEx = (
 
 export const exercises: Record<string, Exercise[]> = {
   peito: [
-    createEx('supino-reto-com-barra', 'Supino Reto com Barra', 'peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro'], 'https://res.cloudinary.com/dih8ff2oi/image/upload/v1770663853/supino-reto-com-barra_elkdmq.gif'),
+    createEx('supino-reto-com-barra', 'Supino Reto com Barra', 'peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro']),
     createEx('supino-inclinado-halter', 'Supino Inclinado com Halteres', 'peito', 'Halteres', 'Empurrar', 'Intermediário'),
     createEx('peck-deck', 'Crucifixo na Máquina (Peck Deck)', 'peito', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('crossover-polia-media', 'Crossover na Polia Média', 'peito', 'Cabo/Polia', 'Isolar', 'Intermediário'),
@@ -117,7 +119,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('ponte-gluteo', 'Ponte para Glúteo e Lombar', 'lombar', 'Peso do corpo', 'Core', 'Iniciante'),
   ],
   pernas: [
-    createEx('agachamento-livre-com-barra', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado', [], 'https://res.cloudinary.com/dih8ff2oi/image/upload/v1770663853/supino-reto-com-barra_elkdmq.gif'),
+    createEx('agachamento-livre-com-barra', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado'),
     createEx('leg-press-45', 'Leg Press 45°', 'pernas', 'Máquina', 'Empurrar', 'Intermediário'),
     createEx('cadeira-extensora', 'Cadeira Extensora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('mesa-flexora', 'Mesa Flexora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),

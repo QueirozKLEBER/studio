@@ -49,8 +49,7 @@ const createEx = (
   equip: Exercise['equipmentType'], 
   move: Exercise['movement'],
   diff: Exercise['difficulty'] = 'Iniciante', 
-  sec: string[] = [],
-  gifUrl: string = TEST_GIF_URL
+  sec: string[] = []
 ): Exercise => {
   const basePrompt = `3D realistic anatomical human body performing ${name} with ${equip}. Clean studio background, neutral grey setting, bright clear lighting, fixed camera angle, 4 seconds duration, perfect seamless loop, full range of motion, professional fitness demonstration style, no text, no music.`;
   
@@ -69,7 +68,7 @@ const createEx = (
     safetyTips: ['Mantenha as articulações seguras.', 'Verifique as travas.', 'Respire corretamente.'],
     variations: ['Unilateral', 'Com pausa', 'Explosivo'],
     tags: [muscle.toLowerCase(), move.toLowerCase(), equip.toLowerCase(), 'elite', 'mfit'],
-    gifPrincipalUrl: TEST_GIF_URL, // Forcing global test URL
+    gifPrincipalUrl: TEST_GIF_URL,
     gifVariationUrl: '',
     gifErrorUrl: '',
     thumbnailUrl: '',

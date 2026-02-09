@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useMemo } from 'react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
@@ -43,32 +43,43 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
   const { data: plan, isLoading } = useDoc(planRef);
 
-  const flatCatalog = Object.values(catalogExercises).flat();
+  // Flatten catalog for easy searching
+  const flatCatalog = useMemo(() => Object.values(catalogExercises).flat(), []);
 
   /**
    * getEnrichedExercise
-   * Cruza o exercício do plano com o catálogo mestre (FONTE DA VERDADE).
-   * FORÇA a mídia (GIF) a vir do catálogo ignorando o snapshot.
+   * Resilient merge logic with multi-field fallback and normalization.
    */
   const getEnrichedExercise = (planEx: any) => {
-    const exerciseId = planEx.id || planEx.exerciseId;
-    const catalogMatch = flatCatalog.find(ex => ex.id === exerciseId);
-    
-    // Log de diagnóstico para o teste
-    const resolvedUrl = catalogMatch?.gifPrincipalUrl || planEx.gifPrincipalUrl;
-    const source = catalogMatch?.gifPrincipalUrl ? 'MASTER_CATALOG' : 'PLAN_SNAPSHOT';
-    console.log(`[MFIT TEST] Rendering Exercise: ID=${exerciseId}, GIF=${resolvedUrl}, Source=${source}`);
+    if (!planEx) return null;
 
-    if (!catalogMatch) return planEx;
+    // Normalizing identifiers
+    const planId = (planEx.id || '').toString().trim().toLowerCase();
+    const planExerciseId = (planEx.exerciseId || '').toString().trim().toLowerCase();
+    const planSlug = (planEx.slug || '').toString().trim().toLowerCase();
+
+    // Finding match in catalog
+    const catalogMatch = flatCatalog.find(ex => {
+      const catId = ex.id.toString().trim().toLowerCase();
+      return catId === planId || catId === planExerciseId || catId === planSlug;
+    });
+
+    if (!catalogMatch) {
+      console.warn(`[MFIT TEST] ❌ UNRESOLVED: ${planEx.name || 'Unknown'}`, {
+        provided: { id: planEx.id, exerciseId: planEx.exerciseId, slug: planEx.slug },
+        reason: (!planId && !planExerciseId && !planSlug) ? 'Missing all ID fields' : 'No match in flatCatalog'
+      });
+      return planEx;
+    }
+
+    // Success log
+    console.log(`[MFIT TEST] ✅ RESOLVED: ${catalogMatch.id} | GIF: ${catalogMatch.gifPrincipalUrl}`);
 
     return {
-      ...catalogMatch,       // Registro mestre (Mídia atualizada)
-      ...planEx,             // Dados do plano (Preservar customizações do professor)
-      gifPrincipalUrl: catalogMatch.gifPrincipalUrl || planEx.gifPrincipalUrl, // Forçar catálogo
-      name: catalogMatch.name,
-      equipmentType: catalogMatch.equipmentType,
-      muscleGroup: catalogMatch.muscleGroup,
-      difficulty: catalogMatch.difficulty
+      ...catalogMatch,       // Catalog master data (Media Priority)
+      ...planEx,             // Plan specific data (Sets/Reps/Notes)
+      gifPrincipalUrl: catalogMatch.gifPrincipalUrl || planEx.gifPrincipalUrl,
+      name: catalogMatch.name || planEx.name,
     };
   };
 
@@ -137,22 +148,23 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         <div className="lg:col-span-8 flex flex-col gap-4">
           {plan.exercises?.map((planEx: any, index: number) => {
             const enrichedEx = getEnrichedExercise(planEx);
-            const gifUrl = enrichedEx.gifPrincipalUrl;
+            const gifUrl = enrichedEx?.gifPrincipalUrl;
+            const exId = enrichedEx?.id || `fallback-${index}`;
 
             return (
               <Card 
-                key={enrichedEx.id} 
-                onClick={() => setSelectedExerciseId(enrichedEx.id)}
+                key={exId} 
+                onClick={() => setSelectedExerciseId(enrichedEx?.id)}
                 className={cn(
                   "rounded-[2rem] border-none shadow-sm transition-all overflow-hidden cursor-pointer hover:shadow-md group",
-                  completedExercises.includes(enrichedEx.id) ? "bg-green-50 opacity-90" : "bg-white"
+                  completedExercises.includes(exId) ? "bg-green-50 opacity-90" : "bg-white"
                 )}
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
                   {gifUrl ? (
                     <Image
                       src={gifUrl}
-                      alt={enrichedEx.name}
+                      alt={enrichedEx?.name || "Exercício"}
                       fill
                       className="object-cover"
                       unoptimized
@@ -161,7 +173,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                     <div className="relative w-full h-full">
                       <Image
                         src={videoPlaceholder?.imageUrl || ''}
-                        alt={enrichedEx.name}
+                        alt={enrichedEx?.name || "Exercício"}
                         fill
                         className="object-cover opacity-60"
                         data-ai-hint="fitness workout"
@@ -177,17 +189,17 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner transition-colors",
-                        completedExercises.includes(enrichedEx.id) ? "bg-green-500 text-white" : "bg-muted text-primary"
+                        completedExercises.includes(exId) ? "bg-green-500 text-white" : "bg-muted text-primary"
                       )}>
                         {index + 1}
                       </div>
                       <div>
                         <h3 className="text-xl font-black uppercase tracking-tight">
-                          {enrichedEx.name}
+                          {enrichedEx?.name || "Exercício"}
                         </h3>
                         <div className="flex gap-2 mt-1">
                           <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
-                            {enrichedEx.equipmentType}
+                            {enrichedEx?.equipmentType || "Livre"}
                           </Badge>
                         </div>
                       </div>
@@ -195,10 +207,10 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      onClick={(e) => toggleComplete(enrichedEx.id, e)}
+                      onClick={(e) => toggleComplete(exId, e)}
                       className={cn(
                         "rounded-full h-12 w-12 transition-all",
-                        completedExercises.includes(enrichedEx.id) ? "text-green-600 bg-green-100 scale-110" : "text-muted-foreground hover:bg-primary/5"
+                        completedExercises.includes(exId) ? "text-green-600 bg-green-100 scale-110" : "text-muted-foreground hover:bg-primary/5"
                       )}
                     >
                       <CheckCircle2 className="h-8 w-8" />
@@ -208,19 +220,19 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                   <div className="grid grid-cols-3 gap-3 mt-6">
                     <div className="bg-muted/30 p-3 rounded-2xl text-center">
                       <p className="text-[10px] font-bold uppercase opacity-50">Séries</p>
-                      <p className="text-lg font-black">{enrichedEx.targetSets || '4'}</p>
+                      <p className="text-lg font-black">{enrichedEx?.targetSets || enrichedEx?.sets || '4'}</p>
                     </div>
                     <div className="bg-muted/30 p-3 rounded-2xl text-center">
                       <p className="text-[10px] font-bold uppercase opacity-50">Reps</p>
-                      <p className="text-lg font-black">{enrichedEx.targetReps || '12'}</p>
+                      <p className="text-lg font-black">{enrichedEx?.targetReps || enrichedEx?.reps || '12'}</p>
                     </div>
                     <div className="bg-muted/30 p-3 rounded-2xl text-center">
                       <p className="text-[10px] font-bold uppercase opacity-50">Descanso</p>
-                      <p className="text-lg font-black">{enrichedEx.targetRest || '60s'}</p>
+                      <p className="text-lg font-black">{enrichedEx?.targetRest || enrichedEx?.rest || '60s'}</p>
                     </div>
                   </div>
 
-                  {enrichedEx.notes && (
+                  {enrichedEx?.notes && (
                     <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-3 items-start">
                       <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <p className="text-sm text-blue-900 leading-relaxed italic">

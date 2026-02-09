@@ -1,4 +1,3 @@
-
 'use client';
 
 import { use, useState } from 'react';
@@ -28,7 +27,7 @@ import { placeHolderImages } from '@/lib/placeholder-images';
 
 export default function PlanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
@@ -38,14 +37,14 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   const [selectedExercise, setSelectedExercise] = useState<any | null>(null);
 
   const planRef = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || !id) return null;
     return doc(db, 'users', user.uid, 'trainingPlans', id);
   }, [db, user, id]);
 
   const { data: plan, isLoading } = useDoc(planRef);
 
   const toggleComplete = (exerciseId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Evita abrir o modal ao marcar como concluído
+    e.stopPropagation();
     setCompletedExercises(prev => 
       prev.includes(exerciseId) 
         ? prev.filter(i => i !== exerciseId) 
@@ -83,7 +82,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  if (isLoading || !user) return <div className="p-8 animate-pulse bg-muted h-screen" />;
+  if (isLoading || !profile) return <div className="p-8 animate-pulse bg-muted h-screen" />;
   if (!plan) return <div className="p-8 text-center py-20">Treino não encontrado ou você não tem permissão.</div>;
 
   const progress = Math.round((completedExercises.length / (plan.exercises?.length || 1)) * 100);
@@ -191,11 +190,11 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="space-y-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <ShieldCheck className="h-5 w-5 text-green-300" />
-                  Postura e técnica em primeiro lugar.
+                  Técnica em primeiro lugar.
                 </div>
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <Zap className="h-5 w-5 text-yellow-300" />
-                  Conexão mente-músculo ativada.
+                  Mente no músculo ativada.
                 </div>
               </div>
 
@@ -211,7 +210,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Modal de Detalhes do Exercício */}
       <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && setSelectedExercise(null)}>
         <DialogContent className="max-w-4xl p-0 rounded-[2.5rem] overflow-hidden border-none bg-white">
           <ScrollArea className="max-h-[90vh]">
@@ -238,14 +236,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="space-y-8">
                   <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
-                    {selectedExercise?.gifPrincipalUrl ? (
-                      <Image
-                        src={selectedExercise.gifPrincipalUrl}
-                        alt="Execução do exercício"
-                        fill
-                        className="object-cover"
-                      />
-                    ) : videoPlaceholder && (
+                    {videoPlaceholder && (
                       <Image
                         src={videoPlaceholder.imageUrl}
                         alt="Demonstração"
@@ -270,13 +261,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                       {selectedExercise?.executionInstructions || "Siga as orientações de postura e controle de carga para este movimento."}
                     </div>
                   </div>
-                  
-                  {selectedExercise?.notes && (
-                    <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
-                      <h4 className="font-black text-sm uppercase text-primary mb-2">Nota do Professor</h4>
-                      <p className="text-sm italic font-medium">"{selectedExercise.notes}"</p>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-8">
@@ -304,21 +288,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                         <li key={index} className="text-xs text-red-700/70 font-bold flex items-center gap-2">
                           <div className="h-1.5 w-1.5 bg-red-400 rounded-full" />
                           {error}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="p-6 bg-orange-50 rounded-[2rem] border border-orange-100">
-                    <h4 className="font-black text-sm text-orange-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4" />
-                      Segurança
-                    </h4>
-                    <ul className="space-y-2">
-                      {(selectedExercise?.safetyTips || ["Não trave os joelhos.", "Cuidado com a coluna cervical."]).map((tip: string, index: number) => (
-                        <li key={index} className="text-xs text-orange-700/70 font-bold flex items-center gap-2">
-                          <div className="h-1.5 w-1.5 bg-orange-400 rounded-full" />
-                          {tip}
                         </li>
                       ))}
                     </ul>

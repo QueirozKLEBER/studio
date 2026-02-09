@@ -1,4 +1,3 @@
-
 'use client';
 
 import { use } from 'react';
@@ -6,7 +5,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDoc } from '@/firebase';
+import { useDoc, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
 import { 
@@ -18,22 +17,28 @@ import {
   ArrowLeft,
   Settings
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function StudentDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const db = useFirestore();
   const router = useRouter();
+  const { user, profile } = useUser();
   
-  const studentRef = useMemoFirebase(() => doc(db, 'users', id), [db, id]);
+  const studentRef = useMemoFirebase(() => {
+    // Only fetch if authenticated and we have an ID
+    if (!user || !id) return null;
+    return doc(db, 'users', id);
+  }, [db, id, user]);
+
   const { data: student, isLoading } = useDoc(studentRef);
 
-  if (isLoading) return <div className="p-8 animate-pulse bg-muted h-screen" />;
-  if (!student) return <div className="p-8 text-center py-20">Aluno não encontrado ou sem permissão.</div>;
+  if (isLoading || !profile) return <div className="p-8 animate-pulse bg-muted h-screen" />;
+  if (!student) return <div className="p-8 text-center py-20">Aluno não encontrado ou sem permissão de acesso.</div>;
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full max-w-none">
       <div className="flex items-center gap-4">
         <Button variant="ghost" className="rounded-2xl" onClick={() => router.back()}>
           <ArrowLeft className="h-5 w-5" />
@@ -125,23 +130,6 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
               Enviar Dica Direta
             </Button>
           </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-col gap-4 mb-10 w-full">
-        <h2 className="text-xl font-bold font-headline">Treino Atual</h2>
-        <Card className="rounded-[2.5rem] border-none shadow-sm bg-white p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-black">Hipertrofia - Semana 4</h3>
-              <p className="text-muted-foreground">Última atualização: Há 2 dias</p>
-            </div>
-            <Button asChild variant="outline" className="rounded-xl font-bold">
-              <Link href={`/trainer/workouts/builder?studentId=${id}`}>
-                Editar Treino
-              </Link>
-            </Button>
-          </div>
         </Card>
       </div>
     </div>

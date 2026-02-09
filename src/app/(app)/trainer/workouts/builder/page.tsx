@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, Suspense } from 'react';
@@ -16,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { addDocumentNonBlocking } from '@/firebase';
 
 type WorkoutExercise = Exercise & {
   targetSets: string;
@@ -68,7 +66,7 @@ function BuilderContent() {
 
   const handleSaveWorkout = async () => {
     if (!studentId) {
-      toast({ variant: 'destructive', title: "Erro", description: "Aluno não identificado. Volte para a lista de alunos." });
+      toast({ variant: 'destructive', title: "Erro", description: "Aluno não identificado." });
       return;
     }
     if (!workoutName || currentWorkout.length === 0) {
@@ -98,7 +96,7 @@ function BuilderContent() {
   };
 
   return (
-    <div className="flex flex-col gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)]">
+    <div className="flex flex-col gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] w-full max-w-none">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
           title="Montador de Treino" 
@@ -116,7 +114,7 @@ function BuilderContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden w-full">
         {/* Biblioteca de Exercícios */}
         <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden h-full">
           <Card className="rounded-[2.5rem] border-none shadow-sm flex flex-col h-full bg-white">

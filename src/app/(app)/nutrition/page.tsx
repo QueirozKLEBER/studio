@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -18,7 +19,7 @@ import { Sparkles, Utensils, Zap, Flame, Heart } from 'lucide-react';
 
 export default function NutritionPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full">
       <PageHeader
         title="Dicas Alimentares"
         subtitle="Potencialize seus resultados com uma nutrição inteligente. Lembre-se: consulte sempre um nutricionista."
@@ -50,7 +51,7 @@ export default function NutritionPage() {
 
         {Object.entries(nutritionTips).map(([key, category]) => (
           <TabsContent key={key} value={key} className="mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
               {category.tips.map((tip, index) => (
                 <Card key={index} className="rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
                   <CardHeader className="bg-blue-50/30">

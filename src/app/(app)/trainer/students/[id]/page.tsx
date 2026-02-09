@@ -1,5 +1,7 @@
+
 'use client';
 
+import { use } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,18 +21,19 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export default function StudentDetails({ params }: { params: { id: string } }) {
+export default function StudentDetails({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const db = useFirestore();
   const router = useRouter();
   
-  const studentRef = useMemoFirebase(() => doc(db, 'users', params.id), [db, params.id]);
+  const studentRef = useMemoFirebase(() => doc(db, 'users', id), [db, id]);
   const { data: student, isLoading } = useDoc(studentRef);
 
   if (isLoading) return <div className="p-8 animate-pulse bg-muted h-screen" />;
-  if (!student) return <div className="p-8">Aluno não encontrado.</div>;
+  if (!student) return <div className="p-8 text-center py-20">Aluno não encontrado ou sem permissão.</div>;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 w-full">
       <div className="flex items-center gap-4">
         <Button variant="ghost" className="rounded-2xl" onClick={() => router.back()}>
           <ArrowLeft className="h-5 w-5" />
@@ -42,7 +45,6 @@ export default function StudentDetails({ params }: { params: { id: string } }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Info do Aluno */}
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-bold">Perfil</CardTitle>
@@ -71,7 +73,6 @@ export default function StudentDetails({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
 
-        {/* Evolução Corporal */}
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
@@ -104,7 +105,6 @@ export default function StudentDetails({ params }: { params: { id: string } }) {
           </CardContent>
         </Card>
 
-        {/* Ações Rápidas */}
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold">Ações do Professor</CardTitle>
@@ -131,7 +131,7 @@ export default function StudentDetails({ params }: { params: { id: string } }) {
         </Card>
       </div>
 
-      <div className="flex flex-col gap-4 mb-10">
+      <div className="flex flex-col gap-4 mb-10 w-full">
         <h2 className="text-xl font-bold font-headline">Treino Atual</h2>
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white p-6">
           <div className="flex items-center justify-between">

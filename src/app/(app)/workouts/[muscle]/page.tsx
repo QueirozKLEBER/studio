@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import {
   Card,
   CardContent,
@@ -15,7 +16,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   muscleGroups,
@@ -31,19 +31,17 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, ShieldAlert, Zap } from 'lucide-react';
 
 type ExercisePageProps = {
-  params: {
+  params: Promise<{
     muscle: string;
-  };
+  }>;
 };
 
 export default function ExerciseListPage({ params }: ExercisePageProps) {
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
-    null
-  );
+  const { muscle } = use(params);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
 
-  const muscleGroup = muscleGroups.find((m) => m.id === params.muscle);
-  const exercises =
-    allExercises[params.muscle as keyof typeof allExercises] || [];
+  const muscleGroup = muscleGroups.find((m) => m.id === muscle);
+  const exercises = allExercises[muscle as keyof typeof allExercises] || [];
 
   if (!muscleGroup) {
     notFound();
@@ -54,14 +52,14 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
   );
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full">
       <PageHeader
         title={muscleGroup.name}
         subtitle={`Exercícios focados em ${muscleGroup.name.toLowerCase()} para você atingir seus objetivos.`}
       />
       
       {exercises.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
           {exercises.map((exercise) => (
             <Card key={exercise.id} className="flex flex-col rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
               <CardHeader>
@@ -98,7 +96,7 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
           ))}
         </div>
       ) : (
-        <Card className="rounded-3xl border-dashed border-2 bg-transparent">
+        <Card className="rounded-3xl border-dashed border-2 bg-transparent w-full">
             <CardContent className="pt-6">
                 <p className="text-muted-foreground text-center italic">Nenhum exercício encontrado para este grupo muscular.</p>
             </CardContent>
@@ -109,7 +107,7 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
         open={!!selectedExercise}
         onOpenChange={(isOpen) => !isOpen && setSelectedExercise(null)}
       >
-        <DialogContent className="max-w-4xl p-0 rounded-3xl overflow-hidden border-none">
+        <DialogContent className="max-w-4xl p-0 rounded-3xl overflow-hidden border-none bg-white">
           <ScrollArea className="max-h-[90vh]">
             <div className="p-6 md:p-10">
               <DialogHeader className="mb-6">

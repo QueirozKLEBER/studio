@@ -40,6 +40,10 @@ service cloud.firestore {
           allow create, update, delete: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
         }
       }
+
+      match /workoutHistory/{historyId} {
+        allow get, list, create: if isOwner(userId);
+      }
     }
 
     match /exercises/{exerciseId} {

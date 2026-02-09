@@ -1,387 +1,62 @@
+
 {
   "entities": {
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user of the TreinoPro platform.",
+      "description": "Represents a user of the platform.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user entity."
-        },
-        "email": {
-          "type": "string",
-          "description": "User's email address.",
-          "format": "email"
-        },
-        "firstName": {
-          "type": "string",
-          "description": "User's first name."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "User's last name."
-        },
-        "dateJoined": {
-          "type": "string",
-          "description": "Date and time the user joined the platform.",
-          "format": "date-time"
-        },
-        "userType": {
-          "type": "string",
-          "description": "Type of user (e.g., 'student', 'trainer')."
-        }
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "dateJoined": { "type": "string", "format": "date-time" },
+        "userType": { "type": "string", "enum": ["student", "trainer", "admin"] }
       },
-      "required": [
-        "id",
-        "email",
-        "firstName",
-        "lastName",
-        "dateJoined",
-        "userType"
-      ]
+      "required": ["id", "email", "firstName", "lastName", "dateJoined", "userType"]
     },
     "TrainingPlan": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "TrainingPlan",
       "type": "object",
-      "description": "Represents a training plan assigned to a user.",
+      "description": "Represents a workout plan assigned to a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the training plan."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the training plan."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of the training plan."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N TrainingPlan)"
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "userId": { "type": "string" },
+        "exercises": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "object" },
+        "status": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "userId"
-      ]
+      "required": ["id", "name", "userId", "exercises"]
     },
-    "Exercise": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Exercise",
+    "WorkoutHistory": {
+      "title": "WorkoutHistory",
       "type": "object",
-      "description": "Represents an exercise in a training plan.",
+      "description": "Records of completed workouts.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the exercise."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the exercise."
-        },
-        "description": {
-          "type": "string",
-          "description": "Description of how to perform the exercise."
-        },
-        "videoUrl": {
-          "type": "string",
-          "description": "URL of the video demonstrating the exercise.",
-          "format": "uri"
-        },
-        "muscleGroup": {
-          "type": "string",
-          "description": "Muscle group targeted by the exercise (e.g., 'Chest', 'Back')."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "videoUrl",
-        "muscleGroup"
-      ]
-    },
-    "Workout": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Workout",
-      "type": "object",
-      "description": "Represents a specific workout session within a training plan.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the workout."
-        },
-        "trainingPlanId": {
-          "type": "string",
-          "description": "Reference to TrainingPlan. (Relationship: TrainingPlan 1:N Workout)"
-        },
-        "exerciseIds": {
-          "type": "array",
-          "description": "References to Exercises. (Relationship: Workout N:N Exercise)",
-          "items": {
-            "type": "string"
-          }
-        },
-        "sets": {
-          "type": "number",
-          "description": "Number of sets for each exercise in the workout."
-        },
-        "reps": {
-          "type": "number",
-          "description": "Number of repetitions for each set in the workout."
-        }
-      },
-      "required": [
-        "id",
-        "trainingPlanId",
-        "exerciseIds",
-        "sets",
-        "reps"
-      ]
-    },
-    "NutritionTip": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "NutritionTip",
-      "type": "object",
-      "description": "Represents a nutrition tip or piece of advice.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the nutrition tip."
-        },
-        "title": {
-          "type": "string",
-          "description": "Title of the nutrition tip."
-        },
-        "content": {
-          "type": "string",
-          "description": "Content of the nutrition tip."
-        },
-        "category": {
-          "type": "string",
-          "description": "Category of the nutrition tip (e.g., 'Weight Loss', 'Muscle Gain')."
-        }
-      },
-      "required": [
-        "id",
-        "title",
-        "content",
-        "category"
-      ]
-    },
-    "SubscriptionPlan": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "SubscriptionPlan",
-      "type": "object",
-      "description": "Represents a subscription plan offered to users.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the subscription plan."
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the subscription plan (e.g., 'Basic', 'Premium')."
-        },
-        "price": {
-          "type": "number",
-          "description": "Price of the subscription plan."
-        },
-        "features": {
-          "type": "string",
-          "description": "Description of the features included in the subscription plan."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "price",
-        "features"
-      ]
-    },
-    "UserSubscription": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "UserSubscription",
-      "type": "object",
-      "description": "Represents a user's subscription to a specific plan.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the user subscription."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N UserSubscription)"
-        },
-        "subscriptionPlanId": {
-          "type": "string",
-          "description": "Reference to SubscriptionPlan. (Relationship: SubscriptionPlan 1:N UserSubscription)"
-        },
-        "startDate": {
-          "type": "string",
-          "description": "Date the subscription started.",
-          "format": "date-time"
-        },
-        "endDate": {
-          "type": "string",
-          "description": "Date the subscription ends.",
-          "format": "date-time"
-        },
-        "status": {
-          "type": "string",
-          "description": "Status of the subscription (e.g., 'Active', 'Inactive')."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "subscriptionPlanId",
-        "startDate",
-        "endDate",
-        "status"
-      ]
+        "planId": { "type": "string" },
+        "planName": { "type": "string" },
+        "completedAt": { "type": "object" },
+        "exerciseCount": { "type": "number" },
+        "completedExercisesCount": { "type": "number" }
+      }
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profiles. Uses path-based ownership for security.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/trainingPlans/{trainingPlanId}",
-        "definition": {
-          "entityName": "TrainingPlan",
-          "schema": {
-            "$ref": "#/backend/entities/TrainingPlan"
-          },
-          "description": "Stores training plans for each user. Uses path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "trainingPlanId",
-              "description": "The unique identifier for the training plan."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/trainingPlans/{trainingPlanId}/workouts/{workoutId}",
-        "definition": {
-          "entityName": "Workout",
-          "schema": {
-            "$ref": "#/backend/entities/Workout"
-          },
-          "description": "Stores workouts for each training plan. Uses path-based ownership.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "trainingPlanId",
-              "description": "The unique identifier for the training plan."
-            },
-            {
-              "name": "workoutId",
-              "description": "The unique identifier for the workout."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/exercises/{exerciseId}",
-        "definition": {
-          "entityName": "Exercise",
-          "schema": {
-            "$ref": "#/backend/entities/Exercise"
-          },
-          "description": "Stores a global collection of exercises available to all users.",
-          "params": [
-            {
-              "name": "exerciseId",
-              "description": "The unique identifier for the exercise."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/nutritionTips/{nutritionTipId}",
-        "definition": {
-          "entityName": "NutritionTip",
-          "schema": {
-            "$ref": "#/backend/entities/NutritionTip"
-          },
-          "description": "Stores a global collection of nutrition tips available to all users.",
-          "params": [
-            {
-              "name": "nutritionTipId",
-              "description": "The unique identifier for the nutrition tip."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/subscriptionPlans/{subscriptionPlanId}",
-        "definition": {
-          "entityName": "SubscriptionPlan",
-          "schema": {
-            "$ref": "#/backend/entities/SubscriptionPlan"
-          },
-          "description": "Stores a global collection of subscription plans.",
-          "params": [
-            {
-              "name": "subscriptionPlanId",
-              "description": "The unique identifier for the subscription plan."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/userSubscriptions/{userSubscriptionId}",
-        "definition": {
-          "entityName": "UserSubscription",
-          "schema": {
-            "$ref": "#/backend/entities/UserSubscription"
-          },
-          "description": "Stores user subscription information.",
-          "params": [
-            {
-              "name": "userSubscriptionId",
-              "description": "The unique identifier for the user subscription."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to support the TreinoPro application, emphasizing security, scalability, and ease of debugging. It leverages path-based ownership for private user data and membership maps for collaborative data. Authorization Independence is achieved through denormalization. All collections enforce a homogeneous security posture.\n\n**Authorization Independence:** User-specific data (TrainingPlans, Workouts) is stored under the `/users/{userId}` path, inheriting implicit ownership based on the path. This eliminates the need for `get()` calls to verify ownership. No authorization data is stored in parents that children would need to retrieve.\n\n**Structural Segregation:** Data with different access requirements is separated into different collections. User-specific data is kept separate from global data like Exercises and NutritionTips.\n\n**Access Modeling:** Path-based ownership is used for private user data. Global data (Exercises, NutritionTips, SubscriptionPlans) are stored in root collections and are publicly accessible. This meets the QAP requirements by allowing efficient list operations based on document type.\n\n**Global Roles (DBAC):** There are no global roles currently modelled. If global roles were required (e.g. for an admin user), a collection such as `/roles_admin/{userId}` could be used, and rules would check for the existence of this document."
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "/users/{userId}/trainingPlans/{planId}": {
+      "schema": { "$ref": "#/entities/TrainingPlan" },
+      "description": "Workouts assigned to users"
+    },
+    "/users/{userId}/workoutHistory/{historyId}": {
+      "schema": { "$ref": "#/entities/WorkoutHistory" },
+      "description": "Records of completed workouts"
+    }
   }
 }

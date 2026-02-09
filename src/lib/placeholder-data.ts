@@ -47,7 +47,8 @@ const createEx = (
   equip: Exercise['equipmentType'], 
   move: Exercise['movement'],
   diff: Exercise['difficulty'] = 'Iniciante', 
-  sec: string[] = []
+  sec: string[] = [],
+  gifUrl: string = ''
 ): Exercise => {
   const basePrompt = `3D realistic anatomical human body performing ${name} with ${equip}. Clean studio background, neutral grey setting, bright clear lighting, fixed camera angle, 4 seconds duration, perfect seamless loop, full range of motion, professional fitness demonstration style, no text, no music.`;
   
@@ -66,7 +67,7 @@ const createEx = (
     safetyTips: ['Mantenha as articulações seguras.', 'Verifique as travas.', 'Respire corretamente.'],
     variations: ['Unilateral', 'Com pausa', 'Explosivo'],
     tags: [muscle.toLowerCase(), move.toLowerCase(), equip.toLowerCase(), 'elite', 'mfit'],
-    gifPrincipalUrl: '',
+    gifPrincipalUrl: gifUrl,
     gifVariationUrl: '',
     gifErrorUrl: '',
     thumbnailUrl: '',
@@ -81,12 +82,13 @@ const createEx = (
 
 export const exercises: Record<string, Exercise[]> = {
   peito: [
-    createEx('supino-reto-barra', 'Supino Reto com Barra', 'peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro']),
+    createEx('supino-reto-com-barra', 'Supino Reto com Barra', 'peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro'], 'https://treinototal.com.br/wp-content/uploads/2023/05/supino-reto-com-barra.gif'),
     createEx('supino-inclinado-halter', 'Supino Inclinado com Halteres', 'peito', 'Halteres', 'Empurrar', 'Intermediário'),
     createEx('peck-deck', 'Crucifixo na Máquina (Peck Deck)', 'peito', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('crossover-polia-media', 'Crossover na Polia Média', 'peito', 'Cabo/Polia', 'Isolar', 'Intermediário'),
     createEx('flexao-braço', 'Flexão de Braço', 'peito', 'Peso do corpo', 'Empurrar', 'Iniciante'),
     createEx('supino-maquina', 'Supino na Máquina Horizontal', 'peito', 'Máquina', 'Empurrar', 'Iniciante'),
+    createEx('crucifixo-reto-halter', 'Crucifixo Reto com Halteres', 'peito', 'Halteres', 'Isolar', 'Intermediário'),
   ],
   costas: [
     createEx('puxada-frontal', 'Puxada Frontal Aberta', 'costas', 'Máquina', 'Puxar', 'Iniciante', ['Bíceps']),
@@ -94,6 +96,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('remada-curvada-barra', 'Remada Curvada com Barra', 'costas', 'Barra', 'Puxar', 'Intermediário'),
     createEx('pull-up', 'Barra Fixa (Pull Up)', 'costas', 'Peso do corpo', 'Puxar', 'Avançado'),
     createEx('remada-unilateral-halter', 'Remada Unilateral (Serrote)', 'costas', 'Halteres', 'Puxar', 'Iniciante'),
+    createEx('lat-pulldown-frente', 'Puxada na Frente (Lat Pulldown)', 'costas', 'Máquina', 'Puxar', 'Iniciante'),
   ],
   trapezio: [
     createEx('encolhimento-halter', 'Encolhimento com Halteres', 'trapezio', 'Halteres', 'Isolar', 'Iniciante'),
@@ -103,6 +106,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('face-pull', 'Face Pull com Corda', 'trapezio', 'Cabo/Polia', 'Puxar', 'Intermediário'),
     createEx('high-pull-barra', 'High Pull com Barra', 'trapezio', 'Barra', 'Puxar', 'Avançado'),
     createEx('clean-shrug', 'Clean Shrug', 'trapezio', 'Barra', 'Puxar', 'Avançado'),
+    createEx('encolhimento-por-tras', 'Encolhimento por trás com Barra', 'trapezio', 'Barra', 'Isolar', 'Intermediário'),
   ],
   lombar: [
     createEx('hiperextensao-lombar', 'Hiperextensão Lombar 45°', 'lombar', 'Máquina', 'Core', 'Iniciante'),
@@ -110,6 +114,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('good-morning', 'Good Morning com Barra', 'lombar', 'Barra', 'Hinge', 'Avançado'),
     createEx('superman-solo', 'Superman no Solo', 'lombar', 'Peso do corpo', 'Core', 'Iniciante'),
     createEx('stiff-barra', 'Stiff com Barra', 'lombar', 'Barra', 'Hinge', 'Intermediário'),
+    createEx('ponte-gluteo', 'Ponte para Glúteo e Lombar', 'lombar', 'Peso do corpo', 'Core', 'Iniciante'),
   ],
   pernas: [
     createEx('agachamento-livre', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado'),
@@ -117,11 +122,18 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('cadeira-extensora', 'Cadeira Extensora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('mesa-flexora', 'Mesa Flexora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('hack-squat', 'Hack Squat', 'pernas', 'Máquina', 'Agachar', 'Intermediário'),
+    createEx('afundo-halter', 'Afundo com Halteres', 'pernas', 'Halteres', 'Agachar', 'Intermediário'),
   ],
   abdomen: [
     createEx('abdominal-supra', 'Abdominal Supra (Crunch)', 'abdomen', 'Peso do corpo', 'Core', 'Iniciante'),
     createEx('abdominal-infra', 'Abdominal Infra', 'abdomen', 'Peso do corpo', 'Core', 'Intermediário'),
     createEx('prancha-abdominal', 'Prancha Isométrica', 'abdomen', 'Peso do corpo', 'Core', 'Iniciante'),
+    createEx('russian-twist', 'Russian Twist', 'abdomen', 'Livre', 'Core', 'Intermediário'),
+  ],
+  antebreaco: [
+    createEx('rosca-punho-barra', 'Rosca Punho com Barra', 'antebreaco', 'Barra', 'Isolar', 'Iniciante'),
+    createEx('rosca-inversa-barra', 'Rosca Inversa com Barra', 'antebreaco', 'Barra', 'Isolar', 'Intermediário'),
+    createEx('rosca-martelo-halter', 'Rosca Martelo com Halteres', 'antebreaco', 'Halteres', 'Isolar', 'Iniciante'),
   ]
 };
 

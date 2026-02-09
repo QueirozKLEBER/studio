@@ -1,34 +1,42 @@
 
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState } from 'react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   ArrowLeft, 
   CheckCircle2, 
   Info,
   ShieldCheck,
-  Zap
+  Zap,
+  PlayCircle,
+  AlertTriangle,
+  ChevronRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
+import { placeHolderImages } from '@/lib/placeholder-images';
 
 export default function PlanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { user, profile } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<any | null>(null);
 
-  // Somente cria a referência se o usuário estiver logado
   const planRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, 'users', user.uid, 'trainingPlans', id);
@@ -36,7 +44,8 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
   const { data: plan, isLoading } = useDoc(planRef);
 
-  const toggleComplete = (exerciseId: string) => {
+  const toggleComplete = (exerciseId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita abrir o modal ao marcar como concluído
     setCompletedExercises(prev => 
       prev.includes(exerciseId) 
         ? prev.filter(i => i !== exerciseId) 
@@ -78,16 +87,17 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   if (!plan) return <div className="p-8 text-center py-20">Treino não encontrado ou você não tem permissão.</div>;
 
   const progress = Math.round((completedExercises.length / (plan.exercises?.length || 1)) * 100);
+  const videoPlaceholder = placeHolderImages.find(img => img.id === 'exercise-video-placeholder');
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full max-w-none">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
         <PageHeader 
           title={plan.name} 
-          subtitle="Siga as instruções do seu professor e registre seu progresso." 
+          subtitle="Clique no exercício para ver a execução correta e orientações." 
         />
       </div>
 
@@ -96,24 +106,28 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
           {plan.exercises?.map((ex: any, index: number) => (
             <Card 
               key={ex.id} 
+              onClick={() => setSelectedExercise(ex)}
               className={cn(
-                "rounded-[2rem] border-none shadow-sm transition-all overflow-hidden",
-                completedExercises.includes(ex.id) ? "bg-green-50 opacity-80" : "bg-white"
+                "rounded-[2rem] border-none shadow-sm transition-all overflow-hidden cursor-pointer hover:shadow-md group",
+                completedExercises.includes(ex.id) ? "bg-green-50 opacity-90" : "bg-white"
               )}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div className={cn(
-                      "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner",
+                      "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner transition-colors",
                       completedExercises.includes(ex.id) ? "bg-green-500 text-white" : "bg-muted text-primary"
                     )}>
                       {index + 1}
                     </div>
                     <div>
-                      <h3 className="text-xl font-black uppercase tracking-tight">{ex.name}</h3>
+                      <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                        {ex.name}
+                        <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </h3>
                       <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary">
+                        <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
                           {ex.equipmentType}
                         </Badge>
                       </div>
@@ -122,10 +136,10 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    onClick={() => toggleComplete(ex.id)}
+                    onClick={(e) => toggleComplete(ex.id, e)}
                     className={cn(
-                      "rounded-full h-12 w-12",
-                      completedExercises.includes(ex.id) ? "text-green-600 bg-green-100" : "text-muted-foreground hover:bg-primary/5"
+                      "rounded-full h-12 w-12 transition-all",
+                      completedExercises.includes(ex.id) ? "text-green-600 bg-green-100 scale-110" : "text-muted-foreground hover:bg-primary/5"
                     )}
                   >
                     <CheckCircle2 className="h-8 w-8" />
@@ -162,13 +176,11 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground overflow-hidden sticky top-8">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-lg font-bold">Resumo da Sessão</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="flex flex-col items-center gap-2">
+            <CardContent className="p-8 space-y-8">
+              <div className="text-center">
+                <p className="text-xs font-bold uppercase opacity-70 tracking-widest mb-2">Progresso Atual</p>
                 <div className="text-6xl font-black">{progress}%</div>
-                <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden">
+                <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden mt-4">
                   <div 
                     className="h-full bg-white transition-all duration-500" 
                     style={{ width: `${progress}%` }} 
@@ -176,21 +188,21 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              <div className="space-y-4 pt-4">
+              <div className="space-y-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <ShieldCheck className="h-5 w-5 text-green-300" />
-                  Postura verificada pelo Prof.
+                  Postura e técnica em primeiro lugar.
                 </div>
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <Zap className="h-5 w-5 text-yellow-300" />
-                  Foco total na técnica.
+                  Conexão mente-músculo ativada.
                 </div>
               </div>
 
               <Button 
                 onClick={handleFinishWorkout}
                 disabled={progress < 100 || isFinishing}
-                className="w-full h-14 rounded-2xl bg-white text-primary font-black text-lg hover:bg-white/90 shadow-lg disabled:opacity-50"
+                className="w-full h-16 rounded-3xl bg-white text-primary font-black text-lg hover:bg-white/90 shadow-lg disabled:opacity-50 transition-transform active:scale-95"
               >
                 {isFinishing ? 'SALVANDO...' : 'CONCLUIR TREINO'}
               </Button>
@@ -198,6 +210,125 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
           </Card>
         </div>
       </div>
+
+      {/* Modal de Detalhes do Exercício */}
+      <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && setSelectedExercise(null)}>
+        <DialogContent className="max-w-4xl p-0 rounded-[2.5rem] overflow-hidden border-none bg-white">
+          <ScrollArea className="max-h-[90vh]">
+            <div className="p-6 md:p-10">
+              <DialogHeader className="mb-8">
+                <div className="flex gap-2 mb-3">
+                   <Badge variant="outline" className="rounded-full border-primary text-primary font-bold uppercase px-4 py-1">
+                    {selectedExercise?.equipmentType}
+                   </Badge>
+                   <Badge variant="outline" className="rounded-full border-secondary text-secondary font-bold uppercase px-4 py-1">
+                    {selectedExercise?.difficulty}
+                   </Badge>
+                </div>
+                <DialogTitle className="text-4xl font-black uppercase tracking-tighter">
+                  {selectedExercise?.name}
+                </DialogTitle>
+                <div className="flex gap-6 mt-4 text-sm font-bold uppercase text-muted-foreground border-b pb-4">
+                    <span className="flex items-center gap-1"><Zap className="h-4 w-4 text-primary" /> {selectedExercise?.targetSets} Séries</span>
+                    <span className="flex items-center gap-1"><PlayCircle className="h-4 w-4 text-primary" /> {selectedExercise?.targetReps} Reps</span>
+                    <span className="flex items-center gap-1"><Info className="h-4 w-4 text-primary" /> {selectedExercise?.targetRest} Descanso</span>
+                </div>
+              </DialogHeader>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="space-y-8">
+                  <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
+                    {selectedExercise?.gifPrincipalUrl ? (
+                      <Image
+                        src={selectedExercise.gifPrincipalUrl}
+                        alt="Execução do exercício"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : videoPlaceholder && (
+                      <Image
+                        src={videoPlaceholder.imageUrl}
+                        alt="Demonstração"
+                        fill
+                        className="object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+                        data-ai-hint="fitness workout"
+                      />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
+                            <PlayCircle className="h-10 w-10 text-white" />
+                        </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-black text-xl mb-4 flex items-center gap-2 uppercase">
+                      <Zap className="h-6 w-6 text-primary" />
+                      Instruções de Execução
+                    </h3>
+                    <div className="text-sm leading-relaxed text-muted-foreground bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50 whitespace-pre-wrap font-medium">
+                      {selectedExercise?.executionInstructions || "Siga as orientações de postura e controle de carga para este movimento."}
+                    </div>
+                  </div>
+                  
+                  {selectedExercise?.notes && (
+                    <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
+                      <h4 className="font-black text-sm uppercase text-primary mb-2">Nota do Professor</h4>
+                      <p className="text-sm italic font-medium">"{selectedExercise.notes}"</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-8">
+                  <div>
+                    <h4 className="font-black text-sm uppercase tracking-widest mb-4 opacity-50">Dicas Técnicas</h4>
+                    <ul className="space-y-3">
+                      {(selectedExercise?.tips || ["Mantenha o abdômen contraído.", "Controle a fase excêntrica."]).map((tip: string, index: number) => (
+                        <li key={index} className="flex gap-3 text-sm font-bold bg-muted/30 p-3 rounded-2xl">
+                          <div className="h-5 w-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="h-3 w-3" />
+                          </div>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-6 bg-red-50 rounded-[2rem] border border-red-100">
+                    <h4 className="font-black text-sm text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Evite Erros Comuns
+                    </h4>
+                    <ul className="space-y-2">
+                      {(selectedExercise?.commonErrors || ["Movimentos balísticos.", "Amplitude reduzida."]).map((error: string, index: number) => (
+                        <li key={index} className="text-xs text-red-700/70 font-bold flex items-center gap-2">
+                          <div className="h-1.5 w-1.5 bg-red-400 rounded-full" />
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="p-6 bg-orange-50 rounded-[2rem] border border-orange-100">
+                    <h4 className="font-black text-sm text-orange-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Segurança
+                    </h4>
+                    <ul className="space-y-2">
+                      {(selectedExercise?.safetyTips || ["Não trave os joelhos.", "Cuidado com a coluna cervical."]).map((tip: string, index: number) => (
+                        <li key={index} className="text-xs text-orange-700/70 font-bold flex items-center gap-2">
+                          <div className="h-1.5 w-1.5 bg-orange-400 rounded-full" />
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

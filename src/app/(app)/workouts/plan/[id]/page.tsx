@@ -1,4 +1,3 @@
-
 'use client';
 
 import { use, useState, useEffect } from 'react';
@@ -46,12 +45,30 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
   const flatCatalog = Object.values(catalogExercises).flat();
 
+  /**
+   * getEnrichedExercise
+   * Cruza o exercício do plano com o catálogo mestre.
+   * FORÇA a mídia (GIF) a vir do catálogo se disponível, ignorando o snapshot antigo.
+   */
   const getEnrichedExercise = (planEx: any) => {
-    const catalogMatch = flatCatalog.find(ex => ex.id === planEx.id);
+    // Busca o registro mestre no catálogo usando o ID
+    const catalogMatch = flatCatalog.find(ex => ex.id === (planEx.id || planEx.exerciseId));
+    
+    if (!catalogMatch) return planEx;
+
+    // Lógica de Prioridade:
+    // 1. Informações técnicas (mídia, descrição, biomecânica) vêm SEMPRE do catálogo.
+    // 2. Customizações (séries, reps, descanso, notas do professor) vêm do plano salvo.
     return {
-      ...planEx,
-      ...(catalogMatch || {}),
-      notes: planEx.notes || catalogMatch?.defaultTrainerNotes || ''
+      ...catalogMatch,       // Registro mestre (Mídia, GIF, Instruções atualizadas)
+      ...planEx,             // Dados do plano (Preservar customizações do professor)
+      // FORÇA explicitamente a mídia do catálogo se o link existir
+      gifPrincipalUrl: catalogMatch.gifPrincipalUrl || planEx.gifPrincipalUrl,
+      // Garantir que o nome e campos oficiais reflitam o catálogo
+      name: catalogMatch.name,
+      equipmentType: catalogMatch.equipmentType,
+      muscleGroup: catalogMatch.muscleGroup,
+      difficulty: catalogMatch.difficulty
     };
   };
 
@@ -101,14 +118,14 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   const videoPlaceholder = placeHolderImages.find(img => img.id === 'exercise-video-placeholder');
 
   const selectedExercise = selectedExerciseId 
-    ? getEnrichedExercise(plan.exercises.find((ex: any) => ex.id === selectedExerciseId))
+    ? getEnrichedExercise(plan.exercises.find((ex: any) => (ex.id === selectedExerciseId || ex.exerciseId === selectedExerciseId)))
     : null;
 
   if (selectedExercise) {
-    console.log("MFIT Diagnostic - Rendering Modal:", {
+    console.log("MFIT Diagnostic - Rendering Modal (Plan Context):", {
       id: selectedExercise.id,
       gifPrincipalUrl: selectedExercise.gifPrincipalUrl,
-      source: flatCatalog.some(ex => ex.id === selectedExercise.id) ? 'Catalog' : 'Plan Only'
+      source: flatCatalog.some(ex => ex.id === selectedExercise.id) ? 'Catalog Master' : 'Plan Snapshot Only'
     });
   }
 

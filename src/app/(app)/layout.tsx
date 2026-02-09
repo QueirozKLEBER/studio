@@ -36,15 +36,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background pb-16 md:pb-0 overflow-x-hidden">
-      {/* Sidebar fixo no desktop */}
-      <aside className="hidden md:block w-64 border-r bg-card h-screen sticky top-0">
+    <div className="flex min-h-screen bg-background pb-16 md:pb-0">
+      {/* Sidebar fixo no desktop - Removido o sticky top para evitar conflitos de largura */}
+      <aside className="hidden md:block w-64 border-r bg-card h-screen shrink-0">
         <AppSidebar />
       </aside>
       
-      {/* Área de Conteúdo principal */}
+      {/* Área de Conteúdo principal - Removido mx-auto e max-w-6xl para alinhar à esquerda */}
       <main className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1 p-4 md:p-10 max-w-6xl mx-auto w-full">
+        <div className="flex-1 p-4 md:p-8 lg:p-10 w-full">
           {children}
         </div>
       </main>

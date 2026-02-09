@@ -54,8 +54,8 @@ export const AppSidebar = () => {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar className="border-r bg-card">
+    <SidebarProvider open={true} defaultOpen={true}>
+      <Sidebar className="border-r bg-card w-64">
         <SidebarHeader className="p-6">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,9 @@ import { Search, Plus, Trash2, GripVertical, Save, Send, Dumbbell } from 'lucide
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { doc, setDoc, collection } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { addDocumentNonBlocking } from '@/firebase';
 
 type WorkoutExercise = Exercise & {
   targetSets: string;
@@ -24,14 +25,15 @@ type WorkoutExercise = Exercise & {
   notes: string;
 };
 
-export default function WorkoutBuilder() {
+function BuilderContent() {
+  const searchParams = useSearchParams();
+  const studentId = searchParams.get('studentId');
   const [selectedMuscle, setSelectedMuscle] = useState<string>('peito');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutExercise[]>([]);
   const [workoutName, setWorkoutName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
-  const { profile } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
@@ -65,6 +67,10 @@ export default function WorkoutBuilder() {
   };
 
   const handleSaveWorkout = async () => {
+    if (!studentId) {
+      toast({ variant: 'destructive', title: "Erro", description: "Aluno não identificado. Volte para a lista de alunos." });
+      return;
+    }
     if (!workoutName || currentWorkout.length === 0) {
       toast({ variant: 'destructive', title: "Erro", description: "Dê um nome ao treino e adicione exercícios." });
       return;
@@ -72,8 +78,18 @@ export default function WorkoutBuilder() {
 
     setIsSaving(true);
     try {
-      toast({ title: "Treino Salvo", description: "O treino foi salvo com sucesso!" });
-      router.push('/trainer/dashboard');
+      const planRef = doc(collection(db, 'users', studentId, 'trainingPlans'));
+      await setDoc(planRef, {
+        id: planRef.id,
+        name: workoutName,
+        userId: studentId,
+        exercises: currentWorkout,
+        createdAt: serverTimestamp(),
+        status: 'active'
+      });
+
+      toast({ title: "Treino Liberado", description: `O treino foi enviado para o aluno.` });
+      router.push(`/trainer/students/${studentId}`);
     } catch (error) {
       toast({ variant: 'destructive', title: "Erro", description: "Falha ao salvar o treino." });
     } finally {
@@ -86,7 +102,7 @@ export default function WorkoutBuilder() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
           title="Montador de Treino" 
-          subtitle="Crie treinos de elite com autonomia total." 
+          subtitle={studentId ? "Personalizando treino para o aluno." : "Crie treinos de elite."} 
         />
         <div className="flex gap-2">
           <Button variant="outline" className="rounded-2xl" disabled={isSaving}>
@@ -221,10 +237,10 @@ export default function WorkoutBuilder() {
                         </div>
 
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-bold uppercase opacity-70">Obs. Técnicas (Drop set, Isometria, etc.)</Label>
+                          <Label className="text-[10px] font-bold uppercase opacity-70">Obs. Técnicas</Label>
                           <Input 
                             value={ex.notes} 
-                            placeholder="Adicione instruções específicas..."
+                            placeholder="Adicione instruções..."
                             onChange={(e) => updateExercise(ex.id, 'notes', e.target.value)}
                             className="rounded-xl h-9 bg-white border-none shadow-sm"
                           />
@@ -239,5 +255,13 @@ export default function WorkoutBuilder() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WorkoutBuilder() {
+  return (
+    <Suspense fallback={<div className="p-8 animate-pulse bg-muted h-screen" />}>
+      <BuilderContent />
+    </Suspense>
   );
 }

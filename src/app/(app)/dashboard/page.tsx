@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,15 +11,15 @@ import {
   TrendingUp, 
   Clock, 
   ChevronRight,
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
-import { useUser } from '@/firebase';
-import { dailyWorkout } from '@/lib/placeholder-data';
+import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { 
   BarChart, 
   Bar, 
   XAxis, 
-  YAxis, 
   ResponsiveContainer, 
   Tooltip,
   Cell
@@ -36,9 +37,22 @@ const weeklyData = [
 
 export default function Dashboard() {
   const { user } = useUser();
+  const db = useFirestore();
+
+  const plansQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'trainingPlans'),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+  }, [db, user]);
+
+  const { data: latestPlans, isLoading } = useCollection(plansQuery);
+  const activePlan = latestPlans && latestPlans.length > 0 ? latestPlans[0] : null;
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full max-w-none">
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-bold font-headline text-primary">MFIT Personal</h1>
         <p className="text-muted-foreground italic text-sm">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
@@ -88,45 +102,65 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Workout of the Day */}
+        {/* Workout of the Day (REAL DATA FROM PROFESSOR) */}
         <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground p-2">
           <CardHeader>
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <Dumbbell className="h-5 w-5" />
-              Treino do Dia
+              Seu Treino Atual
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
-            <div>
-              <h3 className="text-3xl font-black">{dailyWorkout.focus}</h3>
-              <p className="text-primary-foreground/80 text-sm mt-2 font-medium">Foco intenso em volume e técnica para resultados máximos.</p>
-            </div>
-            <div className="flex gap-3">
-              <Badge variant="outline" className="border-white/30 text-white font-bold px-3 py-1">
-                {dailyWorkout.exercises.length} Exercícios
-              </Badge>
-              <Badge variant="outline" className="border-white/30 text-white font-bold px-3 py-1">
-                ~50 min
-              </Badge>
-            </div>
-            <Button asChild className="w-full bg-white text-primary hover:bg-white/90 h-14 rounded-3xl font-black text-lg shadow-lg">
-              <Link href={`/workouts/${dailyWorkout.muscleId}`}>
-                COMEÇAR TREINO
-              </Link>
-            </Button>
+            {isLoading ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-8 bg-white/20 rounded-xl w-3/4" />
+                <div className="h-4 bg-white/20 rounded-xl w-1/2" />
+              </div>
+            ) : activePlan ? (
+              <>
+                <div>
+                  <h3 className="text-3xl font-black uppercase">{activePlan.name}</h3>
+                  <p className="text-primary-foreground/80 text-sm mt-2 font-medium italic">
+                    Treino personalizado pelo seu professor.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Badge variant="outline" className="border-white/30 text-white font-bold px-3 py-1">
+                    {activePlan.exercises?.length || 0} Exercícios
+                  </Badge>
+                  <Badge variant="outline" className="border-white/30 text-white font-bold px-3 py-1">
+                    Foco: Hipertrofia
+                  </Badge>
+                </div>
+                <Button asChild className="w-full bg-white text-primary hover:bg-white/90 h-14 rounded-3xl font-black text-lg shadow-lg">
+                  <Link href={`/workouts`}>
+                    VER EXERCÍCIOS
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <div className="py-6 text-center space-y-4">
+                <AlertCircle className="h-12 w-12 mx-auto opacity-50" />
+                <p className="font-bold">Nenhum treino atribuído ainda.</p>
+                <p className="text-xs opacity-70">Aguarde seu professor liberar seu primeiro treino de elite.</p>
+                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 rounded-2xl" asChild>
+                  <Link href="/ai">Falar com Assistente IA</Link>
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Recent Activity / Blog Highlight */}
       <div className="flex flex-col gap-4 mb-10 w-full">
-        <h2 className="text-xl font-bold font-headline px-1">Dicas do Professor</h2>
+        <h2 className="text-xl font-bold font-headline px-1 text-left">Dicas do Professor</h2>
         <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow">
           <div className="flex items-center gap-6 p-6">
             <div className="h-20 w-20 bg-blue-50 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-inner">
               <Sparkles className="h-10 w-10 text-primary" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-left">
               <h4 className="font-bold text-lg truncate">Como ganhar massa muscular com constância?</h4>
               <p className="text-sm text-muted-foreground line-clamp-1 mt-1">Descubra os pilares da hipertrofia real e duradoura...</p>
               <Link href="/blog" className="text-xs text-primary font-black uppercase tracking-widest mt-2 block hover:underline">

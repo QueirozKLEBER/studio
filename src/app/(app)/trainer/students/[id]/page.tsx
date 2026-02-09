@@ -111,7 +111,7 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <Button asChild className="rounded-2xl h-14 font-bold bg-primary text-white w-full">
-              <Link href="/trainer/workouts/builder">
+              <Link href={`/trainer/workouts/builder?studentId=${id}`}>
                 <Dumbbell className="h-5 w-5 mr-2" />
                 Montar Novo Treino
               </Link>
@@ -123,9 +123,6 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
             <Button variant="outline" className="rounded-2xl h-14 font-bold border-2 w-full">
               <MessageSquare className="h-5 w-5 mr-2" />
               Enviar Dica Direta
-            </Button>
-            <Button variant="outline" className="rounded-2xl h-14 font-bold border-2 w-full text-destructive hover:text-destructive hover:bg-destructive/5">
-              Bloquear Acesso
             </Button>
           </CardContent>
         </Card>
@@ -139,7 +136,11 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
               <h3 className="text-2xl font-black">Hipertrofia - Semana 4</h3>
               <p className="text-muted-foreground">Última atualização: Há 2 dias</p>
             </div>
-            <Button variant="outline" className="rounded-xl font-bold">Editar Treino</Button>
+            <Button asChild variant="outline" className="rounded-xl font-bold">
+              <Link href={`/trainer/workouts/builder?studentId=${id}`}>
+                Editar Treino
+              </Link>
+            </Button>
           </div>
         </Card>
       </div>

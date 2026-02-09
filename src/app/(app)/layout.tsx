@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
@@ -44,8 +45,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       
       {/* Área de Conteúdo principal - Alinhamento TOTAL à esquerda, ocupando 100% da largura disponível */}
       <div className="flex flex-col flex-1 md:pl-64 w-full min-w-0">
-        <main className="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-none">
-          {children}
+        <main className="flex-1 w-full p-4 md:p-8 lg:p-10">
+          <div className="w-full max-w-none">
+            {children}
+          </div>
         </main>
         
         {/* Navegação inferior para Mobile */}

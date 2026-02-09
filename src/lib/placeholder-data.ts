@@ -1,3 +1,4 @@
+
 export type Exercise = {
   id: string;
   name: string;
@@ -54,12 +55,12 @@ const createEx = (
   equipmentType: equip,
   movement: move,
   difficulty: diff,
-  executionInstructions: `1. Posicione-se corretamente no equipamento ${equip}.\n2. Mantenha o core contraído e a postura alinhada.\n3. Execute o movimento de ${move.toLowerCase()} de forma controlada.\n4. Sinta a contração no ${muscle} e retorne lentamente.`,
-  description: `Exercício fundamental de ${move.toLowerCase()} para o desenvolvimento de ${muscle}.`,
-  tips: ['Mantenha a cadência 2-0-2.', 'Foco na conexão mente-músculo.', 'Respire durante a fase concêntrica.'],
-  commonErrors: ['Uso de carga excessiva.', 'Amplitude incompleta.', 'Falta de estabilidade no tronco.'],
-  safetyTips: ['Verifique se as travas estão seguras.', 'Use cinturão se necessário.'],
-  variations: ['Unilateral', 'Com pausa', 'Drop-set'],
+  executionInstructions: `1. Posicione-se corretamente.\n2. Mantenha o core contraído.\n3. Execute o movimento de ${move.toLowerCase()} de forma controlada.\n4. Retorne à posição inicial mantendo a tensão muscular.`,
+  description: `Exercício de ${move.toLowerCase()} focado no desenvolvimento de ${muscle}.`,
+  tips: ['Mantenha a cadência controlada.', 'Foco na conexão mente-músculo.'],
+  commonErrors: ['Uso de carga excessiva.', 'Amplitude incompleta.'],
+  safetyTips: ['Verifique as travas de segurança.', 'Mantenha a coluna neutra.'],
+  variations: ['Unilateral', 'Com pausa'],
   tags: [muscle.toLowerCase(), move.toLowerCase(), equip.toLowerCase()],
   gifPrincipalUrl: '',
   gifVariationUrl: '',
@@ -68,103 +69,105 @@ const createEx = (
   defaultTrainerNotes: 'Focar na técnica antes de progredir carga.',
   sets: '4',
   reps: '12',
-  rest: '60s'
+  rest: '60'
 });
 
 export const exercises: Record<string, Exercise[]> = {
   peito: [
-    createEx('supino-reto-barra', 'Supino Reto com Barra', 'Peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro Frontal']),
+    createEx('supino-reto-barra', 'Supino Reto com Barra', 'Peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro']),
+    createEx('supino-inclinado-halter', 'Supino Inclinado com Halteres', 'Peito', 'Halteres', 'Empurrar', 'Intermediário'),
+    createEx('peck-deck', 'Crucifixo na Máquina (Peck Deck)', 'Peito', 'Máquina', 'Isolar', 'Iniciante'),
+    createEx('flexao-braco', 'Flexão de Braço', 'Peito', 'Peso do corpo', 'Empurrar', 'Iniciante'),
+    createEx('crossover-polia-media', 'Crossover na Polia Média', 'Peito', 'Cabo/Polia', 'Isolar', 'Intermediário'),
     createEx('supino-reto-halter', 'Supino Reto com Halteres', 'Peito', 'Halteres', 'Empurrar', 'Intermediário'),
-    createEx('supino-inc-barra', 'Supino Inclinado com Barra', 'Peito', 'Barra', 'Empurrar', 'Intermediário'),
-    createEx('supino-inc-halter', 'Supino Inclinado com Halteres', 'Peito', 'Halteres', 'Empurrar', 'Intermediário'),
-    createEx('supino-dec-barra', 'Supino Declinado com Barra', 'Peito', 'Barra', 'Empurrar', 'Avançado'),
-    createEx('supino-maq', 'Supino na Máquina', 'Peito', 'Máquina', 'Empurrar', 'Iniciante'),
-    createEx('crucifixo-reto', 'Crucifixo Reto com Halteres', 'Peito', 'Halteres', 'Isolar', 'Intermediário'),
-    createEx('crucifixo-maq', 'Crucifixo na Máquina (Peck Deck)', 'Peito', 'Máquina', 'Isolar', 'Iniciante'),
-    createEx('crossover-alto', 'Crossover Alto', 'Peito', 'Cabo/Polia', 'Isolar', 'Intermediário'),
-    createEx('flexao-trad', 'Flexão de Braço Tradicional', 'Peito', 'Peso do corpo', 'Empurrar', 'Iniciante'),
-    createEx('supino-smith', 'Supino no Smith', 'Peito', 'Smith', 'Empurrar', 'Intermediário'),
-    createEx('pullover-halter', 'Pullover com Halter', 'Peito', 'Halteres', 'Puxar', 'Intermediário'),
+    createEx('supino-inclinado-barra', 'Supino Inclinado com Barra', 'Peito', 'Barra', 'Empurrar', 'Intermediário'),
+    createEx('supino-declinado-barra', 'Supino Declinado com Barra', 'Peito', 'Barra', 'Empurrar', 'Avançado'),
+    createEx('crucifixo-reto-halter', 'Crucifixo Reto com Halteres', 'Peito', 'Halteres', 'Isolar', 'Iniciante'),
+    createEx('chest-press-maquina', 'Chest Press Vertical (Máquina)', 'Peito', 'Máquina', 'Empurrar', 'Iniciante'),
   ],
   costas: [
     createEx('puxada-frontal', 'Puxada Frontal Aberta', 'Costas', 'Máquina', 'Puxar', 'Iniciante', ['Bíceps']),
-    createEx('remada-baixa', 'Remada Baixa no Cabo', 'Costas', 'Cabo/Polia', 'Puxar', 'Iniciante'),
-    createEx('remada-unilateral', 'Remada Unilateral com Halter (Serrote)', 'Costas', 'Halteres', 'Puxar', 'Iniciante'),
-    createEx('barra-fixa', 'Barra Fixa Pronada', 'Costas', 'Peso do corpo', 'Puxar', 'Avançado'),
-    createEx('puxada-triangulo', 'Puxada Frontal com Triângulo', 'Costas', 'Máquina', 'Puxar', 'Iniciante'),
+    createEx('remada-baixa', 'Remada Baixa (Triângulo)', 'Costas', 'Cabo/Polia', 'Puxar', 'Iniciante'),
     createEx('remada-curvada-barra', 'Remada Curvada com Barra', 'Costas', 'Barra', 'Puxar', 'Intermediário'),
-    createEx('pulldown-cabo', 'Pulldown no Cabo (Braços Estendidos)', 'Costas', 'Cabo/Polia', 'Isolar', 'Intermediário'),
+    createEx('pull-up', 'Barra Fixa (Pull Up)', 'Costas', 'Peso do corpo', 'Puxar', 'Avançado'),
+    createEx('puxada-supinada', 'Puxada Frontal Supinada', 'Costas', 'Máquina', 'Puxar', 'Iniciante'),
+    createEx('remada-unilateral-halter', 'Remada Unilateral com Halter (Serrote)', 'Costas', 'Halteres', 'Puxar', 'Iniciante'),
     createEx('remada-cavalinho', 'Remada Cavalinho', 'Costas', 'Barra', 'Puxar', 'Intermediário'),
+    createEx('pulldown-corda', 'Pulldown com Corda', 'Costas', 'Cabo/Polia', 'Isolar', 'Intermediário'),
   ],
   ombros: [
-    createEx('desenv-halter', 'Desenvolvimento com Halteres', 'Ombros', 'Halteres', 'Empurrar', 'Iniciante', ['Tríceps']),
-    createEx('eleva-lateral-halter', 'Elevação Lateral com Halteres', 'Ombros', 'Halteres', 'Isolar', 'Iniciante'),
-    createEx('eleva-frontal-halter', 'Elevação Frontal com Halteres', 'Ombros', 'Halteres', 'Isolar', 'Iniciante'),
-    createEx('desenv-barra-militar', 'Desenvolvimento Militar (Barra)', 'Ombros', 'Barra', 'Empurrar', 'Avançado'),
-    createEx('eleva-posterior-peck-deck', 'Elevação Posterior (Peck Deck)', 'Ombros', 'Máquina', 'Isolar', 'Iniciante'),
+    createEx('desenvolvimento-halter', 'Desenvolvimento com Halteres', 'Ombros', 'Halteres', 'Empurrar', 'Iniciante'),
+    createEx('elevacao-lateral-halter', 'Elevação Lateral com Halteres', 'Ombros', 'Halteres', 'Isolar', 'Iniciante'),
+    createEx('desenvolvimento-militar', 'Desenvolvimento Militar (Barra)', 'Ombros', 'Barra', 'Empurrar', 'Avançado'),
+    createEx('elevacao-frontal-halter', 'Elevação Frontal com Halteres', 'Ombros', 'Halteres', 'Isolar', 'Iniciante'),
+    createEx('crucifixo-inverso-maquina', 'Crucifixo Inverso na Máquina', 'Ombros', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('arnold-press', 'Arnold Press', 'Ombros', 'Halteres', 'Empurrar', 'Avançado'),
-    createEx('eleva-lateral-cabo', 'Elevação Lateral no Cabo', 'Ombros', 'Cabo/Polia', 'Isolar', 'Intermediário'),
-    createEx('remada-alta-barra', 'Remada Alta com Barra', 'Ombros', 'Barra', 'Puxar', 'Intermediário'),
+    createEx('elevacao-lateral-cabo', 'Elevação Lateral no Cabo', 'Ombros', 'Cabo/Polia', 'Isolar', 'Intermediário'),
+    createEx('face-pull', 'Face Pull', 'Ombros', 'Cabo/Polia', 'Puxar', 'Intermediário'),
   ],
   biceps: [
     createEx('rosca-direta-barra', 'Rosca Direta com Barra', 'Bíceps', 'Barra', 'Isolar', 'Iniciante'),
     createEx('rosca-alternada-halter', 'Rosca Alternada com Halteres', 'Bíceps', 'Halteres', 'Isolar', 'Iniciante'),
+    createEx('rosca-scott', 'Rosca Scott (Máquina/Banco)', 'Bíceps', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('rosca-martelo-halter', 'Rosca Martelo com Halteres', 'Bíceps', 'Halteres', 'Isolar', 'Iniciante'),
-    createEx('rosca-scott-barra', 'Rosca Scott com Barra EZ', 'Bíceps', 'Barra', 'Isolar', 'Intermediário'),
-    createEx('rosca-concentrada', 'Rosca Concentrada', 'Bíceps', 'Halteres', 'Isolar', 'Iniciante'),
-    createEx('rosca-no-cabo', 'Rosca no Cabo (Polia Baixa)', 'Bíceps', 'Cabo/Polia', 'Isolar', 'Iniciante'),
-    createEx('rosca-inclinada-45', 'Rosca no Banco 45°', 'Bíceps', 'Halteres', 'Isolar', 'Intermediário'),
+    createEx('rosca-concentrada', 'Rosca Concentrada', 'Bíceps', 'Halteres', 'Isolar', 'Intermediário'),
+    createEx('rosca-direta-cabo', 'Rosca Direta no Cabo', 'Bíceps', 'Cabo/Polia', 'Isolar', 'Iniciante'),
+    createEx('rosca-inclinada-45', 'Rosca Inclinada 45°', 'Bíceps', 'Halteres', 'Isolar', 'Intermediário'),
   ],
   triceps: [
-    createEx('triceps-pulley-barra', 'Tríceps Pulley (Barra Reta)', 'Tríceps', 'Cabo/Polia', 'Isolar', 'Iniciante'),
+    createEx('triceps-pulley', 'Tríceps Pulley (Barra Reta)', 'Tríceps', 'Cabo/Polia', 'Isolar', 'Iniciante'),
     createEx('triceps-corda', 'Tríceps Corda', 'Tríceps', 'Cabo/Polia', 'Isolar', 'Iniciante'),
-    createEx('triceps-testa-barra', 'Tríceps Testa com Barra EZ', 'Tríceps', 'Barra', 'Isolar', 'Intermediário'),
+    createEx('triceps-testa', 'Tríceps Testa com Barra EZ', 'Tríceps', 'Barra', 'Isolar', 'Intermediário'),
     createEx('mergulho-paralelas', 'Mergulho em Paralelas', 'Tríceps', 'Peso do corpo', 'Empurrar', 'Avançado'),
     createEx('triceps-frances-halter', 'Tríceps Francês com Halter', 'Tríceps', 'Halteres', 'Isolar', 'Intermediário'),
-    createEx('supino-fechado', 'Supino com Pegada Fechada', 'Tríceps', 'Barra', 'Empurrar', 'Avançado'),
-    createEx('triceps-coice-cabo', 'Tríceps Coice no Cabo', 'Tríceps', 'Cabo/Polia', 'Isolar', 'Intermediário'),
+    createEx('supino-fechado', 'Supino Pegada Fechada', 'Tríceps', 'Barra', 'Empurrar', 'Avançado'),
+    createEx('triceps-coice-halter', 'Tríceps Coice com Halter', 'Tríceps', 'Halteres', 'Isolar', 'Iniciante'),
   ],
   pernas: [
-    createEx('agachamento-livre', 'Agachamento Livre com Barra', 'Pernas', 'Barra', 'Agachar', 'Avançado', ['Glúteos', 'Lombar']),
+    createEx('agachamento-livre', 'Agachamento Livre com Barra', 'Pernas', 'Barra', 'Agachar', 'Avançado'),
     createEx('leg-press-45', 'Leg Press 45°', 'Pernas', 'Máquina', 'Empurrar', 'Intermediário'),
     createEx('cadeira-extensora', 'Cadeira Extensora', 'Pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('mesa-flexora', 'Mesa Flexora', 'Pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('afundo-halter', 'Afundo com Halteres', 'Pernas', 'Halteres', 'Agachar', 'Intermediário'),
-    createEx('stiff-barra', 'Stiff com Barra', 'Pernas', 'Barra', 'Hinge', 'Intermediário', ['Posterior']),
-    createEx('cadeira-flexora', 'Cadeira Flexora', 'Pernas', 'Máquina', 'Isolar', 'Iniciante'),
-    createEx('agachamento-hack', 'Agachamento no Hack', 'Pernas', 'Máquina', 'Agachar', 'Intermediário'),
+    createEx('stiff-barra', 'Stiff com Barra', 'Pernas', 'Barra', 'Hinge', 'Intermediário'),
+    createEx('agachamento-hack', 'Agachamento Hack', 'Pernas', 'Máquina', 'Agachar', 'Intermediário'),
+    createEx('cadeira-abdutora', 'Cadeira Abdutora', 'Pernas', 'Máquina', 'Isolar', 'Iniciante'),
+    createEx('cadeira-adutora', 'Cadeira Adutora', 'Pernas', 'Máquina', 'Isolar', 'Iniciante'),
   ],
   trapezio: [
     createEx('encolhimento-halter', 'Encolhimento com Halteres', 'Trapézio', 'Halteres', 'Isolar', 'Iniciante'),
     createEx('encolhimento-barra', 'Encolhimento com Barra', 'Trapézio', 'Barra', 'Isolar', 'Iniciante'),
     createEx('remada-alta-cabo', 'Remada Alta no Cabo', 'Trapézio', 'Cabo/Polia', 'Puxar', 'Intermediário'),
-    createEx('encolhimento-smith', 'Encolhimento no Smith', 'Trapézio', 'Smith', 'Isolar', 'Intermediário'),
+    createEx('encolhimento-smith', 'Encolhimento no Smith', 'Trapézio', 'Smith', 'Isolar', 'Iniciante'),
     createEx('high-pull-barra', 'High Pull com Barra', 'Trapézio', 'Barra', 'Puxar', 'Avançado'),
-    createEx('clean-shrug-barra', 'Clean Shrug com Barra', 'Trapézio', 'Barra', 'Isolar', 'Avançado'),
-    createEx('encolhimento-por-tras', 'Encolhimento por trás (Barra/Smith)', 'Trapézio', 'Barra', 'Isolar', 'Avançado'),
+    createEx('clean-shrug-barra', 'Clean Shrug (Encolhimento Explosivo)', 'Trapézio', 'Barra', 'Isolar', 'Avançado'),
+    createEx('encolhimento-por-tras-barra', 'Encolhimento por trás com Barra', 'Trapézio', 'Barra', 'Isolar', 'Avançado'),
+    createEx('face-pull-alto', 'Face Pull Foco Trapézio', 'Trapézio', 'Cabo/Polia', 'Puxar', 'Intermediário'),
   ],
   lombar: [
+    createEx('levantamento-terra', 'Levantamento Terra Convencional', 'Lombar', 'Barra', 'Hinge', 'Avançado'),
     createEx('hiperextensao-lombar', 'Hiperextensão Lombar (Banco Romano)', 'Lombar', 'Peso do corpo', 'Core', 'Iniciante'),
-    createEx('levantamento-terra', 'Levantamento Terra Convencional', 'Lombar', 'Barra', 'Hinge', 'Avançado', ['Pernas', 'Costas']),
     createEx('good-morning-barra', 'Good Morning com Barra', 'Lombar', 'Barra', 'Hinge', 'Avançado'),
-    createEx('superman', 'Superman (Solo)', 'Lombar', 'Peso do corpo', 'Core', 'Iniciante'),
-    createEx('perdigueiro', 'Perdigueiro (Bird-Dog)', 'Lombar', 'Peso do corpo', 'Core', 'Iniciante'),
+    createEx('superman-solo', 'Superman (Extensão de Tronco no Solo)', 'Lombar', 'Peso do corpo', 'Core', 'Iniciante'),
+    createEx('deadlift-sumo', 'Levantamento Terra Sumô', 'Lombar', 'Barra', 'Hinge', 'Avançado'),
   ],
   panturrilha: [
-    createEx('panturrilha-em-pe', 'Panturrilha em Pé (Máquina)', 'Panturrilha', 'Máquina', 'Isolar', 'Iniciante'),
-    createEx('panturrilha-sentado', 'Panturrilha Sentado (Cavalinho)', 'Panturrilha', 'Máquina', 'Isolar', 'Iniciante'),
-    createEx('panturrilha-no-leg', 'Panturrilha no Leg Press', 'Panturrilha', 'Máquina', 'Isolar', 'Iniciante'),
+    createEx('panturrilha-em-pe-maquina', 'Panturrilha em Pé (Máquina)', 'Panturrilha', 'Máquina', 'Isolar', 'Iniciante'),
+    createEx('panturrilha-sentado-maquina', 'Panturrilha Sentado (Cavalinho)', 'Panturrilha', 'Máquina', 'Isolar', 'Iniciante'),
+    createEx('panturrilha-leg-press', 'Panturrilha no Leg Press', 'Panturrilha', 'Máquina', 'Isolar', 'Iniciante'),
   ],
   abdomen: [
-    createEx('crunch-abdominal', 'Crunch Abdominal Solo', 'Abdômen', 'Peso do corpo', 'Core', 'Iniciante'),
-    createEx('elevacao-pernas', 'Elevação de Pernas Suspenso', 'Abdômen', 'Peso do corpo', 'Core', 'Avançado'),
+    createEx('abdominal-crunch', 'Crunch Abdominal', 'Abdômen', 'Peso do corpo', 'Core', 'Iniciante'),
+    createEx('elevacao-pernas-suspenso', 'Elevação de Pernas Suspenso', 'Abdômen', 'Peso do corpo', 'Core', 'Avançado'),
     createEx('prancha-isometrica', 'Prancha Isométrica', 'Abdômen', 'Peso do corpo', 'Core', 'Iniciante'),
-    createEx('abdominal-na-polia', 'Abdominal na Polia Alta', 'Abdômen', 'Cabo/Polia', 'Core', 'Intermediário'),
+    createEx('abdominal-roda', 'Abdominal com Roda', 'Abdômen', 'Livre', 'Core', 'Avançado'),
+    createEx('abdominal-infra-solo', 'Abdominal Infra no Solo', 'Abdômen', 'Peso do corpo', 'Core', 'Iniciante'),
   ],
   antebreaco: [
     createEx('rosca-punho-barra', 'Rosca Punho com Barra', 'Antebraço', 'Barra', 'Isolar', 'Iniciante'),
-    createEx('rosca-inversa-barra', 'Rosca Inversa com Barra EZ', 'Antebraço', 'Barra', 'Isolar', 'Iniciante'),
+    createEx('rosca-inversa-barra', 'Rosca Inversa com Barra', 'Antebraço', 'Barra', 'Isolar', 'Intermediário'),
     createEx('farmer-walk', 'Caminhada do Fazendeiro (Farmer Walk)', 'Antebraço', 'Halteres', 'Isolar', 'Intermediário'),
+    createEx('rosca-martelo-corda', 'Rosca Martelo com Corda', 'Antebraço', 'Cabo/Polia', 'Isolar', 'Iniciante'),
   ]
 };
 
@@ -172,43 +175,43 @@ export const nutritionTips = {
   emagrecimento: {
     title: 'Emagrecimento Saudável',
     tips: [
-      { title: 'Déficit Calórico', content: 'Para emagrecer, você precisa consumir menos calorias do que gasta. Foque em alimentos densos em nutrientes e baixos em calorias.' },
-      { title: 'Proteína é Chave', content: 'Aumentar a ingestão de proteínas ajuda na saciedade e preserva a massa muscular durante a perda de peso.' },
-      { title: 'Hidratação', content: 'Beba pelo menos 35ml de água por quilo de peso corporal. Muitas vezes a sede é confundida com fome.' },
-      { title: 'Fibras', content: 'Consuma vegetais em todas as refeições. As fibras retardam a digestão e mantêm você satisfeito por mais tempo.' }
+      { title: 'Déficit Calórico', content: 'Consuma menos calorias do que gasta. Foque em vegetais e proteínas magras.' },
+      { title: 'Proteína e Saciedade', content: 'Proteínas levam mais tempo para digerir, mantendo você saciado por mais tempo.' },
+      { title: 'Evite Calorias Líquidas', content: 'Sucos e refrigerantes não trazem saciedade. Prefira a fruta inteira e água.' },
+      { title: 'Ciclo de Carboidratos', content: 'Consuma mais carboidratos nos dias de treino intenso e menos nos dias de descanso.' }
     ]
   },
   hipertrofia: {
     title: 'Ganho de Massa Muscular',
     tips: [
-      { title: 'Superávit Calórico', content: 'Músculos precisam de energia extra para crescer. Coma um pouco mais do que gasta, priorizando carboidratos complexos.' },
-      { title: 'Timing da Proteína', content: 'Distribua sua meta de proteína ao longo do dia em 4 a 6 refeições para manter a síntese proteica elevada.' },
-      { title: 'Descanso e Sono', content: 'O músculo cresce no descanso. Durma de 7 a 9 horas por noite e evite treinar o mesmo grupo muscular todos os dias.' },
-      { title: 'Progressão de Carga', content: 'Para hipertrofia, você deve desafiar seus músculos constantemente aumentando pesos ou repetições.' }
+      { title: 'Superávit Calórico', content: 'Músculos precisam de energia extra. Coma cerca de 300-500 kcal acima do seu gasto diário.' },
+      { title: 'Aporte Proteico', content: 'Mantenha entre 1.6g a 2.2g de proteína por kg de peso corporal para reparação tecidual.' },
+      { title: 'Carboidratos Complexos', content: 'Aveia, arroz e batatas são fundamentais para dar energia ao treino e poupar proteína.' },
+      { title: 'Descanso Anabólico', content: 'O crescimento ocorre durante o sono. Garanta pelo menos 7 a 8 horas de sono de qualidade.' }
     ]
   },
   energia: {
     title: 'Energia e Performance',
     tips: [
-      { title: 'Carboidratos Complexos', content: 'Aveia, batata doce e arroz integral fornecem energia sustentada para seus treinos mais intensos.' },
-      { title: 'Gorduras Boas', content: 'Abacate, nozes e azeite são fontes excelentes de energia a longo prazo e fundamentais para a regulação hormonal.' },
-      { title: 'Micronutrientes', content: 'Não foque apenas em macros. Vitaminas e minerais de frutas e legumes são os catalisadores da sua energia.' }
+      { title: 'Hidratação Constante', content: 'Apenas 2% de desidratação reduz drasticamente sua força e foco no treino.' },
+      { title: 'Gorduras Saudáveis', content: 'Abacate e nozes são excelentes fontes de energia duradoura e regulação hormonal.' },
+      { title: 'Micronutrientes', content: 'Vitaminas do complexo B são essenciais para o metabolismo energético.' }
     ]
   },
   'pre-treino': {
     title: 'Refeição Pré-Treino',
     tips: [
-      { title: 'Foco em Carboidratos', content: 'Coma carboidratos de fácil digestão 60-90 minutos antes do treino para garantir glicogênio muscular.' },
-      { title: 'Evite Fibras em Excesso', content: 'Muita fibra logo antes do treino pode causar desconforto gástrico durante exercícios intensos.' },
-      { title: 'Cafeína', content: 'Um café preto puro pode aumentar o foco e a queima de gordura se consumido 30 minutos antes da sessão.' }
+      { title: 'Janela de Tempo', content: 'Faça uma refeição sólida 1h a 2h antes, ou uma líquida/leve 30min antes.' },
+      { title: 'Carboidratos de Fácil Digestão', content: 'Banana com mel ou pasta de amendoim são ótimas opções rápidas.' },
+      { title: 'Cafeína Estratégica', content: 'Um café expresso 30 min antes pode aumentar a performance e a queima de gordura.' }
     ]
   },
   'pos-treino': {
     title: 'Recuperação Pós-Treino',
     tips: [
-      { title: 'Janela de Recuperação', content: 'Consuma uma combinação de proteínas e carboidratos logo após o treino para iniciar a reparação tecidual.' },
-      { title: 'Reposição de Glicogênio', content: 'Carboidratos pós-treino ajudam a levar a proteína para dentro das células musculares mais rápido.' },
-      { title: 'Eletrólitos', content: 'Se suou muito, reponha sódio, potássio e magnésio para evitar cãibras e fadiga excessiva.' }
+      { title: 'Reposição de Glicogênio', content: 'Consuma carboidratos logo após o treino para repor os estoques de energia.' },
+      { title: 'Proteína Rápida', content: 'Whey protein ou ovos ajudam a iniciar o processo de reconstrução muscular imediata.' },
+      { title: 'Eletrólitos', content: 'Reponha sódio e potássio perdidos no suor para evitar cãibras e fadiga extrema.' }
     ]
   }
 };

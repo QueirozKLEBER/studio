@@ -15,30 +15,23 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId && resource != null;
     }
 
-    function hasValidUserDataOnCreate(userId) {
-      return request.resource.data.id == userId;
+    function isTrainer() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer';
     }
 
-    function hasImmutableUserId() {
-      return request.resource.data.id == resource.data.id;
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
     match /users/{userId} {
-      // Allow trainers and admins to read any student profile
+      // Allow authenticated users to read profiles (needed for trainer/student interaction)
       allow get, list: if isSignedIn();
-      allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
-      allow update: if isExistingOwner(userId) && hasImmutableUserId();
-      allow delete: if isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId) || isAdmin();
 
       match /trainingPlans/{trainingPlanId} {
         allow get, list: if isSignedIn();
-        allow create: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
-        allow update, delete: if isExistingOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
-
-        match /workouts/{workoutId} {
-          allow get, list: if isSignedIn();
-          allow create, update, delete: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
-        }
+        allow create, update, delete: if isOwner(userId) || isTrainer() || isAdmin();
       }
 
       match /workoutHistory/{historyId} {
@@ -47,26 +40,13 @@ service cloud.firestore {
     }
 
     match /exercises/{exerciseId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow get, list: if true;
-      allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
-    }
-
-    match /subscriptionPlans/{subscriptionPlanId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    match /userSubscriptions/{userSubscriptionId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin');
-      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin');
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

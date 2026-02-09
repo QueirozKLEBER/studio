@@ -1,39 +1,34 @@
 
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { 
-  Dumbbell, 
   ArrowLeft, 
-  PlayCircle, 
   CheckCircle2, 
-  Clock, 
-  Zap,
   Info,
   ShieldCheck,
-  Trophy
+  Zap
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 export default function PlanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
   const [isFinishing, setIsFinishing] = useState(false);
 
+  // Somente cria a referência se o usuário estiver logado
   const planRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(db, 'users', user.uid, 'trainingPlans', id);
@@ -54,7 +49,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
     
     setIsFinishing(true);
     try {
-      // Registrar a conclusão no histórico do aluno
       await addDoc(collection(db, 'users', user.uid, 'workoutHistory'), {
         planId: id,
         planName: plan.name,
@@ -80,13 +74,13 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  if (isLoading) return <div className="p-8 animate-pulse bg-muted h-screen" />;
-  if (!plan) return <div className="p-8 text-center py-20">Treino não encontrado.</div>;
+  if (isLoading || !user) return <div className="p-8 animate-pulse bg-muted h-screen" />;
+  if (!plan) return <div className="p-8 text-center py-20">Treino não encontrado ou você não tem permissão.</div>;
 
   const progress = Math.round((completedExercises.length / (plan.exercises?.length || 1)) * 100);
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-none">
+    <div className="flex flex-col gap-6 w-full">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
@@ -98,7 +92,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
-        {/* Lista de Exercícios */}
         <div className="lg:col-span-8 flex flex-col gap-4">
           {plan.exercises?.map((ex: any, index: number) => (
             <Card 
@@ -123,11 +116,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                         <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary">
                           {ex.equipmentType}
                         </Badge>
-                        {ex.difficulty && (
-                          <Badge variant="outline" className="text-[10px] font-bold">
-                            {ex.difficulty}
-                          </Badge>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -147,15 +135,15 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="grid grid-cols-3 gap-3 mt-6">
                   <div className="bg-muted/30 p-3 rounded-2xl text-center">
                     <p className="text-[10px] font-bold uppercase opacity-50">Séries</p>
-                    <p className="text-lg font-black">{ex.targetSets || ex.sets}</p>
+                    <p className="text-lg font-black">{ex.targetSets || '4'}</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-2xl text-center">
                     <p className="text-[10px] font-bold uppercase opacity-50">Reps</p>
-                    <p className="text-lg font-black">{ex.targetReps || ex.reps}</p>
+                    <p className="text-lg font-black">{ex.targetReps || '12'}</p>
                   </div>
                   <div className="bg-muted/30 p-3 rounded-2xl text-center">
                     <p className="text-[10px] font-bold uppercase opacity-50">Descanso</p>
-                    <p className="text-lg font-black">{ex.targetRest || ex.rest || '60s'}</p>
+                    <p className="text-lg font-black">{ex.targetRest || '60s'}</p>
                   </div>
                 </div>
 
@@ -172,14 +160,10 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
           ))}
         </div>
 
-        {/* Sidebar de Progresso */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground overflow-hidden sticky top-8">
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-lg font-bold">Resumo da Sessão</CardTitle>
-              <CardDescription className="text-primary-foreground/70">
-                Mantenha o foco até o final!
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
               <div className="flex flex-col items-center gap-2">
@@ -192,17 +176,6 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white/10 p-4 rounded-2xl text-center">
-                  <p className="text-[10px] font-bold uppercase opacity-70">Tempo Est.</p>
-                  <p className="text-xl font-bold">45 min</p>
-                </div>
-                <div className="bg-white/10 p-4 rounded-2xl text-center">
-                  <p className="text-[10px] font-bold uppercase opacity-70">Calorias</p>
-                  <p className="text-xl font-bold">320 kcal</p>
-                </div>
-              </div>
-
               <div className="space-y-4 pt-4">
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <ShieldCheck className="h-5 w-5 text-green-300" />
@@ -210,14 +183,14 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <Zap className="h-5 w-5 text-yellow-300" />
-                  Alta intensidade sugerida.
+                  Foco total na técnica.
                 </div>
               </div>
 
               <Button 
                 onClick={handleFinishWorkout}
                 disabled={progress < 100 || isFinishing}
-                className="w-full h-14 rounded-2xl bg-white text-primary font-black text-lg hover:bg-white/90 shadow-lg disabled:opacity-50 disabled:bg-white/20"
+                className="w-full h-14 rounded-2xl bg-white text-primary font-black text-lg hover:bg-white/90 shadow-lg disabled:opacity-50"
               >
                 {isFinishing ? 'SALVANDO...' : 'CONCLUIR TREINO'}
               </Button>

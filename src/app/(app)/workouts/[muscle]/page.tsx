@@ -61,6 +61,21 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
           {exercises.map((exercise) => (
             <Card key={exercise.id} className="flex flex-col rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
+              <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                <Image
+                  src={exercise.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                  alt={exercise.name}
+                  fill
+                  className="object-cover"
+                  unoptimized={!!exercise.gifPrincipalUrl}
+                  data-ai-hint="fitness workout"
+                />
+                {!exercise.gifPrincipalUrl && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <Zap className="h-8 w-8 text-white opacity-50" />
+                  </div>
+                )}
+              </div>
               <CardHeader>
                 <div className="flex justify-between items-start mb-2">
                   <Badge variant="secondary" className="bg-blue-50 text-primary border-none text-[10px] font-bold uppercase">
@@ -132,6 +147,7 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
                       alt={selectedExercise?.name || "Vídeo do exercício"}
                       fill
                       className="object-cover"
+                      unoptimized={!!selectedExercise?.gifPrincipalUrl}
                       data-ai-hint="fitness workout"
                     />
                     {!selectedExercise?.gifPrincipalUrl && (

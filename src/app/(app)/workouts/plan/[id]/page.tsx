@@ -111,6 +111,21 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 completedExercises.includes(ex.id) ? "bg-green-50 opacity-90" : "bg-white"
               )}
             >
+              <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                <Image
+                  src={ex.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                  alt={ex.name}
+                  fill
+                  className="object-cover"
+                  unoptimized={!!ex.gifPrincipalUrl}
+                  data-ai-hint="fitness workout"
+                />
+                {!ex.gifPrincipalUrl && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <PlayCircle className="h-10 w-10 text-white opacity-50" />
+                  </div>
+                )}
+              </div>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-4">
@@ -123,7 +138,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                     <div>
                       <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                         {ex.name}
-                        <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {!ex.gifPrincipalUrl && <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
                       </h3>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
@@ -241,6 +256,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                       alt={selectedExercise?.name || "Demonstração"}
                       fill
                       className="object-cover"
+                      unoptimized={!!selectedExercise?.gifPrincipalUrl}
                       data-ai-hint="fitness workout"
                     />
                     {!selectedExercise?.gifPrincipalUrl && (

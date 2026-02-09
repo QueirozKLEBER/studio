@@ -42,9 +42,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
       </div>
       
-      {/* Área de Conteúdo principal - Alinhamento total à esquerda após o menu */}
+      {/* Área de Conteúdo principal - Alinhamento total à esquerda após o menu sem limitações de largura */}
       <div className="flex flex-col flex-1 md:pl-64 w-full min-w-0">
-        <main className="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-none">
+        <main className="flex-1 w-full p-4 md:p-8 lg:p-10">
           {children}
         </main>
         

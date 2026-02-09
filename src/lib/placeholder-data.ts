@@ -118,12 +118,12 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('ponte-gluteo', 'Ponte para Glúteo e Lombar', 'lombar', 'Peso do corpo', 'Core', 'Iniciante'),
   ],
   pernas: [
-    createEx('agachamento-livre', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado'),
+    createEx('agachamento-livre-com-barra', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado', [], 'COLE_AQUI_A_URL_DO_GIF_DO_AGACHAMENTO'),
     createEx('leg-press-45', 'Leg Press 45°', 'pernas', 'Máquina', 'Empurrar', 'Intermediário'),
     createEx('cadeira-extensora', 'Cadeira Extensora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('mesa-flexora', 'Mesa Flexora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('hack-squat', 'Hack Squat', 'pernas', 'Máquina', 'Agachar', 'Intermediário'),
-    createEx('afundo-halter', 'Afundo com Halteres', 'pernas', 'Halteres', 'Agachar', 'Intermediário'),
+    createEx('afundo-halter', 'Afundo com Halteres', 'pernas', 'Agachar', 'Intermediário'),
   ],
   abdomen: [
     createEx('abdominal-supra', 'Abdominal Supra (Crunch)', 'abdomen', 'Peso do corpo', 'Core', 'Iniciante'),

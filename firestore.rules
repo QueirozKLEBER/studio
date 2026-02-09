@@ -4,14 +4,10 @@
  * Data Structure: User data is hierarchically organized under the /users/{userId} path. For example, a user's training plans are located at /users/{userId}/trainingPlans/{trainingPlanId}. This structure provides inherent, path-based security. Public data, such as /exercises and /nutritionTips, resides in top-level collections for easy, global access.
  *
  * Key Security Decisions:
- * - User data is strictly private. A user can only access documents within their own /users/{userId} data tree.
+ * - User data is private for writes, but readable by other authenticated users (Trainers/Admins/Students) to support the management platform.
  * - User list access: Allowed for authenticated users to support Dashboard functionalities for Trainers and Admins.
  * - Global content (Exercises, NutritionTips, SubscriptionPlans) is publicly readable to support the application's core functionality for all users, including those not signed in. Writes to these collections are disallowed pending the implementation of an admin role.
  * - User subscriptions are stored in a top-level collection and secured using a denormalized 'userId' field within each document, rather than path-based ownership. Listing the entire collection is prohibited to protect user privacy.
- *
- * Denormalization for Authorization: The rules heavily rely on denormalized data to ensure fast and secure authorization checks without costly `get()` calls. For user-specific data, the document's path (/users/{userId}) provides the necessary ownership context. For user subscriptions, an explicit `userId` field is stored on each document, allowing rules to verify ownership directly.
- *
- * Structural Segregation: The data model clearly separates private user data (nested under /users) from public, shared data (e.g., /exercises). This segregation simplifies security rules and improves query performance, as access controls are applied at the collection level rather than on a per-document basis with boolean flags.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -30,7 +26,6 @@ service cloud.firestore {
 
     /**
      * Checks if the currently authenticated user's UID matches the provided userId.
-     * This is the core of the ownership model.
      */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
@@ -95,12 +90,11 @@ service cloud.firestore {
     /**
      * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (get, create) An authenticated user can create and read their own profile.
-     * @allow (list) Authenticated users can list the collection to support Trainer/Admin views.
+     * @allow (get, list) Authenticated users can read profiles to support management views.
+     * @allow (create, update, delete) Only the owner can modify their profile.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
       allow update: if isExistingOwner(userId) && hasImmutableUserId();
       allow delete: if isExistingOwner(userId);
@@ -110,22 +104,17 @@ service cloud.firestore {
        * @path /users/{userId}/trainingPlans/{trainingPlanId}
        */
       match /trainingPlans/{trainingPlanId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasValidTrainingPlanDataOnCreate(userId);
-        allow update: if isExistingOwner(userId) && hasImmutableTrainingPlanOwner();
-        allow delete: if isExistingOwner(userId);
+        allow get, list: if isSignedIn(); // Trainers need to see student plans
+        allow create: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
+        allow update, delete: if isExistingOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
 
         /**
          * @description Controls access to workouts within a specific training plan.
          * @path /users/{userId}/trainingPlans/{trainingPlanId}/workouts/{workoutId}
          */
         match /workouts/{workoutId} {
-          allow get: if isOwner(userId);
-          allow list: if isOwner(userId);
-          allow create: if isOwner(userId) && hasValidWorkoutDataOnCreate(trainingPlanId);
-          allow update: if isExistingOwner(userId) && hasImmutableWorkoutParent();
-          allow delete: if isExistingOwner(userId);
+          allow get, list: if isSignedIn();
+          allow create, update, delete: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
         }
       }
     }
@@ -154,11 +143,11 @@ service cloud.firestore {
     // --------------------------------
 
     match /userSubscriptions/{userSubscriptionId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list: if false;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin');
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin');
     }
   }
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth, useUser, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { doc, setDoc } from 'firebase/firestore';
-
+import { UserCircle, ShieldAlert, GraduationCap } from 'lucide-react';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" {...props}>
@@ -27,18 +29,21 @@ export default function SignupPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState<'student' | 'trainer' | 'admin'>('student');
     const [isLoading, setIsLoading] = useState(false);
     const auth = useAuth();
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
+    const { user, profile, isUserLoading } = useUser();
     const router = useRouter();
     const { toast } = useToast();
 
     useEffect(() => {
-        if (!isUserLoading && user) {
-            router.push('/dashboard');
+        if (!isUserLoading && user && profile) {
+            if (profile.userType === 'admin') router.push('/admin/dashboard');
+            else if (profile.userType === 'trainer') router.push('/trainer/dashboard');
+            else router.push('/dashboard');
         }
-    }, [user, isUserLoading, router]);
+    }, [user, profile, isUserLoading, router]);
     
     const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -58,15 +63,22 @@ export default function SignupPage() {
             await updateProfile(firebaseUser, { displayName: name });
 
             const userRef = doc(firestore, 'users', firebaseUser.uid);
-            const [firstName, ...lastName] = name.split(' ');
+            const nameParts = name.trim().split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ');
             
             await setDoc(userRef, {
                 id: firebaseUser.uid,
                 email: firebaseUser.email,
                 firstName: firstName,
-                lastName: lastName.join(' '),
+                lastName: lastName || '',
                 dateJoined: new Date().toISOString(),
-                userType: 'student',
+                userType: role,
+            });
+
+            toast({
+                title: 'Conta criada!',
+                description: `Bem-vindo ao MFIT, ${firstName}!`,
             });
             
         } catch (error) {
@@ -101,35 +113,56 @@ export default function SignupPage() {
     return (
         <AuthCard
         title="Criar Conta"
-        description="Comece sua transformação hoje mesmo."
+        description="Escolha seu perfil e comece hoje mesmo."
         footerText="Já tem uma conta?"
         footerLink="/login"
         footerLinkText="Entrar"
         >
+        <div className="mb-6">
+            <Tabs value={role} onValueChange={(v) => setRole(v as any)} className="w-full">
+                <TabsList className="grid grid-cols-3 w-full h-12 rounded-2xl bg-muted p-1">
+                    <TabsTrigger value="student" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <UserCircle className="h-4 w-4 mr-2" />
+                        Aluno
+                    </TabsTrigger>
+                    <TabsTrigger value="trainer" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <GraduationCap className="h-4 w-4 mr-2" />
+                        Prof
+                    </TabsTrigger>
+                    <TabsTrigger value="admin" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                        <ShieldAlert className="h-4 w-4 mr-2" />
+                        ADM
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+        </div>
+
         <form className="space-y-4" onSubmit={handleSignUp}>
-            <Button variant="outline" className="w-full" type="button" disabled={isLoading}>
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Cadastrar com Google
+            <div className="space-y-2">
+                <Label htmlFor="name">Nome completo</Label>
+                <Input id="name" type="text" placeholder="Seu nome" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input id="email" type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input id="password" type="password" placeholder="Mínimo 6 caracteres" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className="rounded-xl" />
+            </div>
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-2xl font-bold shadow-lg" disabled={isLoading}>
+                {isLoading ? 'Criando conta...' : 'Criar minha conta'}
             </Button>
-            <div className="flex items-center space-x-2">
+            
+            <div className="flex items-center space-x-2 py-2">
                 <Separator className="flex-1" />
                 <span className="text-xs text-muted-foreground">OU</span>
                 <Separator className="flex-1" />
             </div>
-            <div className="space-y-2">
-            <Label htmlFor="name">Nome completo</Label>
-            <Input id="name" type="text" placeholder="Seu nome" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
-            </div>
-            <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
-            </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isLoading}>
-            {isLoading ? 'Criando conta...' : 'Criar conta'}
+
+            <Button variant="outline" className="w-full rounded-2xl h-11" type="button" disabled={isLoading}>
+                <GoogleIcon className="mr-2 h-4 w-4" />
+                Continuar com Google
             </Button>
         </form>
         </AuthCard>

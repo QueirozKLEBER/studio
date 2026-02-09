@@ -128,7 +128,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         <div className="lg:col-span-8 flex flex-col gap-4">
           {plan.exercises?.map((planEx: any, index: number) => {
             const enrichedEx = getEnrichedExercise(planEx);
-            const hasGif = !!enrichedEx.gifPrincipalUrl;
+            const gifUrl = enrichedEx.gifPrincipalUrl;
 
             return (
               <Card 
@@ -140,17 +140,26 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 )}
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                  <Image
-                    src={enrichedEx.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                    alt={enrichedEx.name}
-                    fill
-                    className="object-cover"
-                    unoptimized={hasGif}
-                    data-ai-hint="fitness workout"
-                  />
-                  {!hasGif && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                      <PlayCircle className="h-10 w-10 text-white opacity-50" />
+                  {gifUrl ? (
+                    <Image
+                      src={gifUrl}
+                      alt={enrichedEx.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={videoPlaceholder?.imageUrl || ''}
+                        alt={enrichedEx.name}
+                        fill
+                        className="object-cover opacity-60"
+                        data-ai-hint="fitness workout"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                        <PlayCircle className="h-10 w-10 text-white opacity-50" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -166,7 +175,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                       <div>
                         <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                           {enrichedEx.name}
-                          {!hasGif && <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          {!gifUrl && <PlayCircle className="h-4 w-4 text-primary opacity-50 transition-opacity" />}
                         </h3>
                         <div className="flex gap-2 mt-1">
                           <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
@@ -281,19 +290,28 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                   <div className="space-y-8">
                     <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
-                      <Image
-                        src={selectedExercise.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                        alt={selectedExercise.name || "Demonstração"}
-                        fill
-                        className="object-cover"
-                        unoptimized={!!selectedExercise.gifPrincipalUrl}
-                        data-ai-hint="fitness workout"
-                      />
-                      {!selectedExercise.gifPrincipalUrl && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
-                                <PlayCircle className="h-10 w-10 text-white" />
-                            </div>
+                      {selectedExercise.gifPrincipalUrl ? (
+                        <Image
+                          src={selectedExercise.gifPrincipalUrl}
+                          alt={selectedExercise.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={videoPlaceholder?.imageUrl || ''}
+                            alt={selectedExercise.name || "Demonstração"}
+                            fill
+                            className="object-cover opacity-60"
+                            data-ai-hint="fitness workout"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
+                                  <PlayCircle className="h-10 w-10 text-white" />
+                              </div>
+                          </div>
                         </div>
                       )}
                     </div>

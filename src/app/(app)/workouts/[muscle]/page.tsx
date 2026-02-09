@@ -61,21 +61,30 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
       {exercises.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
           {exercises.map((exercise) => {
-            const hasGif = !!exercise.gifPrincipalUrl;
+            const gifUrl = exercise.gifPrincipalUrl;
             return (
               <Card key={exercise.id} className="flex flex-col rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                  <Image
-                    src={exercise.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                    alt={exercise.name}
-                    fill
-                    className="object-cover"
-                    unoptimized={hasGif}
-                    data-ai-hint="fitness workout"
-                  />
-                  {!hasGif && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                      <PlayCircle className="h-8 w-8 text-white opacity-50" />
+                  {gifUrl ? (
+                    <Image
+                      src={gifUrl}
+                      alt={exercise.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={videoPlaceholder?.imageUrl || ''}
+                        alt={exercise.name}
+                        fill
+                        className="object-cover opacity-60"
+                        data-ai-hint="fitness workout"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                        <PlayCircle className="h-8 w-8 text-white opacity-50" />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -146,19 +155,28 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="space-y-6">
                   <div className="aspect-video bg-gray-100 rounded-[2rem] overflow-hidden shadow-inner relative">
-                    <Image
-                      src={selectedExercise?.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                      alt={selectedExercise?.name || "Vídeo do exercício"}
-                      fill
-                      className="object-cover"
-                      unoptimized={!!selectedExercise?.gifPrincipalUrl}
-                      data-ai-hint="fitness workout"
-                    />
-                    {!selectedExercise?.gifPrincipalUrl && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-white/20 backdrop-blur-md p-4 rounded-full">
-                              <PlayCircle className="h-8 w-8 text-white" />
-                          </div>
+                    {selectedExercise?.gifPrincipalUrl ? (
+                      <Image
+                        src={selectedExercise.gifPrincipalUrl}
+                        alt={selectedExercise.name || "Demonstração"}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={videoPlaceholder?.imageUrl || ''}
+                          alt={selectedExercise?.name || "Demonstração"}
+                          fill
+                          className="object-cover opacity-60"
+                          data-ai-hint="fitness workout"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-white/20 backdrop-blur-md p-4 rounded-full">
+                                <PlayCircle className="h-8 w-8 text-white" />
+                            </div>
+                        </div>
                       </div>
                     )}
                   </div>

@@ -1,8 +1,9 @@
-'use client'; // Needs to be a client component to use hooks
+'use client';
 
 import React, { useEffect } from 'react';
 import { AppSidebar } from '@/components/layout/app-sidebar';
-import { useUser } from '@/firebase'; // Using the simplified alias
+import { BottomNav } from '@/components/layout/bottom-nav';
+import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -16,31 +17,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  return (
-    <div className="flex min-h-screen">
-      <AppSidebar />
-      <main className="flex-1 bg-background overflow-y-auto min-w-0 p-4 pt-20 md:p-8">
-        {isUserLoading || !user ? (
-            <div>
-                {/* This is a skeleton for the content of a page, e.g. the PageHeader and the content grid */}
-                <div className="mb-4">
-                    <Skeleton className="h-10 md:h-12 w-48 md:w-64" />
-                    <Skeleton className="h-5 md:h-6 w-72 md:w-96 mt-2" />
-                </div>
-                {/* A generic content skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <Skeleton className="h-36 w-full" />
-                    <Skeleton className="h-36 w-full" />
-                    <Skeleton className="h-36 w-full" />
-                    <Skeleton className="h-36 w-full" />
-                    <Skeleton className="h-36 w-full" />
-                    <Skeleton className="h-36 w-full" />
-                </div>
+  if (isUserLoading || !user) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <main className="flex-1 p-4 md:p-8">
+            <div className="mb-8">
+                <Skeleton className="h-10 w-48 mb-2" />
+                <Skeleton className="h-5 w-72" />
             </div>
-        ) : (
-          children
-        )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Skeleton className="h-32 w-full rounded-2xl" />
+                <Skeleton className="h-32 w-full rounded-2xl" />
+                <Skeleton className="h-32 w-full rounded-2xl" />
+            </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-background pb-16 md:pb-0">
+      <div className="hidden md:block">
+        <AppSidebar />
+      </div>
+      <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="max-w-5xl mx-auto w-full">
+          {children}
+        </div>
       </main>
+      <BottomNav />
     </div>
   );
 }

@@ -1,79 +1,122 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/page-header';
-import { Check } from 'lucide-react';
+import { Check, Star, Zap, ShieldCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const plans = [
   {
-    name: 'Plano Básico',
-    price: 'R$ 29,90',
-    description: 'Ideal para quem está começando e busca autonomia.',
+    name: 'Gratuito',
+    price: 'R$ 0,00',
+    description: 'Experimente o MFIT e dê os primeiros passos.',
+    icon: Zap,
     features: [
-      'Acesso a todos os treinos prontos',
-      'Biblioteca de vídeos de exercícios',
-      'Dicas alimentares',
+      'Acesso aos treinos básicos',
+      'Assistente IA limitado',
+      'Blog informativo',
     ],
-    cta: 'Assinar Plano Básico',
+    cta: 'Começar Agora',
     isPremium: false,
+    color: 'text-gray-500'
   },
   {
-    name: 'Plano Premium',
-    price: 'R$ 79,90',
-    description: 'Para quem busca um acompanhamento mais próximo e personalizado.',
+    name: 'Premium',
+    price: 'R$ 49,90',
+    description: 'A experiência completa para resultados reais.',
+    icon: Star,
     features: [
-      'Tudo do Plano Básico',
-      'Treinos 100% personalizados para seus objetivos',
-      'Ajustes mensais no seu plano de treino',
-      'Suporte via chat para tirar dúvidas',
+      'Tudo do Plano Gratuito',
+      'Treinos 100% Personalizados',
+      'Assistente IA Ilimitado',
+      'Avaliação Física Completa',
+      'Gráficos de Evolução',
     ],
-    cta: 'Assinar Plano Premium',
+    cta: 'Assinar Premium',
     isPremium: true,
+    color: 'text-primary'
+  },
+  {
+    name: 'Personal',
+    price: 'R$ 149,90',
+    description: 'Acompanhamento VIP com personal trainer.',
+    icon: ShieldCheck,
+    features: [
+      'Tudo do Plano Premium',
+      'Suporte via Chat 24/7',
+      'Ajustes de treino semanais',
+      'Plano alimentar sugerido',
+      'Chamada mensal com personal',
+    ],
+    cta: 'Falar com Consultor',
+    isPremium: false,
+    color: 'text-secondary'
   },
 ];
 
 export default function PricingPage() {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 pb-10">
       <PageHeader
-        title="Planos e Mensalidade"
-        subtitle="Escolha o plano que melhor se adapta aos seus objetivos e comece a transformar seu corpo hoje mesmo."
+        title="Nossos Planos"
+        subtitle="Escolha o nível de suporte ideal para o seu objetivo."
       />
 
-      <div className="grid md:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {plans.map((plan) => (
-          <Card key={plan.name} className={plan.isPremium ? 'border-primary shadow-lg' : ''}>
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-headline">{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <div className="mb-6">
-                <span className="text-4xl font-bold">{plan.price}</span>
-                <span className="text-muted-foreground">/mês</span>
+          <Card key={plan.name} className={cn(
+            "rounded-[2.5rem] border-none shadow-md flex flex-col relative transition-transform hover:scale-[1.02]",
+            plan.isPremium ? "bg-primary text-primary-foreground shadow-xl ring-4 ring-primary/20" : "bg-white"
+          )}>
+            {plan.isPremium && (
+              <div className="absolute top-0 right-10 transform -translate-y-1/2 bg-secondary text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                Mais Recomendado
               </div>
-              <ul className="space-y-3 w-full">
+            )}
+            <CardHeader className="text-center pt-8">
+              <div className={cn(
+                "w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4",
+                plan.isPremium ? "bg-white/20" : "bg-blue-50"
+              )}>
+                <plan.icon className={cn("h-6 w-6", plan.isPremium ? "text-white" : plan.color)} />
+              </div>
+              <CardTitle className="text-2xl font-bold font-headline">{plan.name}</CardTitle>
+              <CardDescription className={plan.isPremium ? "text-primary-foreground/70" : ""}>
+                {plan.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center flex-grow">
+              <div className="mb-8">
+                <span className="text-4xl font-black">{plan.price}</span>
+                <span className={cn("text-sm font-bold opacity-70", plan.isPremium ? "" : "text-muted-foreground")}>/mês</span>
+              </div>
+              <ul className="space-y-4 w-full">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-1" />
-                    <span className="text-sm text-muted-foreground">{feature}</span>
+                  <li key={feature} className="flex items-center gap-3">
+                    <div className={cn(
+                      "h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0",
+                      plan.isPremium ? "bg-white/20" : "bg-blue-50"
+                    )}>
+                      <Check className={cn("h-3 w-3", plan.isPremium ? "text-white" : "text-primary")} />
+                    </div>
+                    <span className={cn("text-sm font-medium", plan.isPremium ? "" : "text-muted-foreground")}>
+                      {feature}
+                    </span>
                   </li>
                 ))}
               </ul>
             </CardContent>
-            <CardFooter>
-              <Button className={`w-full ${plan.isPremium ? 'bg-primary hover:bg-primary/90' : 'bg-accent hover:bg-accent/90 text-accent-foreground'}`}>
+            <CardFooter className="pb-8">
+              <Button className={cn(
+                "w-full rounded-2xl h-12 font-bold shadow-lg transition-transform active:scale-95",
+                plan.isPremium ? "bg-white text-primary hover:bg-white/90" : "bg-primary text-white hover:bg-primary/90"
+              )}>
                 {plan.cta}
               </Button>
             </CardFooter>
           </Card>
         ))}
-      </div>
-      
-      <div className="text-center mt-8">
-        <h3 className="text-xl font-headline font-semibold mb-2">Por que um Personal Trainer Online?</h3>
-        <p className="max-w-2xl mx-auto text-muted-foreground">
-          Com a TreinoPro, você tem a flexibilidade de treinar onde e quando quiser, com a segurança de um acompanhamento profissional. Nossos métodos são baseados em ciência para garantir que você atinja seus objetivos de forma eficiente e segura.
-        </p>
       </div>
     </div>
   );

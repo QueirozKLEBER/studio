@@ -16,32 +16,27 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Dumbbell,
-  Apple,
+  Activity,
+  BookOpen,
+  Bot,
   CreditCard,
-  User,
   LogOut,
-  Menu,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { placeHolderImages } from '@/lib/placeholder-data';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from '../ui/sheet';
-import React, { useState } from 'react';
-import { Button } from '../ui/button';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 
 const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/workouts', label: 'Treinos', icon: Dumbbell },
-  { href: '/nutrition', label: 'Dicas Alimentares', icon: Apple },
+  { href: '/assessment', label: 'Avaliação Física', icon: Activity },
+  { href: '/blog', label: 'Blog MFIT', icon: BookOpen },
+  { href: '/ai', label: 'IA Professor', icon: Bot },
   { href: '/pricing', label: 'Planos', icon: CreditCard },
 ];
 
-const SidebarNav = () => {
+export const AppSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
@@ -54,99 +49,71 @@ const SidebarNav = () => {
   };
 
   const getAvatarFallback = () => {
-    if (user?.displayName) {
-      return user.displayName.charAt(0).toUpperCase();
-    }
-    if (user?.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
+    if (user?.displayName) return user.displayName.charAt(0).toUpperCase();
     return 'U';
   }
 
-
   return (
-    <>
-      <SidebarHeader>
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Logo className="w-8 h-8 text-primary" />
-          <span className="text-xl font-headline font-bold">TreinoPro</span>
-        </Link>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith(item.href)}
-              >
-                <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
+    <SidebarProvider>
+      <Sidebar className="border-r bg-card">
+        <SidebarHeader className="p-6">
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
+              <Logo className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-headline font-bold tracking-tight">MFIT</span>
+          </Link>
+        </SidebarHeader>
+        <SidebarContent className="px-3">
+          <SidebarMenu>
+            {menuItems.map((item) => {
+              const isActive = pathname.startsWith(item.href);
+              return (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive}
+                    className="rounded-xl transition-all h-11"
+                  >
+                    <Link href={item.href} className="flex items-center gap-3">
+                      <item.icon className={`h-5 w-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <span className={`font-medium ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className="p-4">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={pathname === '/profile'} className="rounded-xl h-14">
+                <Link href="/profile" className="flex items-center gap-3">
+                  <Avatar className="h-9 w-9 rounded-xl border-2 border-primary/10">
+                    <AvatarImage src={user?.photoURL || avatarImage?.imageUrl} />
+                    <AvatarFallback className="rounded-xl bg-blue-50 text-primary font-bold">
+                      {getAvatarFallback()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold truncate">{user?.displayName || 'Usuário'}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Ver Perfil</span>
+                  </div>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === '/profile'}>
-              <Link href="/profile">
-                <Avatar className="h-8 w-8">
-                  {user?.photoURL ? <AvatarImage src={user.photoURL} /> : avatarImage && <AvatarImage src={avatarImage.imageUrl} />}
-                  <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
-                </Avatar>
-                <span>{user?.displayName || 'Meu Perfil'}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout}>
-              <LogOut className="h-5 w-5" />
-              <span>Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout} className="rounded-xl h-11 text-destructive hover:text-destructive hover:bg-destructive/5 mt-2">
+                <LogOut className="h-5 w-5" />
+                <span className="font-bold">Sair do App</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+    </SidebarProvider>
   );
-};
-
-
-const AppSidebarContent = () => {
-    const [openMobile, setOpenMobile] = useState(false);
-
-    return (
-        <>
-            {/* Mobile Sidebar - Hidden on medium screens and up */}
-            <div className="md:hidden">
-                <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-                    <SheetTrigger asChild>
-                        <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm">
-                            <Menu className="h-6 w-6" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
-                       <SidebarNav />
-                    </SheetContent>
-                </Sheet>
-            </div>
-
-            {/* Desktop Sidebar - Hidden on small screens */}
-            <div className="hidden md:block">
-                <SidebarProvider>
-                    <Sidebar className="border-r">
-                        <SidebarNav />
-                    </Sidebar>
-                </SidebarProvider>
-            </div>
-        </>
-    );
-}
-
-
-export const AppSidebar = () => {
-    return <AppSidebarContent />;
 };

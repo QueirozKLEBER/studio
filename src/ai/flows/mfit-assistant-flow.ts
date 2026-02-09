@@ -6,7 +6,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { gemini15Flash } from '@genkit-ai/google-genai';
 
 const MfitAssistantInputSchema = z.object({
   message: z.string().describe('A pergunta ou mensagem enviada pelo usuário.'),
@@ -33,7 +32,7 @@ const mfitAssistantFlow = ai.defineFlow(
   async (input) => {
     try {
       const response = await ai.generate({
-        model: gemini15Flash,
+        model: 'googleai/gemini-1.5-flash',
         system: `Você é o Professor MFIT, o personal trainer virtual oficial do app MFIT Personal. 
         Sua missão é ser o melhor parceiro de treino do usuário.
         

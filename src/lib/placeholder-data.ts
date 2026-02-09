@@ -118,7 +118,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('ponte-gluteo', 'Ponte para Glúteo e Lombar', 'lombar', 'Peso do corpo', 'Core', 'Iniciante'),
   ],
   pernas: [
-    createEx('agachamento-livre-com-barra', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado', [], 'COLE_AQUI_A_URL_DO_GIF_DO_AGACHAMENTO'),
+    createEx('agachamento-livre-com-barra', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado', [], 'https://res.cloudinary.com/dih8ff2oi/image/upload/v1770663853/supino-reto-com-barra_elkdmq.gif'),
     createEx('leg-press-45', 'Leg Press 45°', 'pernas', 'Máquina', 'Empurrar', 'Intermediário'),
     createEx('cadeira-extensora', 'Cadeira Extensora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('mesa-flexora', 'Mesa Flexora', 'pernas', 'Máquina', 'Isolar', 'Iniciante'),

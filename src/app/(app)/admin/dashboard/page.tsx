@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { useCollection } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { ShieldCheck, Users, GraduationCap, CreditCard, Activity, ArrowRight } from 'lucide-react';
+import { GraduationCap, Users, CreditCard, Activity, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
   const db = useFirestore();
@@ -101,8 +102,4 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

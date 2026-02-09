@@ -1,16 +1,17 @@
 'use client';
 
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { Users, Dumbbell, AlertCircle, CheckCircle2, ChevronRight, Search } from 'lucide-react';
+import { Users, AlertCircle, CheckCircle2, ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function TrainerDashboard() {
   const { profile } = useUser();
@@ -18,8 +19,6 @@ export default function TrainerDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const studentsQuery = useMemoFirebase(() => {
-    // In a real app, students would be linked to this trainerId
-    // For MVP, we show all students if the user is a trainer
     return query(collection(db, 'users'), where('userType', '==', 'student'));
   }, [db]);
 
@@ -107,8 +106,4 @@ export default function TrainerDashboard() {
       </div>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

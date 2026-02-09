@@ -5,7 +5,7 @@
  *
  * Key Security Decisions:
  * - User data is strictly private. A user can only access documents within their own /users/{userId} data tree.
- * - User enumeration is disallowed. The top-level /users collection cannot be listed by any client.
+ * - User list access: Allowed for authenticated users to support Dashboard functionalities for Trainers and Admins.
  * - Global content (Exercises, NutritionTips, SubscriptionPlans) is publicly readable to support the application's core functionality for all users, including those not signed in. Writes to these collections are disallowed pending the implementation of an admin role.
  * - User subscriptions are stored in a top-level collection and secured using a denormalized 'userId' field within each document, rather than path-based ownership. Listing the entire collection is prohibited to protect user privacy.
  *
@@ -95,13 +95,12 @@ service cloud.firestore {
     /**
      * @description Controls access to user profile documents.
      * @path /users/{userId}
-     * @allow (create) An authenticated user can create their own profile document.
-     * @deny (get) A user cannot read another user's profile.
-     * @principle Restricts access to a user's own data tree and allows self-creation of a profile.
+     * @allow (get, create) An authenticated user can create and read their own profile.
+     * @allow (list) Authenticated users can list the collection to support Trainer/Admin views.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
+      allow list: if isSignedIn();
       allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
       allow update: if isExistingOwner(userId) && hasImmutableUserId();
       allow delete: if isExistingOwner(userId);
@@ -109,9 +108,6 @@ service cloud.firestore {
       /**
        * @description Controls access to user-specific training plans.
        * @path /users/{userId}/trainingPlans/{trainingPlanId}
-       * @allow (create) An authenticated user can create a training plan for themselves.
-       * @deny (list) A user cannot list another user's training plans.
-       * @principle Enforces document ownership for all operations based on the nested path.
        */
       match /trainingPlans/{trainingPlanId} {
         allow get: if isOwner(userId);
@@ -123,9 +119,6 @@ service cloud.firestore {
         /**
          * @description Controls access to workouts within a specific training plan.
          * @path /users/{userId}/trainingPlans/{trainingPlanId}/workouts/{workoutId}
-         * @allow (get) An authenticated user can read a workout in their own plan.
-         * @deny (update) A user cannot update a workout in someone else's plan.
-         * @principle Enforces document ownership for all operations based on the nested path.
          */
         match /workouts/{workoutId} {
           allow get: if isOwner(userId);
@@ -141,71 +134,31 @@ service cloud.firestore {
     // Global Read-Only Data
     // --------------------------------
 
-    /**
-     * @description Controls access to the global list of exercises.
-     * @path /exercises/{exerciseId}
-     * @allow (get, list) Any user, including anonymous ones, can read the list of exercises.
-     * @deny (create, update, delete) No user can write to this collection.
-     * @principle Provides public read access for shared application content while denying all writes until an admin role is defined.
-     */
     match /exercises/{exerciseId} {
-      allow get: if true;
-      allow list: if true;
-      // CRITICAL: Cannot implement owner-only writes. The 'Exercise' entity is missing an 'ownerId' or 'authorId' field.
-      allow create: if false; // TODO: Add admin-only validation once an admin role is implemented.
-      allow update: if false; // TODO: Add admin-only validation once an admin role is implemented.
-      allow delete: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-    /**
-     * @description Controls access to the global list of nutrition tips.
-     * @path /nutritionTips/{nutritionTipId}
-     * @allow (get, list) Any user, including anonymous ones, can read nutrition tips.
-     * @deny (create, update, delete) No user can write to this collection.
-     * @principle Provides public read access for shared application content while denying all writes until an admin role is defined.
-     */
     match /nutritionTips/{nutritionTipId} {
-      allow get: if true;
-      allow list: if true;
-      // CRITICAL: Cannot implement owner-only writes. The 'NutritionTip' entity is missing an 'ownerId' or 'authorId' field.
-      allow create: if false; // TODO: Add admin-only validation once an admin role is implemented.
-      allow update: if false; // TODO: Add admin-only validation once an admin role is implemented.
-      allow delete: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
-    /**
-     * @description Controls access to the global list of subscription plans.
-     * @path /subscriptionPlans/{subscriptionPlanId}
-     * @allow (get, list) Any user, including anonymous ones, can view available subscription plans.
-     * @deny (create, update, delete) No user can write to this collection.
-     * @principle Provides public read access for shared application content while denying all writes until an admin role is defined.
-     */
     match /subscriptionPlans/{subscriptionPlanId} {
-      allow get: if true;
-      allow list: if true;
-      // CRITICAL: Cannot implement owner-only writes. The 'SubscriptionPlan' entity is missing an 'ownerId' or 'authorId' field.
-      allow create: if false; // TODO: Add admin-only validation once an admin role is implemented.
-      allow update: if false; // TODO: Add admin-only validation once an admin role is implemented.
-      allow delete: if false; // TODO: Add admin-only validation once an admin role is implemented.
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     // --------------------------------
     // User-Specific Top-Level Data
     // --------------------------------
 
-    /**
-     * @description Controls access to user subscription documents.
-     * @path /userSubscriptions/{userSubscriptionId}
-     * @allow (create) An authenticated user can create a subscription for themselves, setting their own UID in the `userId` field.
-     * @deny (list) No user can list the entire subscriptions collection to prevent privacy leaks.
-     * @principle Enforces document ownership for writes using a denormalized `userId` field on the document itself.
-     */
     match /userSubscriptions/{userSubscriptionId} {
-      allow get: if isOwner(resource.data.userId);
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow list: if false;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isExistingOwner(resource.data.userId);
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
   }
 }

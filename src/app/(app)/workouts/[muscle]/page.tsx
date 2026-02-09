@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, use } from 'react';
@@ -27,7 +28,7 @@ import Image from 'next/image';
 import { placeHolderImages } from '@/lib/placeholder-images';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ShieldAlert, Zap } from 'lucide-react';
+import { AlertCircle, ShieldAlert, Zap, PlayCircle } from 'lucide-react';
 
 type ExercisePageProps = {
   params: Promise<{
@@ -59,55 +60,58 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
       
       {exercises.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
-          {exercises.map((exercise) => (
-            <Card key={exercise.id} className="flex flex-col rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                <Image
-                  src={exercise.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                  alt={exercise.name}
-                  fill
-                  className="object-cover"
-                  unoptimized={!!exercise.gifPrincipalUrl}
-                  data-ai-hint="fitness workout"
-                />
-                {!exercise.gifPrincipalUrl && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                    <Zap className="h-8 w-8 text-white opacity-50" />
-                  </div>
-                )}
-              </div>
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="secondary" className="bg-blue-50 text-primary border-none text-[10px] font-bold uppercase">
-                    {exercise.equipmentType}
-                  </Badge>
-                  <Badge className="text-[10px] font-bold uppercase">
-                    {exercise.difficulty}
-                  </Badge>
+          {exercises.map((exercise) => {
+            const hasGif = !!exercise.gifPrincipalUrl;
+            return (
+              <Card key={exercise.id} className="flex flex-col rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
+                <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                  <Image
+                    src={exercise.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                    alt={exercise.name}
+                    fill
+                    className="object-cover"
+                    unoptimized={hasGif}
+                    data-ai-hint="fitness workout"
+                  />
+                  {!hasGif && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                      <PlayCircle className="h-8 w-8 text-white opacity-50" />
+                    </div>
+                  )}
                 </div>
-                <CardTitle className="font-bold text-xl">{exercise.name}</CardTitle>
-                <CardDescription className="font-medium text-xs">
-                  {exercise.sets} séries x {exercise.reps} repetições
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {exercise.description}
-                </p>
-                <p className="text-[10px] font-bold mt-4 text-primary uppercase">
-                  Músculos: {exercise.muscleGroup} {exercise.secondaryMuscles.length > 0 && `+ ${exercise.secondaryMuscles.join(', ')}`}
-                </p>
-              </CardContent>
-              <CardFooter className="pt-0">
-                <Button
-                  onClick={() => setSelectedExercise(exercise)}
-                  className="w-full rounded-2xl font-bold transition-transform active:scale-95"
-                >
-                  Ver Detalhes
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                <CardHeader>
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="secondary" className="bg-blue-50 text-primary border-none text-[10px] font-bold uppercase">
+                      {exercise.equipmentType}
+                    </Badge>
+                    <Badge className="text-[10px] font-bold uppercase">
+                      {exercise.difficulty}
+                    </Badge>
+                  </div>
+                  <CardTitle className="font-bold text-xl">{exercise.name}</CardTitle>
+                  <CardDescription className="font-medium text-xs">
+                    {exercise.sets} séries x {exercise.reps} repetições
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {exercise.description}
+                  </p>
+                  <p className="text-[10px] font-bold mt-4 text-primary uppercase">
+                    Músculos: {exercise.muscleGroup} {exercise.secondaryMuscles.length > 0 && `+ ${exercise.secondaryMuscles.join(', ')}`}
+                  </p>
+                </CardContent>
+                <CardFooter className="pt-0">
+                  <Button
+                    onClick={() => setSelectedExercise(exercise)}
+                    className="w-full rounded-2xl font-bold transition-transform active:scale-95"
+                  >
+                    Ver Detalhes
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <Card className="rounded-3xl border-dashed border-2 bg-transparent w-full">
@@ -153,7 +157,7 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
                     {!selectedExercise?.gifPrincipalUrl && (
                       <div className="absolute inset-0 flex items-center justify-center">
                           <div className="bg-white/20 backdrop-blur-md p-4 rounded-full">
-                              <Zap className="h-8 w-8 text-white" />
+                              <PlayCircle className="h-8 w-8 text-white" />
                           </div>
                       </div>
                     )}

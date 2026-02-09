@@ -1,3 +1,4 @@
+
 'use client';
 
 import { use, useState, useEffect } from 'react';
@@ -43,16 +44,13 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
   const { data: plan, isLoading } = useDoc(planRef);
 
-  // Flatten catalog exercises for easier lookup
   const flatCatalog = Object.values(catalogExercises).flat();
 
-  // Helper to find the most complete exercise data
   const getEnrichedExercise = (planEx: any) => {
     const catalogMatch = flatCatalog.find(ex => ex.id === planEx.id);
     return {
       ...planEx,
       ...(catalogMatch || {}),
-      // Keep trainer notes from the plan as they are specific to this user
       notes: planEx.notes || catalogMatch?.defaultTrainerNotes || ''
     };
   };
@@ -102,12 +100,10 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   const progress = Math.round((completedExercises.length / (plan.exercises?.length || 1)) * 100);
   const videoPlaceholder = placeHolderImages.find(img => img.id === 'exercise-video-placeholder');
 
-  // Logic for the modal exercise
   const selectedExercise = selectedExerciseId 
     ? getEnrichedExercise(plan.exercises.find((ex: any) => ex.id === selectedExerciseId))
     : null;
 
-  // Diagnostic log
   if (selectedExercise) {
     console.log("MFIT Diagnostic - Rendering Modal:", {
       id: selectedExercise.id,
@@ -132,6 +128,8 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         <div className="lg:col-span-8 flex flex-col gap-4">
           {plan.exercises?.map((planEx: any, index: number) => {
             const enrichedEx = getEnrichedExercise(planEx);
+            const hasGif = !!enrichedEx.gifPrincipalUrl;
+
             return (
               <Card 
                 key={enrichedEx.id} 
@@ -147,10 +145,10 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                     alt={enrichedEx.name}
                     fill
                     className="object-cover"
-                    unoptimized={!!enrichedEx.gifPrincipalUrl}
+                    unoptimized={hasGif}
                     data-ai-hint="fitness workout"
                   />
-                  {!enrichedEx.gifPrincipalUrl && (
+                  {!hasGif && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/10">
                       <PlayCircle className="h-10 w-10 text-white opacity-50" />
                     </div>
@@ -168,7 +166,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                       <div>
                         <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
                           {enrichedEx.name}
-                          {!enrichedEx.gifPrincipalUrl && <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
+                          {!hasGif && <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
                         </h3>
                         <div className="flex gap-2 mt-1">
                           <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">

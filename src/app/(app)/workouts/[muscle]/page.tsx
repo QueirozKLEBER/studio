@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, use } from 'react';
@@ -128,20 +127,20 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="space-y-6">
                   <div className="aspect-video bg-gray-100 rounded-[2rem] overflow-hidden shadow-inner relative">
-                    {videoPlaceholder && (
-                      <Image
-                        src={videoPlaceholder.imageUrl}
-                        alt="Vídeo do exercício"
-                        fill
-                        className="object-cover"
-                        data-ai-hint={videoPlaceholder.imageHint}
-                      />
+                    <Image
+                      src={selectedExercise?.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                      alt={selectedExercise?.name || "Vídeo do exercício"}
+                      fill
+                      className="object-cover"
+                      data-ai-hint="fitness workout"
+                    />
+                    {!selectedExercise?.gifPrincipalUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="bg-white/20 backdrop-blur-md p-4 rounded-full">
+                              <Zap className="h-8 w-8 text-white" />
+                          </div>
+                      </div>
                     )}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-white/20 backdrop-blur-md p-4 rounded-full">
-                            <Zap className="h-8 w-8 text-white" />
-                        </div>
-                    </div>
                   </div>
 
                   <div>
@@ -150,7 +149,7 @@ export default function ExerciseListPage({ params }: ExercisePageProps) {
                       Execução Correta
                     </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                      {selectedExercise?.description}
+                      {selectedExercise?.executionInstructions || selectedExercise?.description}
                     </p>
                   </div>
                 </div>

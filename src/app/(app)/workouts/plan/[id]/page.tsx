@@ -236,20 +236,20 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 <div className="space-y-8">
                   <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
-                    {videoPlaceholder && (
-                      <Image
-                        src={videoPlaceholder.imageUrl}
-                        alt="Demonstração"
-                        fill
-                        className="object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-                        data-ai-hint="fitness workout"
-                      />
+                    <Image
+                      src={selectedExercise?.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                      alt={selectedExercise?.name || "Demonstração"}
+                      fill
+                      className="object-cover"
+                      data-ai-hint="fitness workout"
+                    />
+                    {!selectedExercise?.gifPrincipalUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
+                              <PlayCircle className="h-10 w-10 text-white" />
+                          </div>
+                      </div>
                     )}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
-                            <PlayCircle className="h-10 w-10 text-white" />
-                        </div>
-                    </div>
                   </div>
 
                   <div>

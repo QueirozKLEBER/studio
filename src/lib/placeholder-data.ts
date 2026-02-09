@@ -82,7 +82,7 @@ const createEx = (
 
 export const exercises: Record<string, Exercise[]> = {
   peito: [
-    createEx('supino-reto-com-barra', 'Supino Reto com Barra', 'peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro'], 'https://treinototal.com.br/wp-content/uploads/2023/05/supino-reto-com-barra.gif'),
+    createEx('supino-reto-com-barra', 'Supino Reto com Barra', 'peito', 'Barra', 'Empurrar', 'Intermediário', ['Tríceps', 'Ombro'], 'https://res.cloudinary.com/dih8ff2oi/image/upload/v1770663853/supino-reto-com-barra_elkdmq.gif'),
     createEx('supino-inclinado-halter', 'Supino Inclinado com Halteres', 'peito', 'Halteres', 'Empurrar', 'Intermediário'),
     createEx('peck-deck', 'Crucifixo na Máquina (Peck Deck)', 'peito', 'Máquina', 'Isolar', 'Iniciante'),
     createEx('crossover-polia-media', 'Crossover na Polia Média', 'peito', 'Cabo/Polia', 'Isolar', 'Intermediário'),

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
@@ -17,13 +17,13 @@ import {
   Zap,
   PlayCircle,
   AlertTriangle,
-  ChevronRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { placeHolderImages } from '@/lib/placeholder-images';
+import { exercises as catalogExercises } from '@/lib/placeholder-data';
 
 export default function PlanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -34,7 +34,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
   const [isFinishing, setIsFinishing] = useState(false);
-  const [selectedExercise, setSelectedExercise] = useState<any | null>(null);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
 
   const planRef = useMemoFirebase(() => {
     if (!user || !id) return null;
@@ -42,6 +42,20 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   }, [db, user, id]);
 
   const { data: plan, isLoading } = useDoc(planRef);
+
+  // Flatten catalog exercises for easier lookup
+  const flatCatalog = Object.values(catalogExercises).flat();
+
+  // Helper to find the most complete exercise data
+  const getEnrichedExercise = (planEx: any) => {
+    const catalogMatch = flatCatalog.find(ex => ex.id === planEx.id);
+    return {
+      ...planEx,
+      ...(catalogMatch || {}),
+      // Keep trainer notes from the plan as they are specific to this user
+      notes: planEx.notes || catalogMatch?.defaultTrainerNotes || ''
+    };
+  };
 
   const toggleComplete = (exerciseId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,6 +102,20 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   const progress = Math.round((completedExercises.length / (plan.exercises?.length || 1)) * 100);
   const videoPlaceholder = placeHolderImages.find(img => img.id === 'exercise-video-placeholder');
 
+  // Logic for the modal exercise
+  const selectedExercise = selectedExerciseId 
+    ? getEnrichedExercise(plan.exercises.find((ex: any) => ex.id === selectedExerciseId))
+    : null;
+
+  // Diagnostic log
+  if (selectedExercise) {
+    console.log("MFIT Diagnostic - Rendering Modal:", {
+      id: selectedExercise.id,
+      gifPrincipalUrl: selectedExercise.gifPrincipalUrl,
+      source: flatCatalog.some(ex => ex.id === selectedExercise.id) ? 'Catalog' : 'Plan Only'
+    });
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-none">
       <div className="flex items-center gap-4">
@@ -102,90 +130,93 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
         <div className="lg:col-span-8 flex flex-col gap-4">
-          {plan.exercises?.map((ex: any, index: number) => (
-            <Card 
-              key={ex.id} 
-              onClick={() => setSelectedExercise(ex)}
-              className={cn(
-                "rounded-[2rem] border-none shadow-sm transition-all overflow-hidden cursor-pointer hover:shadow-md group",
-                completedExercises.includes(ex.id) ? "bg-green-50 opacity-90" : "bg-white"
-              )}
-            >
-              <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                <Image
-                  src={ex.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                  alt={ex.name}
-                  fill
-                  className="object-cover"
-                  unoptimized={!!ex.gifPrincipalUrl}
-                  data-ai-hint="fitness workout"
-                />
-                {!ex.gifPrincipalUrl && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                    <PlayCircle className="h-10 w-10 text-white opacity-50" />
-                  </div>
+          {plan.exercises?.map((planEx: any, index: number) => {
+            const enrichedEx = getEnrichedExercise(planEx);
+            return (
+              <Card 
+                key={enrichedEx.id} 
+                onClick={() => setSelectedExerciseId(enrichedEx.id)}
+                className={cn(
+                  "rounded-[2rem] border-none shadow-sm transition-all overflow-hidden cursor-pointer hover:shadow-md group",
+                  completedExercises.includes(enrichedEx.id) ? "bg-green-50 opacity-90" : "bg-white"
                 )}
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner transition-colors",
-                      completedExercises.includes(ex.id) ? "bg-green-500 text-white" : "bg-muted text-primary"
-                    )}>
-                      {index + 1}
+              >
+                <div className="relative aspect-video w-full overflow-hidden bg-muted">
+                  <Image
+                    src={enrichedEx.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                    alt={enrichedEx.name}
+                    fill
+                    className="object-cover"
+                    unoptimized={!!enrichedEx.gifPrincipalUrl}
+                    data-ai-hint="fitness workout"
+                  />
+                  {!enrichedEx.gifPrincipalUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                      <PlayCircle className="h-10 w-10 text-white opacity-50" />
                     </div>
-                    <div>
-                      <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
-                        {ex.name}
-                        {!ex.gifPrincipalUrl && <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
-                      </h3>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
-                          {ex.equipmentType}
-                        </Badge>
+                  )}
+                </div>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "h-12 w-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-inner transition-colors",
+                        completedExercises.includes(enrichedEx.id) ? "bg-green-500 text-white" : "bg-muted text-primary"
+                      )}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                          {enrichedEx.name}
+                          {!enrichedEx.gifPrincipalUrl && <PlayCircle className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />}
+                        </h3>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
+                            {enrichedEx.equipmentType}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={(e) => toggleComplete(enrichedEx.id, e)}
+                      className={cn(
+                        "rounded-full h-12 w-12 transition-all",
+                        completedExercises.includes(enrichedEx.id) ? "text-green-600 bg-green-100 scale-110" : "text-muted-foreground hover:bg-primary/5"
+                      )}
+                    >
+                      <CheckCircle2 className="h-8 w-8" />
+                    </Button>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={(e) => toggleComplete(ex.id, e)}
-                    className={cn(
-                      "rounded-full h-12 w-12 transition-all",
-                      completedExercises.includes(ex.id) ? "text-green-600 bg-green-100 scale-110" : "text-muted-foreground hover:bg-primary/5"
-                    )}
-                  >
-                    <CheckCircle2 className="h-8 w-8" />
-                  </Button>
-                </div>
 
-                <div className="grid grid-cols-3 gap-3 mt-6">
-                  <div className="bg-muted/30 p-3 rounded-2xl text-center">
-                    <p className="text-[10px] font-bold uppercase opacity-50">Séries</p>
-                    <p className="text-lg font-black">{ex.targetSets || '4'}</p>
+                  <div className="grid grid-cols-3 gap-3 mt-6">
+                    <div className="bg-muted/30 p-3 rounded-2xl text-center">
+                      <p className="text-[10px] font-bold uppercase opacity-50">Séries</p>
+                      <p className="text-lg font-black">{enrichedEx.targetSets || '4'}</p>
+                    </div>
+                    <div className="bg-muted/30 p-3 rounded-2xl text-center">
+                      <p className="text-[10px] font-bold uppercase opacity-50">Reps</p>
+                      <p className="text-lg font-black">{enrichedEx.targetReps || '12'}</p>
+                    </div>
+                    <div className="bg-muted/30 p-3 rounded-2xl text-center">
+                      <p className="text-[10px] font-bold uppercase opacity-50">Descanso</p>
+                      <p className="text-lg font-black">{enrichedEx.targetRest || '60s'}</p>
+                    </div>
                   </div>
-                  <div className="bg-muted/30 p-3 rounded-2xl text-center">
-                    <p className="text-[10px] font-bold uppercase opacity-50">Reps</p>
-                    <p className="text-lg font-black">{ex.targetReps || '12'}</p>
-                  </div>
-                  <div className="bg-muted/30 p-3 rounded-2xl text-center">
-                    <p className="text-[10px] font-bold uppercase opacity-50">Descanso</p>
-                    <p className="text-lg font-black">{ex.targetRest || '60s'}</p>
-                  </div>
-                </div>
 
-                {ex.notes && (
-                  <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-3 items-start">
-                    <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <p className="text-sm text-blue-900 leading-relaxed italic">
-                      {ex.notes}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  {enrichedEx.notes && (
+                    <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-3 items-start">
+                      <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <p className="text-sm text-blue-900 leading-relaxed italic">
+                        {enrichedEx.notes}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <div className="lg:col-span-4 space-y-6">
@@ -225,92 +256,94 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && setSelectedExercise(null)}>
+      <Dialog open={!!selectedExercise} onOpenChange={(open) => !open && setSelectedExerciseId(null)}>
         <DialogContent className="max-w-4xl p-0 rounded-[2.5rem] overflow-hidden border-none bg-white">
           <ScrollArea className="max-h-[90vh]">
-            <div className="p-6 md:p-10">
-              <DialogHeader className="mb-8">
-                <div className="flex gap-2 mb-3">
-                   <Badge variant="outline" className="rounded-full border-primary text-primary font-bold uppercase px-4 py-1">
-                    {selectedExercise?.equipmentType}
-                   </Badge>
-                   <Badge variant="outline" className="rounded-full border-secondary text-secondary font-bold uppercase px-4 py-1">
-                    {selectedExercise?.difficulty}
-                   </Badge>
-                </div>
-                <DialogTitle className="text-4xl font-black uppercase tracking-tighter">
-                  {selectedExercise?.name}
-                </DialogTitle>
-                <div className="flex gap-6 mt-4 text-sm font-bold uppercase text-muted-foreground border-b pb-4">
-                    <span className="flex items-center gap-1"><Zap className="h-4 w-4 text-primary" /> {selectedExercise?.targetSets} Séries</span>
-                    <span className="flex items-center gap-1"><PlayCircle className="h-4 w-4 text-primary" /> {selectedExercise?.targetReps} Reps</span>
-                    <span className="flex items-center gap-1"><Info className="h-4 w-4 text-primary" /> {selectedExercise?.targetRest} Descanso</span>
-                </div>
-              </DialogHeader>
+            {selectedExercise && (
+              <div className="p-6 md:p-10">
+                <DialogHeader className="mb-8">
+                  <div className="flex gap-2 mb-3">
+                     <Badge variant="outline" className="rounded-full border-primary text-primary font-bold uppercase px-4 py-1">
+                      {selectedExercise.equipmentType}
+                     </Badge>
+                     <Badge variant="outline" className="rounded-full border-secondary text-secondary font-bold uppercase px-4 py-1">
+                      {selectedExercise.difficulty}
+                     </Badge>
+                  </div>
+                  <DialogTitle className="text-4xl font-black uppercase tracking-tighter">
+                    {selectedExercise.name}
+                  </DialogTitle>
+                  <div className="flex gap-6 mt-4 text-sm font-bold uppercase text-muted-foreground border-b pb-4">
+                      <span className="flex items-center gap-1"><Zap className="h-4 w-4 text-primary" /> {selectedExercise.targetSets || selectedExercise.sets} Séries</span>
+                      <span className="flex items-center gap-1"><PlayCircle className="h-4 w-4 text-primary" /> {selectedExercise.targetReps || selectedExercise.reps} Reps</span>
+                      <span className="flex items-center gap-1"><Info className="h-4 w-4 text-primary" /> {selectedExercise.targetRest || selectedExercise.rest} Descanso</span>
+                  </div>
+                </DialogHeader>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                <div className="space-y-8">
-                  <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
-                    <Image
-                      src={selectedExercise?.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
-                      alt={selectedExercise?.name || "Demonstração"}
-                      fill
-                      className="object-cover"
-                      unoptimized={!!selectedExercise?.gifPrincipalUrl}
-                      data-ai-hint="fitness workout"
-                    />
-                    {!selectedExercise?.gifPrincipalUrl && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
-                              <PlayCircle className="h-10 w-10 text-white" />
-                          </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div className="space-y-8">
+                    <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
+                      <Image
+                        src={selectedExercise.gifPrincipalUrl || videoPlaceholder?.imageUrl || ''}
+                        alt={selectedExercise.name || "Demonstração"}
+                        fill
+                        className="object-cover"
+                        unoptimized={!!selectedExercise.gifPrincipalUrl}
+                        data-ai-hint="fitness workout"
+                      />
+                      {!selectedExercise.gifPrincipalUrl && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
+                                <PlayCircle className="h-10 w-10 text-white" />
+                            </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <h3 className="font-black text-xl mb-4 flex items-center gap-2 uppercase">
+                        <Zap className="h-6 w-6 text-primary" />
+                        Instruções de Execução
+                      </h3>
+                      <div className="text-sm leading-relaxed text-muted-foreground bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50 whitespace-pre-wrap font-medium">
+                        {selectedExercise.executionInstructions || "Siga as orientações de postura e controle de carga para este movimento."}
                       </div>
-                    )}
+                    </div>
                   </div>
 
-                  <div>
-                    <h3 className="font-black text-xl mb-4 flex items-center gap-2 uppercase">
-                      <Zap className="h-6 w-6 text-primary" />
-                      Instruções de Execução
-                    </h3>
-                    <div className="text-sm leading-relaxed text-muted-foreground bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50 whitespace-pre-wrap font-medium">
-                      {selectedExercise?.executionInstructions || "Siga as orientações de postura e controle de carga para este movimento."}
+                  <div className="space-y-8">
+                    <div>
+                      <h4 className="font-black text-sm uppercase tracking-widest mb-4 opacity-50">Dicas Técnicas</h4>
+                      <ul className="space-y-3">
+                        {(selectedExercise.tips || ["Mantenha o abdômen contraído.", "Controle a fase excêntrica."]).map((tip: string, index: number) => (
+                          <li key={index} className="flex gap-3 text-sm font-bold bg-muted/30 p-3 rounded-2xl">
+                            <div className="h-5 w-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
+                              <CheckCircle2 className="h-3 w-3" />
+                            </div>
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="p-6 bg-red-50 rounded-[2rem] border border-red-100">
+                      <h4 className="font-black text-sm text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        Evite Erros Comuns
+                      </h4>
+                      <ul className="space-y-2">
+                        {(selectedExercise.commonErrors || ["Movimentos balísticos.", "Amplitude reduzida."]).map((error: string, index: number) => (
+                          <li key={index} className="text-xs text-red-700/70 font-bold flex items-center gap-2">
+                            <div className="h-1.5 w-1.5 bg-red-400 rounded-full" />
+                            {error}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 </div>
-
-                <div className="space-y-8">
-                  <div>
-                    <h4 className="font-black text-sm uppercase tracking-widest mb-4 opacity-50">Dicas Técnicas</h4>
-                    <ul className="space-y-3">
-                      {(selectedExercise?.tips || ["Mantenha o abdômen contraído.", "Controle a fase excêntrica."]).map((tip: string, index: number) => (
-                        <li key={index} className="flex gap-3 text-sm font-bold bg-muted/30 p-3 rounded-2xl">
-                          <div className="h-5 w-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
-                            <CheckCircle2 className="h-3 w-3" />
-                          </div>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="p-6 bg-red-50 rounded-[2rem] border border-red-100">
-                    <h4 className="font-black text-sm text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      Evite Erros Comuns
-                    </h4>
-                    <ul className="space-y-2">
-                      {(selectedExercise?.commonErrors || ["Movimentos balísticos.", "Amplitude reduzida."]).map((error: string, index: number) => (
-                        <li key={index} className="text-xs text-red-700/70 font-bold flex items-center gap-2">
-                          <div className="h-1.5 w-1.5 bg-red-400 rounded-full" />
-                          {error}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
               </div>
-            </div>
+            )}
           </ScrollArea>
         </DialogContent>
       </Dialog>

@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Send, User, Sparkles } from 'lucide-react';
+import { Bot, Send, User, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { mfitAssistant } from '@/ai/flows/mfit-assistant-flow';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -16,25 +17,44 @@ type Message = {
 
 export default function AiProfessorPage() {
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'Olá! Sou o assistente inteligente do MFIT Personal. Como posso ajudar no seu treino hoje?' }
   ]);
+  
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
-    const userMessage: Message = { role: 'user', content: input };
+  const handleSend = async (textToSend?: string) => {
+    const messageText = textToSend || input;
+    if (!messageText.trim() || isLoading) return;
+
+    const userMessage: Message = { role: 'user', content: messageText };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setIsLoading(true);
 
-    // Simulate AI Response
-    setTimeout(() => {
+    try {
+      const result = await mfitAssistant({ message: messageText });
       const aiMessage: Message = { 
         role: 'assistant', 
-        content: 'Excelente pergunta! Para este objetivo, recomendo focar na execução lenta (cadência 4020) e manter a hidratação. Gostaria de uma sugestão de exercícios específicos?' 
+        content: result.response 
       };
       setMessages(prev => [...prev, aiMessage]);
-    }, 1000);
+    } catch (error) {
+      const errorMessage: Message = { 
+        role: 'assistant', 
+        content: 'Ops! Tive um problema técnico. Pode repetir a pergunta?' 
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,13 +96,24 @@ export default function AiProfessorPage() {
                   {m.role === 'assistant' ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
                 </div>
                 <div className={cn(
-                  "p-3 rounded-2xl text-sm leading-relaxed",
+                  "p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap",
                   m.role === 'assistant' ? "bg-blue-50 text-blue-900 rounded-tl-none" : "bg-primary text-primary-foreground rounded-tr-none"
                 )}>
                   {m.content}
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="flex items-start gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center animate-pulse">
+                  <Bot className="h-4 w-4" />
+                </div>
+                <div className="bg-blue-50 p-3 rounded-2xl rounded-tl-none">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                </div>
+              </div>
+            )}
+            <div ref={scrollRef} />
           </div>
         </ScrollArea>
 
@@ -93,15 +124,27 @@ export default function AiProfessorPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              disabled={isLoading}
               className="rounded-2xl border-none shadow-sm focus-visible:ring-primary"
             />
-            <Button onClick={handleSend} className="rounded-2xl p-3 aspect-square bg-primary shadow-lg transition-transform active:scale-90">
-              <Send className="h-5 w-5" />
+            <Button 
+              onClick={() => handleSend()} 
+              disabled={isLoading}
+              className="rounded-2xl p-3 aspect-square bg-primary shadow-lg transition-transform active:scale-90"
+            >
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
             </Button>
           </div>
           <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
             {['Dieta pré-treino', 'Como fazer supino?', 'Dicas de braço'].map((tip) => (
-              <Button key={tip} variant="outline" size="sm" onClick={() => setInput(tip)} className="rounded-full text-[10px] whitespace-nowrap border-primary/20 text-primary font-bold hover:bg-primary/5">
+              <Button 
+                key={tip} 
+                variant="outline" 
+                size="sm" 
+                disabled={isLoading}
+                onClick={() => handleSend(tip)} 
+                className="rounded-full text-[10px] whitespace-nowrap border-primary/20 text-primary font-bold hover:bg-primary/5"
+              >
                 <Sparkles className="h-3 w-3 mr-1" />
                 {tip}
               </Button>

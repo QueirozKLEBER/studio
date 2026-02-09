@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { muscleGroups, exercises as allExercises, Exercise } from '@/lib/placeholder-data';
-import { Search, Plus, Trash2, GripVertical, Save, Send } from 'lucide-react';
+import { Search, Plus, Trash2, GripVertical, Save, Send, Dumbbell } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
@@ -71,8 +72,6 @@ export default function WorkoutBuilder() {
 
     setIsSaving(true);
     try {
-      // Logic for saving template or assigned workout
-      // For MVP, we'll just toast success
       toast({ title: "Treino Salvo", description: "O treino foi salvo com sucesso!" });
       router.push('/trainer/dashboard');
     } catch (error) {

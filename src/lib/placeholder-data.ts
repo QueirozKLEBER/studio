@@ -1,3 +1,4 @@
+
 export type Exercise = {
   id: string;
   name: string;
@@ -103,6 +104,8 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('barra-australiana', 'Barra Australiana', 'Costas', 'Peso do corpo', 'Iniciante'),
     createEx('puxada-atras-nuca', 'Puxada atrás da nuca', 'Costas', 'Máquina', 'Intermediário'),
     createEx('remada-baixa-pronada', 'Remada Baixa Pegada Pronada', 'Costas', 'Cabo/Polia', 'Intermediário'),
+    createEx('remada-baixa-supinada', 'Remada Baixa Pegada Supinada', 'Costas', 'Cabo/Polia', 'Intermediário'),
+    createEx('remada-alta-barra-costas', 'Remada Alta com Barra', 'Costas', 'Barra', 'Intermediário'),
   ],
   ombros: [
     createEx('desenv-barra', 'Desenvolvimento com Barra', 'Ombros', 'Barra', 'Intermediário', ['Tríceps']),
@@ -115,6 +118,8 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('eleva-frontal-barra', 'Elevação Frontal com Barra', 'Ombros', 'Barra', 'Iniciante'),
     createEx('eleva-frontal-halter', 'Elevação Frontal com Halteres', 'Ombros', 'Halteres', 'Iniciante'),
     createEx('eleva-frontal-cabo', 'Elevação Frontal no Cabo', 'Ombros', 'Cabo/Polia', 'Intermediário'),
+    createEx('eleva-frontal-alternada', 'Elevação Frontal Alternada', 'Ombros', 'Halteres', 'Iniciante'),
+    createEx('eleva-frontal-anilha', 'Elevação Frontal com Anilha', 'Ombros', 'Livre', 'Iniciante'),
     createEx('remada-alta-barra-ombro', 'Remada Alta com Barra', 'Ombros', 'Barra', 'Intermediário'),
     createEx('remada-alta-cabo-ombro', 'Remada Alta no Cabo', 'Ombros', 'Cabo/Polia', 'Intermediário'),
     createEx('eleva-post-peck', 'Elevação Posterior no Peck Deck', 'Ombros', 'Máquina', 'Iniciante'),
@@ -122,6 +127,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('face-pull-ombro', 'Face Pull', 'Ombros', 'Cabo/Polia', 'Iniciante'),
     createEx('press-militar', 'Press Militar', 'Ombros', 'Barra', 'Avançado'),
     createEx('eleva-lateral-sentado', 'Elevação Lateral Sentada', 'Ombros', 'Halteres', 'Intermediário'),
+    createEx('eleva-lateral-inc', 'Elevação Lateral Inclinada', 'Ombros', 'Halteres', 'Avançado'),
     createEx('y-raise', 'Y-raise', 'Ombros', 'Halteres', 'Avançado'),
   ],
   biceps: [
@@ -139,6 +145,8 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('rosca-banco-inc', 'Rosca no Banco Inclinado', 'Bíceps', 'Halteres', 'Intermediário'),
     createEx('rosca-spider', 'Rosca Spider', 'Bíceps', 'Barra', 'Avançado'),
     createEx('chin-up', 'Chin-up (Barra Fixa Supinada)', 'Bíceps', 'Peso do corpo', 'Intermediário'),
+    createEx('rosca-unilateral-cabo', 'Rosca Unilateral no Cabo', 'Bíceps', 'Cabo/Polia', 'Intermediário'),
+    createEx('rosca-barra-w', 'Rosca com Barra W', 'Bíceps', 'Barra', 'Iniciante'),
   ],
   triceps: [
     createEx('triceps-testa-barra', 'Tríceps Testa com Barra', 'Tríceps', 'Barra', 'Intermediário'),
@@ -153,6 +161,9 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('supino-fechado-triceps', 'Supino Fechado', 'Tríceps', 'Barra', 'Intermediário'),
     createEx('triceps-maq-triceps', 'Tríceps Máquina', 'Tríceps', 'Máquina', 'Iniciante'),
     createEx('triceps-barra-v', 'Tríceps com Barra V', 'Tríceps', 'Cabo/Polia', 'Iniciante'),
+    createEx('triceps-barra-reta', 'Tríceps com Barra Reta', 'Tríceps', 'Cabo/Polia', 'Iniciante'),
+    createEx('ext-acima-cabeca-halter', 'Extensão acima da cabeça com halter', 'Tríceps', 'Halteres', 'Intermediário'),
+    createEx('ext-acima-cabeca-cabo', 'Extensão acima da cabeça no cabo', 'Tríceps', 'Cabo/Polia', 'Intermediário'),
   ],
   pernas: [
     createEx('agachamento-livre', 'Agachamento Livre', 'Pernas', 'Barra', 'Avançado', ['Glúteos']),
@@ -171,9 +182,13 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('mesa-flexora', 'Mesa Flexora', 'Pernas', 'Máquina', 'Iniciante'),
     createEx('cadeira-flexora', 'Cadeira Flexora', 'Pernas', 'Máquina', 'Iniciante'),
     createEx('hip-thrust', 'Hip Thrust (Elevação Pélvica)', 'Pernas', 'Barra', 'Intermediário', ['Glúteos']),
+    createEx('glute-bridge', 'Glute Bridge', 'Pernas', 'Peso do corpo', 'Iniciante'),
     createEx('cadeira-abdutora', 'Cadeira Abdutora', 'Pernas', 'Máquina', 'Iniciante'),
     createEx('cadeira-adutora', 'Cadeira Adutora', 'Pernas', 'Máquina', 'Iniciante'),
     createEx('pistol-squat', 'Pistol Squat', 'Pernas', 'Peso do corpo', 'Avançado'),
+    createEx('box-squat', 'Box Squat', 'Pernas', 'Barra', 'Intermediário'),
+    createEx('sled-push', 'Sled Push', 'Pernas', 'Livre', 'Avançado'),
+    createEx('nordic-curl', 'Nordic Curl', 'Pernas', 'Peso do corpo', 'Avançado'),
   ],
   panturrilha: [
     createEx('eleva-pe', 'Elevação em Pé', 'Panturrilha', 'Máquina', 'Iniciante'),
@@ -181,6 +196,8 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('panturrilha-leg', 'Panturrilha no Leg Press', 'Panturrilha', 'Máquina', 'Iniciante'),
     createEx('panturrilha-smith', 'Panturrilha no Smith', 'Panturrilha', 'Smith', 'Intermediário'),
     createEx('panturrilha-uni', 'Panturrilha Unilateral', 'Panturrilha', 'Peso do corpo', 'Iniciante'),
+    createEx('panturrilha-step', 'Panturrilha no Step', 'Panturrilha', 'Peso do corpo', 'Iniciante'),
+    createEx('panturrilha-hack', 'Panturrilha no Hack', 'Panturrilha', 'Máquina', 'Intermediário'),
   ],
   abdomen: [
     createEx('crunch', 'Abdominal Crunch', 'Abdômen', 'Peso do corpo', 'Iniciante'),
@@ -190,6 +207,9 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('prancha', 'Prancha Isométrica', 'Abdômen', 'Peso do corpo', 'Iniciante'),
     createEx('ab-wheel', 'Ab Wheel (Roda)', 'Abdômen', 'Livre', 'Avançado'),
     createEx('russian-twist', 'Russian Twist', 'Abdômen', 'Livre', 'Intermediário'),
+    createEx('sit-up', 'Sit-up', 'Abdômen', 'Peso do corpo', 'Iniciante'),
+    createEx('mountain-climber', 'Mountain Climber', 'Abdômen', 'Peso do corpo', 'Intermediário'),
+    createEx('woodchopper', 'Woodchopper no Cabo', 'Abdômen', 'Cabo/Polia', 'Intermediário'),
   ],
   antebreaco: [
     createEx('rosca-inversa-ante', 'Rosca Inversa', 'Antebraço', 'Barra', 'Iniciante'),
@@ -197,6 +217,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('rosca-punho-rev', 'Rosca Punho Reversa', 'Antebraço', 'Barra', 'Iniciante'),
     createEx('farmer-walk', 'Farmer’s Walk', 'Antebraço', 'Halteres', 'Intermediário'),
     createEx('wrist-roller', 'Wrist Roller', 'Antebraço', 'Livre', 'Intermediário'),
+    createEx('hang-barra', 'Hang na Barra', 'Antebraço', 'Peso do corpo', 'Intermediário'),
   ],
   trapezio: [
     createEx('encolhe-barra', 'Encolhimento com Barra', 'Trapézio', 'Barra', 'Iniciante'),

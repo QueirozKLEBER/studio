@@ -1,117 +1,40 @@
-/**
- * Core Philosophy: This ruleset enforces a strict security model that segregates user-private data from globally public content. User-specific information, such as profiles and training plans, is protected using a path-based ownership model, ensuring users can only access their own data. Globally shared content, like exercises and nutrition tips, is publicly readable by anyone but write-protected to prevent unauthorized modification.
- *
- * Data Structure: User data is hierarchically organized under the /users/{userId} path. For example, a user's training plans are located at /users/{userId}/trainingPlans/{trainingPlanId}. This structure provides inherent, path-based security. Public data, such as /exercises and /nutritionTips, resides in top-level collections for easy, global access.
- *
- * Key Security Decisions:
- * - User data is private for writes, but readable by other authenticated users (Trainers/Admins/Students) to support the management platform.
- * - User list access: Allowed for authenticated users to support Dashboard functionalities for Trainers and Admins.
- * - Global content (Exercises, NutritionTips, SubscriptionPlans) is publicly readable to support the application's core functionality for all users, including those not signed in. Writes to these collections are disallowed pending the implementation of an admin role.
- * - User subscriptions are stored in a top-level collection and secured using a denormalized 'userId' field within each document, rather than path-based ownership. Listing the entire collection is prohibited to protect user privacy.
- */
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --------------------------------
-    // Helper Functions
-    // --------------------------------
-
-    /**
-     * Checks if a user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the currently authenticated user's UID matches the provided userId.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
     
-    /**
-     * Checks for ownership on an existing document. Used for update and delete operations.
-     */
     function isExistingOwner(userId) {
       return isSignedIn() && request.auth.uid == userId && resource != null;
     }
 
-    /**
-     * On create, validates that the user document's internal `id` field
-     * matches the document ID from the path, ensuring relational integrity.
-     */
     function hasValidUserDataOnCreate(userId) {
       return request.resource.data.id == userId;
     }
 
-    /**
-     * On update, ensures the user document's internal `id` field is immutable.
-     */
     function hasImmutableUserId() {
       return request.resource.data.id == resource.data.id;
     }
 
-    /**
-     * On create, validates that the TrainingPlan's internal `userId` field
-     * matches the user ID from the path.
-     */
-    function hasValidTrainingPlanDataOnCreate(userId) {
-      return request.resource.data.userId == userId;
-    }
-
-    /**
-     * On update, ensures the TrainingPlan's internal `userId` is immutable.
-     */
-    function hasImmutableTrainingPlanOwner() {
-      return request.resource.data.userId == resource.data.userId;
-    }
-
-    /**
-     * On create, validates that the Workout's internal `trainingPlanId` field
-     * matches the ID from the path.
-     */
-    function hasValidWorkoutDataOnCreate(trainingPlanId) {
-      return request.resource.data.trainingPlanId == trainingPlanId;
-    }
-
-    /**
-     * On update, ensures the Workout's internal `trainingPlanId` is immutable.
-     */
-    function hasImmutableWorkoutParent() {
-      return request.resource.data.trainingPlanId == resource.data.trainingPlanId;
-    }
-
-    // --------------------------------
-    // User Data Rules
-    // --------------------------------
-
-    /**
-     * @description Controls access to user profile documents.
-     * @path /users/{userId}
-     * @allow (get, list) Authenticated users can read profiles to support management views.
-     * @allow (create, update, delete) Only the owner can modify their profile.
-     */
     match /users/{userId} {
+      // Allow trainers and admins to read any student profile
       allow get, list: if isSignedIn();
       allow create: if isOwner(userId) && hasValidUserDataOnCreate(userId);
       allow update: if isExistingOwner(userId) && hasImmutableUserId();
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Controls access to user-specific training plans.
-       * @path /users/{userId}/trainingPlans/{trainingPlanId}
-       */
       match /trainingPlans/{trainingPlanId} {
-        allow get, list: if isSignedIn(); // Trainers need to see student plans
+        allow get, list: if isSignedIn();
         allow create: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
         allow update, delete: if isExistingOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
 
-        /**
-         * @description Controls access to workouts within a specific training plan.
-         * @path /users/{userId}/trainingPlans/{trainingPlanId}/workouts/{workoutId}
-         */
         match /workouts/{workoutId} {
           allow get, list: if isSignedIn();
           allow create, update, delete: if isOwner(userId) || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
@@ -119,28 +42,20 @@ service cloud.firestore {
       }
     }
 
-    // --------------------------------
-    // Global Read-Only Data
-    // --------------------------------
-
     match /exercises/{exerciseId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
     match /nutritionTips/{nutritionTipId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
     match /subscriptionPlans/{subscriptionPlanId} {
       allow get, list: if true;
       allow create, update, delete: if false;
     }
-
-    // --------------------------------
-    // User-Specific Top-Level Data
-    // --------------------------------
 
     match /userSubscriptions/{userSubscriptionId} {
       allow get: if isSignedIn();

@@ -3,7 +3,7 @@
 
 import { use, useState } from 'react';
 import { useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,18 +17,22 @@ import {
   Clock, 
   Zap,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  Trophy
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PlanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user } = useUser();
   const db = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const planRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -43,6 +47,37 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         ? prev.filter(i => i !== exerciseId) 
         : [...prev, exerciseId]
     );
+  };
+
+  const handleFinishWorkout = async () => {
+    if (!user || !plan) return;
+    
+    setIsFinishing(true);
+    try {
+      // Registrar a conclusão no histórico do aluno
+      await addDoc(collection(db, 'users', user.uid, 'workoutHistory'), {
+        planId: id,
+        planName: plan.name,
+        completedAt: serverTimestamp(),
+        exerciseCount: plan.exercises?.length || 0,
+        completedExercisesCount: completedExercises.length
+      });
+
+      toast({
+        title: "Treino Concluído! 🏆",
+        description: "Excelente trabalho hoje. Seu progresso foi registrado.",
+      });
+
+      router.push('/dashboard');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: "Erro ao salvar",
+        description: "Não foi possível registrar seu treino.",
+      });
+    } finally {
+      setIsFinishing(false);
+    }
   };
 
   if (isLoading) return <div className="p-8 animate-pulse bg-muted h-screen" />;
@@ -180,10 +215,11 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <Button 
-                disabled={progress < 100}
+                onClick={handleFinishWorkout}
+                disabled={progress < 100 || isFinishing}
                 className="w-full h-14 rounded-2xl bg-white text-primary font-black text-lg hover:bg-white/90 shadow-lg disabled:opacity-50 disabled:bg-white/20"
               >
-                CONCLUIR TREINO
+                {isFinishing ? 'SALVANDO...' : 'CONCLUIR TREINO'}
               </Button>
             </CardContent>
           </Card>

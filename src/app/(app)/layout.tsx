@@ -19,7 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (isUserLoading || !user) {
     return (
-      <div className="flex min-h-screen bg-background">
+      <div className="flex min-h-screen w-full bg-background">
         <main className="flex-1 p-4 md:p-8">
             <div className="mb-8">
                 <Skeleton className="h-10 w-48 mb-2" />
@@ -36,21 +36,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background pb-16 md:pb-0">
-      {/* Sidebar no desktop */}
-      <aside className="hidden md:block w-64 border-r bg-card h-screen sticky top-0 shrink-0">
+    <div className="flex min-h-screen w-full bg-background overflow-x-hidden">
+      {/* Sidebar no desktop - Fixa à esquerda */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r bg-card z-50">
         <AppSidebar />
-      </aside>
+      </div>
       
-      {/* Área de Conteúdo principal - Alinhamento total à esquerda */}
-      <main className="flex-1 flex flex-col min-w-0">
-        <div className="p-4 md:p-8 lg:p-10 w-full">
+      {/* Área de Conteúdo principal - Alinhamento total à esquerda após o menu */}
+      <div className="flex flex-col flex-1 md:pl-64 w-full">
+        <main className="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-full">
           {children}
-        </div>
-      </main>
-
-      {/* Navegação inferior para Mobile */}
-      <BottomNav />
+        </main>
+        
+        {/* Navegação inferior para Mobile */}
+        <BottomNav />
+      </div>
     </div>
   );
 }

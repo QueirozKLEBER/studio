@@ -41,22 +41,28 @@ export const exercises: Record<string, Exercise[]> = {
       reps: '8-12',
       rest: '60-90s',
       videoUrl: '',
-      description: 'Deitado em um banco reto, segure a barra com as mãos um pouco mais afastadas que a largura dos ombros. Desça a barra até tocar levemente o peito e empurre de volta à posição inicial.',
-      tips: [
-        'Mantenha os pés firmes no chão.',
-        'Retraia as escápulas antes de iniciar o movimento.',
-        'Mantenha os cotovelos a cerca de 45-75 graus do tronco.'
-      ],
-      commonErrors: [
-        'Bater a barra no peito.',
-        'Retirar os glúteos do banco.',
-        'Estender os cotovelos bruscamente no topo.'
-      ],
-      safetyTips: [
-        'Sempre use um assistente (spotter) ao carregar pesos pesados.',
-        'Certifique-se de que a barra está travada corretamente nos suportes.'
-      ],
-      variations: ['Supino com Halteres', 'Supino com Pegada Fechada', 'Supino no Smith']
+      description: 'Deitado em um banco reto, segure a barra com as mãos um pouco mais afastadas que a largura dos ombros. Desça a barra até tocar levemente o peito e empurre de volta.',
+      tips: ['Mantenha os pés firmes no chão.', 'Retraia as escápulas.', 'Cotovelos a 45-75 graus do tronco.'],
+      commonErrors: ['Bater a barra no peito.', 'Retirar os glúteos do banco.'],
+      safetyTips: ['Use um spotter.', 'Não trave os cotovelos no topo.'],
+      variations: ['Supino com Halteres', 'Supino no Smith', 'Supino Pegada Fechada']
+    },
+    {
+      id: 'supino-inclinado-halter',
+      name: 'Supino Inclinado com Halteres',
+      muscleGroup: 'Peito (Superior)',
+      secondaryMuscles: ['Tríceps', 'Deltóide Anterior'],
+      equipmentType: 'Halteres',
+      difficulty: 'Intermediário',
+      sets: '4',
+      reps: '10-12',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Banco inclinado a 30-45 graus. Empurre os halteres para cima a partir da altura dos ombros até quase estender os braços.',
+      tips: ['Maior amplitude de movimento que a barra.', 'Controle a descida.'],
+      commonErrors: ['Inclinação excessiva do banco.', 'Bater os halteres no topo.'],
+      safetyTips: ['Mantenha os pulsos retos.'],
+      variations: ['Supino Inclinado com Barra', 'Supino Inclinado na Máquina']
     },
     {
       id: 'peck-deck',
@@ -69,22 +75,28 @@ export const exercises: Record<string, Exercise[]> = {
       reps: '12-15',
       rest: '60s',
       videoUrl: '',
-      description: 'Sentado na máquina, apoie as costas no encosto. Segure as manoplas e feche os braços à frente do corpo, contraindo o peitoral. Retorne lentamente sentindo o alongamento.',
-      tips: [
-        'Mantenha o peito estufado.',
-        'Não deixe os braços irem muito atrás da linha do tronco para proteger os ombros.',
-        'Concentre-se na contração máxima no centro.'
-      ],
-      commonErrors: [
-        'Usar impulso exagerado.',
-        'Encolher os ombros durante o movimento.',
-        'Amplitude de movimento muito curta.'
-      ],
-      safetyTips: [
-        'Ajuste a altura do banco para que as mãos fiquem na linha do peito.',
-        'Evite cargas que não permitem o controle total.'
-      ],
-      variations: ['Crucifixo com Halteres', 'Crossover polia média']
+      description: 'Sentado na máquina, feche os braços à frente do corpo contraindo o peitoral.',
+      tips: ['Mantenha o peito estufado.', 'Concentre na contração.'],
+      commonErrors: ['Usar impulso.', 'Ombros para frente.'],
+      safetyTips: ['Ajuste o banco corretamente.'],
+      variations: ['Crucifixo Halter', 'Crossover']
+    },
+    {
+      id: 'crossover-polia-alta',
+      name: 'Crossover Polia Alta',
+      muscleGroup: 'Peito (Inferior)',
+      secondaryMuscles: ['Deltóide Anterior'],
+      equipmentType: 'Cabo/Polia',
+      difficulty: 'Intermediário',
+      sets: '3',
+      reps: '12-15',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Com as polias no topo, puxe os cabos para baixo e para frente cruzando levemente as mãos.',
+      tips: ['Mantenha leve flexão nos cotovelos.', 'Corpo levemente inclinado à frente.'],
+      commonErrors: ['Dobrar demais os braços.', 'Usar o tronco.'],
+      safetyTips: ['Controle o retorno.'],
+      variations: ['Crossover Polia Média', 'Crossover Polia Baixa']
     },
     {
       id: 'flexao-braço',
@@ -94,54 +106,49 @@ export const exercises: Record<string, Exercise[]> = {
       equipmentType: 'Peso do corpo',
       difficulty: 'Iniciante',
       sets: '3',
-      reps: 'Até a falha',
+      reps: 'Fadiga',
       rest: '60s',
       videoUrl: '',
-      description: 'Em posição de prancha, desça o corpo mantendo o tronco reto até o peito quase tocar o chão. Empurre de volta à posição inicial.',
-      tips: [
-        'Mantenha o abdômen contraído.',
-        'Olhe ligeiramente à frente para alinhar a coluna.',
-        'Cotovelos devem apontar para trás, não para os lados.'
-      ],
-      commonErrors: [
-        'Deixar o quadril cair ou subir demais.',
-        'Movimento incompleto.',
-        'Posição das mãos desalinhada.'
-      ],
-      safetyTips: [
-        'Se for iniciante, comece com os joelhos no chão.',
-        'Pare se sentir dor aguda nos punhos ou ombros.'
-      ],
-      variations: ['Flexão Inclinada', 'Flexão Diamante', 'Flexão com Palmas']
+      description: 'Apoie as mãos no chão e desça o corpo mantendo o alinhamento da coluna.',
+      tips: ['Cotovelos para trás.', 'Abdômen travado.'],
+      commonErrors: ['Quadril caído.', 'Olhar para baixo.'],
+      safetyTips: ['Comece com os joelhos se necessário.'],
+      variations: ['Flexão Inclinada', 'Flexão Diamante']
+    },
+    {
+      id: 'mergulho-paralelas',
+      name: 'Mergulho em Paralelas (Dips)',
+      muscleGroup: 'Peito (Inferior)',
+      secondaryMuscles: ['Tríceps', 'Ombros'],
+      equipmentType: 'Livre',
+      difficulty: 'Avançado',
+      sets: '3',
+      reps: '8-12',
+      rest: '90s',
+      videoUrl: '',
+      description: 'Nas barras paralelas, incline o corpo à frente e desça flexionando os braços.',
+      tips: ['Corpo inclinado foca no peito.', 'Corpo vertical foca no tríceps.'],
+      commonErrors: ['Descer pouco.', 'Balançar as pernas.'],
+      safetyTips: ['Evite se tiver dor no ombro.'],
+      variations: ['Mergulho no Banco', 'Graviton']
     }
   ],
   pernas: [
     {
       id: 'agachamento-livre',
       name: 'Agachamento Livre',
-      muscleGroup: 'Pernas',
+      muscleGroup: 'Pernas (Quadríceps)',
       secondaryMuscles: ['Glúteos', 'Lombar', 'Core'],
       equipmentType: 'Barra',
       difficulty: 'Avançado',
       sets: '4',
       reps: '8-10',
-      rest: '90-120s',
+      rest: '120s',
       videoUrl: '',
-      description: 'Com a barra nos ombros, agache como se fosse sentar em uma cadeira, mantendo o calcanhar firme no chão e o peito aberto. Desça até as coxas ficarem paralelas ao chão.',
-      tips: [
-        'Mantenha a coluna neutra.',
-        'Inicie o movimento jogando o quadril para trás.',
-        'Joelhos devem seguir a direção da ponta dos pés.'
-      ],
-      commonErrors: [
-        'Projetar os joelhos excessivamente para dentro (valgo dinâmico).',
-        'Tirar os calcanhares do chão.',
-        'Arredondar a coluna lombar.'
-      ],
-      safetyTips: [
-        'Sempre use a trava de segurança no rack.',
-        'Mantenha o olhar no horizonte.'
-      ],
+      description: 'Agache com a barra nos trapézios, mantendo os calcanhares no chão e coluna reta.',
+      tips: ['Olhar no horizonte.', 'Joelhos seguem a ponta dos pés.'],
+      commonErrors: ['Joelhos para dentro.', 'Coluna curvada.'],
+      safetyTips: ['Use o rack de segurança.'],
       variations: ['Agachamento Frontal', 'Agachamento Sumô', 'Agachamento Búlgaro']
     },
     {
@@ -155,52 +162,132 @@ export const exercises: Record<string, Exercise[]> = {
       reps: '10-12',
       rest: '90s',
       videoUrl: '',
-      description: 'Sentado na máquina, apoie os pés na plataforma na largura dos ombros. Destrave o peso e desça lentamente até as coxas aproximarem-se do tronco. Empurre de volta sem bloquear os joelhos.',
-      tips: [
-        'Não tire o quadril do banco durante a descida.',
-        'Mantenha a pressão no meio do pé e calcanhares.',
-        'Respire durante o esforço.'
-      ],
-      commonErrors: [
-        'Estender totalmente (bloquear) os joelhos no topo.',
-        'Amplitude muito curta.',
-        'Mãos nos joelhos para ajudar.'
-      ],
-      safetyTips: [
-        'Nunca retire as mãos das travas de segurança enquanto o peso estiver em movimento.',
-        'Verifique se os pés estão bem posicionados e secos.'
-      ],
+      description: 'Empurre a plataforma com os pés, sem bloquear os joelhos no topo.',
+      tips: ['Quadril colado no banco.', 'Pés na largura dos ombros.'],
+      commonErrors: ['Tirar o quadril do banco.', 'Mãos nos joelhos.'],
+      safetyTips: ['Sempre use as travas.'],
       variations: ['Leg Press Horizontal', 'Leg Press Unilateral']
+    },
+    {
+      id: 'cadeira-extensora',
+      name: 'Cadeira Extensora',
+      muscleGroup: 'Pernas (Quadríceps)',
+      secondaryMuscles: [],
+      equipmentType: 'Máquina',
+      difficulty: 'Iniciante',
+      sets: '3',
+      reps: '12-15',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Sentado na máquina, estenda as pernas totalmente e retorne controladamente.',
+      tips: ['Mantenha as costas no encosto.', 'Pés apontados para cima.'],
+      commonErrors: ['Usar carga excessiva e balançar o corpo.'],
+      safetyTips: ['Alinhe o joelho com o eixo da máquina.'],
+      variations: ['Extensora Unilateral']
+    },
+    {
+      id: 'mesa-flexora',
+      name: 'Mesa Flexora (Deitado)',
+      muscleGroup: 'Posterior de Coxa',
+      secondaryMuscles: ['Glúteos'],
+      equipmentType: 'Máquina',
+      difficulty: 'Iniciante',
+      sets: '3',
+      reps: '12-15',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Deitado na máquina, flexione as pernas trazendo o rolo em direção aos glúteos.',
+      tips: ['Mantenha o quadril pressionado no banco.', 'Controle a descida.'],
+      commonErrors: ['Elevar o quadril.', 'Movimento muito rápido.'],
+      safetyTips: ['Ajuste o rolo logo acima do calcanhar.'],
+      variations: ['Cadeira Flexora', 'Flexora Vertical']
+    },
+    {
+      id: 'stiff',
+      name: 'Stiff (Levantamento Terra Romeno)',
+      muscleGroup: 'Posterior de Coxa',
+      secondaryMuscles: ['Glúteos', 'Lombar'],
+      equipmentType: 'Barra',
+      difficulty: 'Intermediário',
+      sets: '3',
+      reps: '10-12',
+      rest: '90s',
+      videoUrl: '',
+      description: 'Com as pernas quase retas, desça a barra rente às pernas jogando o quadril para trás.',
+      tips: ['Sinta o alongamento do posterior.', 'Mantenha a coluna reta.'],
+      commonErrors: ['Arredondar a coluna.', 'Dobrar demais os joelhos.'],
+      safetyTips: ['Mantenha a barra perto das pernas.'],
+      variations: ['Stiff com Halteres']
     }
   ],
   costas: [
     {
-      id: 'puxada-frontal',
+      id: 'puxada-frente',
       name: 'Puxada Frontal',
-      muscleGroup: 'Costas',
-      secondaryMuscles: ['Bíceps', 'Deltóide Posterior'],
+      muscleGroup: 'Costas (Dorsal)',
+      secondaryMuscles: ['Bíceps', 'Braquial'],
       equipmentType: 'Máquina',
       difficulty: 'Iniciante',
       sets: '4',
       reps: '10-12',
       rest: '60s',
       videoUrl: '',
-      description: 'Sentado na máquina, puxe a barra em direção ao peito, focando em trazer os cotovelos para baixo e para trás. Retorne controladamente.',
-      tips: [
-        'Mantenha o peito inclinado levemente para cima.',
-        'Imagine que suas mãos são apenas ganchos, puxe com os cotovelos.',
-        'Contraia as escápulas na parte baixa do movimento.'
-      ],
-      commonErrors: [
-        'Balançar o corpo para trás para ganhar impulso.',
-        'Puxar a barra atrás da nuca (risco para ombros).',
-        'Não estender totalmente os braços na subida.'
-      ],
-      safetyTips: [
-        'Ajuste o apoio das coxas para que você fique firme no banco.',
-        'Não use uma carga que te obrigue a perder a postura.'
-      ],
-      variations: ['Puxada com Triângulo', 'Puxada com Pegada Supinada', 'Puxada Unilateral']
+      description: 'Puxe a barra em direção ao peito, focando em trazer os cotovelos para baixo.',
+      tips: ['Não use o balanço.', 'Contraia as escápulas.'],
+      commonErrors: ['Puxar atrás da nuca.', 'Inclinar demais para trás.'],
+      safetyTips: ['Controle o peso na subida.'],
+      variations: ['Puxada com Triângulo', 'Puxada Supinada']
+    },
+    {
+      id: 'remada-curvada',
+      name: 'Remada Curvada com Barra',
+      muscleGroup: 'Costas',
+      secondaryMuscles: ['Bíceps', 'Posterior de Ombro'],
+      equipmentType: 'Barra',
+      difficulty: 'Intermediário',
+      sets: '4',
+      reps: '8-12',
+      rest: '90s',
+      videoUrl: '',
+      description: 'Tronco inclinado, puxe a barra em direção ao abdômen mantendo a coluna reta.',
+      tips: ['Cotovelos rente ao corpo.', 'Foco nas escápulas.'],
+      commonErrors: ['Coluna arredondada.', 'Subir o tronco durante a remada.'],
+      safetyTips: ['Mantenha o abdômen contraído.'],
+      variations: ['Remada Curvada Supinada', 'Remada com Halteres']
+    },
+    {
+      id: 'barra-fixa',
+      name: 'Barra Fixa (Pull-up)',
+      muscleGroup: 'Costas',
+      secondaryMuscles: ['Bíceps'],
+      equipmentType: 'Peso do corpo',
+      difficulty: 'Avançado',
+      sets: '3',
+      reps: 'Fadiga',
+      rest: '120s',
+      videoUrl: '',
+      description: 'Puxe seu corpo até o queixo passar a barra.',
+      tips: ['Peito para cima.', 'Controle a descida.'],
+      commonErrors: ['Kipping (chutes).', 'Amplitude incompleta.'],
+      safetyTips: ['Cuidado com a pegada.'],
+      variations: ['Chin-up (Supinada)', 'Barra com Elástico']
+    },
+    {
+      id: 'pulldown-corda',
+      name: 'Pulldown com Corda',
+      muscleGroup: 'Costas (Dorsal)',
+      secondaryMuscles: ['Tríceps (Cabeça Longa)'],
+      equipmentType: 'Cabo/Polia',
+      difficulty: 'Intermediário',
+      sets: '3',
+      reps: '12-15',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Braços quase retos, puxe a corda da polia alta até as coxas.',
+      tips: ['Mantenha o peito aberto.', 'Sinta apenas o dorsal trabalhando.'],
+      commonErrors: ['Dobrar os cotovelos.', 'Usar o tríceps.'],
+      safetyTips: ['Peso moderado.'],
+      variations: ['Pulldown com Barra Reta']
     }
   ],
   ombros: [
@@ -213,58 +300,53 @@ export const exercises: Record<string, Exercise[]> = {
       difficulty: 'Intermediário',
       sets: '4',
       reps: '8-12',
-      rest: '60-90s',
+      rest: '90s',
       videoUrl: '',
-      description: 'Sentado ou em pé, leve os halteres à altura dos ombros. Empurre-os para cima até que os braços estejam quase estendidos e retorne lentamente.',
-      tips: [
-        'Mantenha o core contraído para estabilizar a coluna.',
-        'Não bata os halteres no topo.',
-        'Mantenha os cotovelos ligeiramente à frente da linha dos ombros.'
-      ],
-      commonErrors: [
-        'Arquear excessivamente a lombar.',
-        'Usar impulso com as pernas (a menos que seja um Push Press).',
-        'Amplitude incompleta.'
-      ],
-      safetyTips: [
-        'Se fizer em pé, mantenha os joelhos levemente flexionados.',
-        'Cuidado ao colocar e retirar os halteres do chão.'
-      ],
-      variations: ['Desenvolvimento com Barra', 'Arnold Press', 'Desenvolvimento na Máquina']
+      description: 'Empurre os halteres para cima a partir da altura das orelhas.',
+      tips: ['Cotovelos levemente à frente.', 'Não arquear a lombar.'],
+      commonErrors: ['Bater os pesos.', 'Descer pouco.'],
+      safetyTips: ['Pés firmes no chão.'],
+      variations: ['Desenvolvimento Barra', 'Arnold Press']
     },
     {
       id: 'elevacao-lateral',
       name: 'Elevação Lateral',
-      muscleGroup: 'Ombros',
-      secondaryMuscles: ['Trapézio Superior'],
+      muscleGroup: 'Ombros (Lateral)',
+      secondaryMuscles: ['Trapézio'],
       equipmentType: 'Halteres',
-      difficulty: 'Intermediário',
+      difficulty: 'Iniciante',
       sets: '3',
       reps: '12-15',
       rest: '60s',
       videoUrl: '',
-      description: 'Em pé, com um halter em cada mão, eleve os braços lateralmente até a altura dos ombros. Mantenha os braços ligeiramente flexionados e retorne lentamente.',
-      tips: [
-        'O foco deve ser o deltoide lateral.',
-        'Mantenha o punho firme.',
-        'Pense em "afastar" o peso do corpo, não apenas subir.'
-      ],
-      commonErrors: [
-        'Subir o peso acima da linha dos ombros.',
-        'Usar o trapézio para "dar de ombros".',
-        'Balançar o tronco.'
-      ],
-      safetyTips: [
-        'Use pesos moderados; este é um exercício de isolamento.',
-        'Evite movimentos bruscos.'
-      ],
-      variations: ['Elevação Lateral no Cabo', 'Elevação Lateral Sentado']
+      description: 'Eleve os braços lateralmente até a altura dos ombros.',
+      tips: ['Pense em "afastar" o peso.', 'Leve flexão no cotovelo.'],
+      commonErrors: ['Subir acima do ombro.', 'Usar impulso.'],
+      safetyTips: ['Peso moderado.'],
+      variations: ['Elevação Lateral Cabo']
+    },
+    {
+      id: 'crucifixo-inverso-maquina',
+      name: 'Crucifixo Inverso (Máquina)',
+      muscleGroup: 'Ombros (Posterior)',
+      secondaryMuscles: ['Rombóides', 'Trapézio'],
+      equipmentType: 'Máquina',
+      difficulty: 'Iniciante',
+      sets: '3',
+      reps: '12-15',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Sentado de frente para a máquina, abra os braços para trás.',
+      tips: ['Foco na parte de trás do ombro.', 'Não junte as escápulas demais.'],
+      commonErrors: ['Encolher os ombros.'],
+      safetyTips: ['Ajuste a altura do banco.'],
+      variations: ['Crucifixo Inverso Halter']
     }
   ],
   biceps: [
     {
-      id: 'rosca-direta-barra',
-      name: 'Rosca Direta com Barra',
+      id: 'rosca-direta-barra-w',
+      name: 'Rosca Direta com Barra W',
       muscleGroup: 'Bíceps',
       secondaryMuscles: ['Antebraço'],
       equipmentType: 'Barra',
@@ -273,59 +355,105 @@ export const exercises: Record<string, Exercise[]> = {
       reps: '10-12',
       rest: '60s',
       videoUrl: '',
-      description: 'Em pé, segure a barra com as palmas voltadas para cima. Flexione os cotovelos levando a barra em direção aos ombros e retorne controladamente.',
-      tips: [
-        'Mantenha os cotovelos fixos ao lado do corpo.',
-        'Não use o balanço do corpo.',
-        'Estenda quase totalmente os braços na descida.'
-      ],
-      commonErrors: [
-        'Mover os cotovelos para frente durante a subida.',
-        'Encurtar a amplitude na descida.',
-        'Pulso "quebrado" ou frouxo.'
-      ],
-      safetyTips: [
-        'Mantenha os joelhos relaxados.',
-        'Cuidado com a carga para não sobrecarregar a lombar.'
-      ],
-      variations: ['Rosca com Barra W', 'Rosca Alternada com Halteres', 'Rosca Martelo']
+      description: 'Flexione os braços trazendo a barra em direção aos ombros.',
+      tips: ['Cotovelos fixos.', 'Não balance o corpo.'],
+      commonErrors: ['Usar a lombar.', 'Amplitude curta.'],
+      safetyTips: ['Mantenha os pulsos firmes.'],
+      variations: ['Rosca Barra Reta', 'Rosca Halteres']
+    },
+    {
+      id: 'rosca-martelo',
+      name: 'Rosca Martelo com Halteres',
+      muscleGroup: 'Bíceps (Braquial)',
+      secondaryMuscles: ['Braquiorradial'],
+      equipmentType: 'Halteres',
+      difficulty: 'Iniciante',
+      sets: '3',
+      reps: '10-12',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Pegada neutra (palmas viradas para o corpo), flexione os braços.',
+      tips: ['Ótimo para volume lateral do braço.'],
+      commonErrors: ['Girar o pulso.'],
+      safetyTips: ['Controle a descida.'],
+      variations: ['Rosca Martelo Cabo']
+    },
+    {
+      id: 'rosca-scott-maquina',
+      name: 'Rosca Scott (Máquina)',
+      muscleGroup: 'Bíceps',
+      secondaryMuscles: [],
+      equipmentType: 'Máquina',
+      difficulty: 'Iniciante',
+      sets: '3',
+      reps: '10-12',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Apoie os braços no banco e execute a flexão.',
+      tips: ['Isolamento total do bíceps.', 'Não estenda totalmente para não lesionar.'],
+      commonErrors: ['Sair do banco.'],
+      safetyTips: ['Cuidado com o alongamento excessivo.'],
+      variations: ['Rosca Scott Barra']
     }
   ],
   triceps: [
     {
-      id: 'triceps-pulley',
-      name: 'Tríceps Pulley (Corda ou Barra)',
+      id: 'triceps-pulley-barra',
+      name: 'Tríceps Pulley (Barra Reta)',
       muscleGroup: 'Tríceps',
       secondaryMuscles: [],
       equipmentType: 'Cabo/Polia',
       difficulty: 'Iniciante',
-      sets: '3',
+      sets: '4',
       reps: '12-15',
       rest: '60s',
       videoUrl: '',
-      description: 'Na polia alta, empurre a barra ou corda para baixo até estender totalmente os braços, focando na contração do tríceps. Retorne lentamente.',
-      tips: [
-        'Mantenha os ombros para baixo e cotovelos fixos.',
-        'Se usar corda, abra as pontas no final do movimento para contração extra.',
-        'Mantenha o peito estufado.'
-      ],
-      commonErrors: [
-        'Usar o peso do corpo para empurrar.',
-        'Abrir os cotovelos para os lados.',
-        'Deixar os ombros subirem em direção às orelhas.'
-      ],
-      safetyTips: [
-        'Mantenha uma base estável com os pés.',
-        'Controle a velocidade, especialmente na volta (fase excêntrica).'
-      ],
-      variations: ['Tríceps Testa', 'Tríceps Francês', 'Mergulho no Banco']
+      description: 'Empurre a barra para baixo até estender os braços.',
+      tips: ['Cotovelos colados no corpo.', 'Ombros para baixo.'],
+      commonErrors: ['Usar o peso do corpo.', 'Abrir cotovelos.'],
+      safetyTips: ['Mantenha o punho reto.'],
+      variations: ['Tríceps Pulley Corda']
+    },
+    {
+      id: 'triceps-testa-barra-w',
+      name: 'Tríceps Testa com Barra W',
+      muscleGroup: 'Tríceps',
+      secondaryMuscles: [],
+      equipmentType: 'Barra',
+      difficulty: 'Intermediário',
+      sets: '3',
+      reps: '10-12',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Deitado, desça a barra em direção à testa e empurre de volta.',
+      tips: ['Cotovelos apontando para o teto.', 'Controle a descida.'],
+      commonErrors: ['Abrir demais os cotovelos.'],
+      safetyTips: ['Cuidado para não bater na testa.'],
+      variations: ['Tríceps Testa Halteres']
+    },
+    {
+      id: 'triceps-frances-halter',
+      name: 'Tríceps Francês com Halter',
+      muscleGroup: 'Tríceps (Cabeça Longa)',
+      secondaryMuscles: [],
+      equipmentType: 'Halteres',
+      difficulty: 'Intermediário',
+      sets: '3',
+      reps: '10-12',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Segure o halter acima da cabeça e desça por trás da nuca.',
+      tips: ['Excelente para alongamento do tríceps.'],
+      commonErrors: ['Arquear a lombar.'],
+      safetyTips: ['Pode ser feito sentado para maior estabilidade.'],
+      variations: ['Tríceps Francês Cabo']
     }
   ],
   abdomen: [
     {
       id: 'abdominal-crunch',
       name: 'Abdominal Crunch',
-      muscleGroup: 'Abdômen',
+      muscleGroup: 'Abdômen (Superior)',
       secondaryMuscles: [],
       equipmentType: 'Peso do corpo',
       difficulty: 'Iniciante',
@@ -333,22 +461,81 @@ export const exercises: Record<string, Exercise[]> = {
       reps: '15-20',
       rest: '45s',
       videoUrl: '',
-      description: 'Deitado de costas, flexione as pernas. Eleve apenas a parte superior das costas, focando na contração do abdômen, e retorne.',
-      tips: [
-        'Não puxe o pescoço com as mãos.',
-        'Solte o ar na subida.',
-        'Mantenha o queixo longe do peito.'
-      ],
-      commonErrors: [
-        'Usar os braços para puxar a cabeça.',
-        'Subir o tronco inteiro (o foco é apenas a flexão da coluna).',
-        'Movimento muito rápido.'
-      ],
-      safetyTips: [
-        'Mantenha a lombar encostada no chão.',
-        'Se tiver dor no pescoço, olhe para um ponto fixo no teto.'
-      ],
-      variations: ['Abdominal no Cabo', 'Prancha Isométrica', 'Elevação de Pernas']
+      description: 'Eleve levemente os ombros do chão contraindo o abdômen.',
+      tips: ['Solte o ar na subida.', 'Não puxe o pescoço.'],
+      commonErrors: ['Usar os braços.'],
+      safetyTips: ['Lombar sempre no chão.'],
+      variations: ['Abdominal na Máquina']
+    },
+    {
+      id: 'elevacao-de-pernas',
+      name: 'Elevação de Pernas',
+      muscleGroup: 'Abdômen (Inferior)',
+      secondaryMuscles: ['Iliopsoas'],
+      equipmentType: 'Peso do corpo',
+      difficulty: 'Intermediário',
+      sets: '3',
+      reps: '12-15',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Deitado, eleve as pernas estendidas e desça sem tocar o chão.',
+      tips: ['Mantenha a lombar colada no chão.'],
+      commonErrors: ['Arquear as costas.'],
+      safetyTips: ['Pode colocar as mãos sob o glúteo.'],
+      variations: ['Elevação de Pernas Suspenso']
+    },
+    {
+      id: 'prancha-isometrica',
+      name: 'Prancha Isométrica',
+      muscleGroup: 'Core',
+      secondaryMuscles: ['Ombros', 'Lombar'],
+      equipmentType: 'Peso do corpo',
+      difficulty: 'Iniciante',
+      sets: '3',
+      reps: '45-60s',
+      rest: '60s',
+      videoUrl: '',
+      description: 'Mantenha o corpo reto apoiado nos antebraços e pontas dos pés.',
+      tips: ['Abdômen e glúteos contraídos.'],
+      commonErrors: ['Levantar demais o quadril.', 'Deixar o quadril cair.'],
+      safetyTips: ['Respire normalmente.'],
+      variations: ['Prancha Lateral']
+    }
+  ],
+  panturrilha: [
+    {
+      id: 'panturrilha-em-pe',
+      name: 'Panturrilha em Pé (Máquina)',
+      muscleGroup: 'Panturrilha',
+      secondaryMuscles: [],
+      equipmentType: 'Máquina',
+      difficulty: 'Iniciante',
+      sets: '4',
+      reps: '15-20',
+      rest: '45s',
+      videoUrl: '',
+      description: 'Eleve o corpo ficando nas pontas dos pés e desça totalmente.',
+      tips: ['Amplitude máxima.', 'Pausa no topo.'],
+      commonErrors: ['Usar os joelhos.'],
+      safetyTips: ['Pés bem apoiados.'],
+      variations: ['Panturrilha no Leg Press']
+    },
+    {
+      id: 'panturrilha-sentado',
+      name: 'Panturrilha Sentado (Sóleus)',
+      muscleGroup: 'Panturrilha',
+      secondaryMuscles: [],
+      equipmentType: 'Máquina',
+      difficulty: 'Iniciante',
+      sets: '4',
+      reps: '15-20',
+      rest: '45s',
+      videoUrl: '',
+      description: 'Sentado na máquina, eleve os calcanhares contra o peso.',
+      tips: ['Foca no músculo sóleo.'],
+      commonErrors: ['Movimento muito curto.'],
+      safetyTips: ['Ajuste o apoio nas coxas.'],
+      variations: ['Panturrilha Sentado Halter']
     }
   ]
 };
@@ -369,7 +556,7 @@ export const dailyWorkout = {
   exercises: [
     { name: 'Supino Reto Barra', sets: '4', reps: '10' },
     { name: 'Peck Deck', sets: '3', reps: '12' },
-    { name: 'Flexão de Braços', sets: '3', reps: 'Até a falha' },
+    { name: 'Flexão de Braços', sets: '3', reps: 'Fadiga' },
     { name: 'Tríceps Pulley', sets: '4', reps: '12' },
     { name: 'Mergulho no Banco', sets: '3', reps: '15' },
   ],

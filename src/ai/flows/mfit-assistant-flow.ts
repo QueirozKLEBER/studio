@@ -41,7 +41,8 @@ const mfitAssistantFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const { text } = await ai.generate({
+      const response = await ai.generate({
+        model: 'googleai/gemini-1.5-flash',
         system: `Você é o Assistente MFIT Personal, um personal trainer virtual altamente qualificado, motivador e empático. 
         Sua missão é ajudar alunos a atingirem seus objetivos de fitness (emagrecimento, hipertrofia, saúde).
         Responda de forma profissional, clara e baseada em evidências. 
@@ -50,6 +51,7 @@ const mfitAssistantFlow = ai.defineFlow(
         Mantenha as respostas concisas e motivadoras.`,
         prompt: input.message,
         config: {
+          temperature: 0.7,
           safetySettings: [
             { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
             { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
@@ -59,13 +61,27 @@ const mfitAssistantFlow = ai.defineFlow(
         }
       });
 
+      const text = response.text;
+
+      if (!text) {
+        throw new Error('O modelo não retornou nenhum texto.');
+      }
+
       return {
-        response: text || 'Desculpe, não consegui pensar em uma resposta agora. Vamos tentar de outra forma?',
+        response: text,
       };
-    } catch (error) {
-      console.error('Erro na geração da IA:', error);
+    } catch (error: any) {
+      console.error('Erro detalhado na geração da IA:', error);
+      
+      // Mensagem de erro mais amigável e diagnóstica para o protótipo
+      let errorMsg = 'Desculpe, estou passando por uma manutenção rápida nos meus circuitos de treino. Pode tentar novamente?';
+      
+      if (error.message?.includes('API_KEY')) {
+        errorMsg = 'Erro de configuração: Chave de API não encontrada ou inválida. Verifique o arquivo .env.';
+      }
+
       return {
-        response: 'Desculpe, estou passando por uma manutenção rápida nos meus circuitos de treino. Pode tentar novamente em alguns segundos?',
+        response: errorMsg,
       };
     }
   }

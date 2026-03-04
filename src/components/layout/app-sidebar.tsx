@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Dumbbell,
   Activity,
-  BookOpen,
   Bot,
   CreditCard,
   LogOut,
@@ -58,7 +57,6 @@ export const AppSidebar = () => {
       { href: '/workouts', label: 'Meus Treinos', icon: Dumbbell },
       { href: '/diet', label: 'Minha Dieta', icon: Utensils },
       { href: '/assessment', label: 'Avaliação Física', icon: Activity },
-      { href: '/blog', label: 'Blog MFIT', icon: BookOpen },
       { href: '/ai', label: 'IA Professor', icon: Bot },
       { href: '/pricing', label: 'Planos', icon: CreditCard },
     ];

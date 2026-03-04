@@ -12,7 +12,8 @@ import {
   Clock, 
   ChevronRight,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Utensils
 } from 'lucide-react';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit } from 'firebase/firestore';
@@ -62,11 +63,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-3 gap-3 md:grid-cols-6 w-full">
         {[
           { icon: Dumbbell, label: 'Treinos', href: '/workouts', color: 'bg-blue-100 text-blue-600' },
+          { icon: Utensils, label: 'Dieta', href: '/diet', color: 'bg-orange-100 text-orange-600' },
           { icon: TrendingUp, label: 'Avaliação', href: '/assessment', color: 'bg-green-100 text-green-600' },
-          { icon: Sparkles, label: 'Blog', href: '/blog', color: 'bg-orange-100 text-orange-600' },
-          { icon: Flame, label: 'Planos', href: '/pricing', color: 'bg-red-100 text-red-600' },
-          { icon: Clock, label: 'Histórico', href: '/profile', color: 'bg-purple-100 text-purple-600' },
-          { icon: ChevronRight, label: 'Mais', href: '/dashboard', color: 'bg-gray-100 text-gray-600' },
+          { icon: Sparkles, label: 'IA Prof', href: '/ai', color: 'bg-purple-100 text-purple-600' },
+          { icon: Clock, label: 'Histórico', href: '/profile', color: 'bg-gray-100 text-gray-600' },
+          { icon: ChevronRight, label: 'Planos', href: '/pricing', color: 'bg-red-100 text-red-600' },
         ].map((item, i) => (
           <Link key={i} href={item.href} className="flex flex-col items-center gap-2">
             <div className={`p-4 rounded-3xl ${item.color} shadow-sm transition-transform active:scale-95 w-full aspect-square flex items-center justify-center`}>
@@ -152,19 +153,19 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Recent Activity / Blog Highlight */}
+      {/* Diet Highlight */}
       <div className="flex flex-col gap-4 mb-10 w-full">
-        <h2 className="text-xl font-bold font-headline px-1 text-left">Dicas do Professor</h2>
+        <h2 className="text-xl font-bold font-headline px-1 text-left">Foco na Nutrição</h2>
         <Card className="rounded-[2rem] border-none shadow-sm overflow-hidden bg-white hover:shadow-md transition-shadow">
           <div className="flex items-center gap-6 p-6">
-            <div className="h-20 w-20 bg-blue-50 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-inner">
-              <Sparkles className="h-10 w-10 text-primary" />
+            <div className="h-20 w-20 bg-orange-50 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-inner">
+              <Utensils className="h-10 w-10 text-orange-600" />
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <h4 className="font-bold text-lg truncate">Como ganhar massa muscular com constância?</h4>
-              <p className="text-sm text-muted-foreground line-clamp-1 mt-1">Descubra os pilares da hipertrofia real e duradoura...</p>
-              <Link href="/blog" className="text-xs text-primary font-black uppercase tracking-widest mt-2 block hover:underline">
-                Ler Matéria Completa
+              <h4 className="font-bold text-lg truncate">Minha Dieta Personalizada</h4>
+              <p className="text-sm text-muted-foreground line-clamp-1 mt-1">Confira as últimas orientações alimentares do seu professor...</p>
+              <Link href="/diet" className="text-xs text-primary font-black uppercase tracking-widest mt-2 block hover:underline">
+                Acessar Plano Alimentar
               </Link>
             </div>
           </div>

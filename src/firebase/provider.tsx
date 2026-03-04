@@ -14,13 +14,16 @@ interface FirebaseProviderProps {
   auth: Auth;
 }
 
-interface UserProfile {
+export interface UserProfile {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   userType: 'student' | 'trainer' | 'admin';
   dateJoined: string;
+  photoURL?: string;
+  height?: string;
+  weight?: string;
 }
 
 // Internal state for user authentication

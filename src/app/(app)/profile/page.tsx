@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef } from 'react';
@@ -120,9 +119,9 @@ export default function ProfilePage() {
     const reader = new FileReader();
     
     reader.onload = (event) => {
-      const img = new Image();
+      // Use globalThis.Image to avoid conflict with Next.js Image component
+      const img = new globalThis.Image();
       img.onload = () => {
-        // Create canvas for compression/resizing
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 400;
         const MAX_HEIGHT = 400;
@@ -146,10 +145,20 @@ export default function ProfilePage() {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
-        // Convert to highly compressed JPEG to ensure it fits in Firestore (limit 1MB)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        // Convert to highly compressed JPEG
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
         handleUpdateAvatar(compressedBase64);
       };
+      
+      img.onerror = () => {
+        setIsUpdating(false);
+        toast({
+          variant: "destructive",
+          title: "Erro na imagem",
+          description: "O arquivo selecionado não é uma imagem válida.",
+        });
+      };
+      
       img.src = event.target?.result as string;
     };
     
@@ -158,7 +167,7 @@ export default function ProfilePage() {
       toast({
         variant: "destructive",
         title: "Erro no arquivo",
-        description: "Não foi possível ler a imagem selecionada.",
+        description: "Não foi possível ler o arquivo selecionado.",
       });
     };
 
@@ -192,13 +201,11 @@ export default function ProfilePage() {
               </Avatar>
               <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button 
-                    variant="secondary" 
-                    size="icon" 
-                    className="absolute -bottom-2 -right-2 rounded-2xl shadow-lg border-2 border-white hover:scale-110 transition-transform"
+                  <button 
+                    className="absolute -bottom-2 -right-2 p-2 bg-secondary text-white rounded-2xl shadow-lg border-2 border-white hover:scale-110 transition-transform flex items-center justify-center"
                   >
                     <Camera className="h-5 w-5" />
-                  </Button>
+                  </button>
                 </DialogTrigger>
                 <DialogContent className="rounded-[2.5rem] max-w-md">
                   <DialogHeader>

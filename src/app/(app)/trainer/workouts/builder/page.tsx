@@ -1,20 +1,22 @@
+
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { muscleGroups, exercises as allExercises, Exercise } from '@/lib/placeholder-data';
-import { Search, Plus, Trash2, GripVertical, Save, Send, Dumbbell } from 'lucide-react';
+import { Search, Plus, Trash2, GripVertical, Save, Send, Dumbbell, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser } from '@/firebase';
-import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser, useDoc } from '@/firebase';
+import { doc, setDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useMemoFirebase } from '@/firebase';
 
 type WorkoutExercise = Exercise & {
   targetSets: string;
@@ -26,6 +28,8 @@ type WorkoutExercise = Exercise & {
 function BuilderContent() {
   const searchParams = useSearchParams();
   const studentId = searchParams.get('studentId');
+  const planId = searchParams.get('planId');
+  
   const [selectedMuscle, setSelectedMuscle] = useState<string>('peito');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutExercise[]>([]);
@@ -35,6 +39,22 @@ function BuilderContent() {
   const db = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useUser();
+
+  // Se existir um planId, carregar os dados do treino existente
+  const planRef = useMemoFirebase(() => {
+    if (!studentId || !planId) return null;
+    return doc(db, 'users', studentId, 'trainingPlans', planId);
+  }, [db, studentId, planId]);
+
+  const { data: existingPlan, isLoading: isPlanLoading } = useDoc(planRef);
+
+  useEffect(() => {
+    if (existingPlan) {
+      setWorkoutName(existingPlan.name || '');
+      setCurrentWorkout(existingPlan.exercises || []);
+    }
+  }, [existingPlan]);
 
   const filteredExercises = allExercises[selectedMuscle as keyof typeof allExercises]?.filter(ex =>
     ex.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -76,17 +96,32 @@ function BuilderContent() {
 
     setIsSaving(true);
     try {
-      const planRef = doc(collection(db, 'users', studentId, 'trainingPlans'));
-      await setDoc(planRef, {
-        id: planRef.id,
+      const finalPlanRef = planId 
+        ? doc(db, 'users', studentId, 'trainingPlans', planId)
+        : doc(collection(db, 'users', studentId, 'trainingPlans'));
+
+      const planData = {
+        id: finalPlanRef.id,
         name: workoutName,
         userId: studentId,
         exercises: currentWorkout,
-        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         status: 'active'
-      });
+      };
 
-      toast({ title: "Treino Liberado", description: `O treino foi enviado para o aluno.` });
+      if (planId) {
+        await updateDoc(finalPlanRef, planData);
+      } else {
+        await setDoc(finalPlanRef, {
+          ...planData,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      toast({ 
+        title: planId ? "Treino Atualizado" : "Treino Liberado", 
+        description: `As alterações foram enviadas para o aluno.` 
+      });
       router.push(`/trainer/students/${studentId}`);
     } catch (error) {
       toast({ variant: 'destructive', title: "Erro", description: "Falha ao salvar o treino." });
@@ -95,11 +130,19 @@ function BuilderContent() {
     }
   };
 
+  if (isPlanLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] w-full max-w-none">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
-          title="Montador de Treino" 
+          title={planId ? "Editar Treino" : "Montador de Treino"} 
           subtitle={studentId ? "Personalizando treino para o aluno." : "Crie treinos de elite."} 
         />
         <div className="flex gap-2">
@@ -109,7 +152,7 @@ function BuilderContent() {
           </Button>
           <Button onClick={handleSaveWorkout} className="rounded-2xl font-bold" disabled={isSaving}>
             <Send className="h-4 w-4 mr-2" />
-            Publicar Treino
+            {planId ? "Salvar Alterações" : "Publicar Treino"}
           </Button>
         </div>
       </div>

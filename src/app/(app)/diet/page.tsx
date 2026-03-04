@@ -67,7 +67,7 @@ export default function StudentDietPage() {
                         <Zap className="h-4 w-4" />
                         Dica Importante
                       </h4>
-                      <p className="text-xs text-secondary-foreground/80 leading-relaxed font-medium">
+                      <p className="text-sm text-foreground/80 leading-relaxed font-bold">
                         A hidratação é fundamental. Beba pelo menos 35ml de água para cada kg de peso corporal ao longo do dia.
                       </p>
                     </div>
@@ -76,7 +76,7 @@ export default function StudentDietPage() {
                         <Info className="h-4 w-4" />
                         Aviso
                       </h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
+                      <p className="text-sm text-muted-foreground leading-relaxed font-medium">
                         Estas são sugestões baseadas no seu objetivo. Consulte sempre um nutricionista para um plano clínico individualizado.
                       </p>
                     </div>

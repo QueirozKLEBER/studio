@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,9 @@ import { useUser, useFirestore } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
 const PRESET_AVATARS = [
   { id: 'av1', url: 'https://picsum.photos/seed/fitness_user1/200' },
@@ -32,6 +33,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     firstName: profile?.firstName || '',
@@ -114,6 +116,28 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size (limit to 1MB for base64 storage in Firestore)
+    if (file.size > 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "Arquivo muito grande",
+        description: "Por favor, escolha uma imagem de até 1MB.",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      handleUpdateAvatar(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -154,30 +178,62 @@ export default function ProfilePage() {
                   <DialogHeader>
                     <DialogTitle className="text-xl font-black uppercase tracking-tight">Escolher Novo Avatar</DialogTitle>
                   </DialogHeader>
-                  <div className="grid grid-cols-3 gap-4 py-4">
-                    {PRESET_AVATARS.map((avatar) => (
-                      <button
-                        key={avatar.id}
-                        onClick={() => handleUpdateAvatar(avatar.url)}
-                        className="relative aspect-square rounded-2xl overflow-hidden hover:ring-4 ring-primary transition-all group"
-                      >
-                        <img src={avatar.url} alt="Preset Avatar" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <ImageIcon className="text-white h-6 w-6" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="space-y-2 mt-4">
-                    <Label className="font-bold text-xs uppercase opacity-70">Ou use uma URL personalizada</Label>
-                    <div className="flex gap-2">
-                      <Input 
-                        placeholder="https://..." 
-                        className="rounded-xl h-12" 
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleUpdateAvatar((e.target as HTMLInputElement).value);
-                        }}
+                  
+                  <div className="flex flex-col gap-6 py-4">
+                    {/* Opção de Upload de Arquivo */}
+                    <div className="space-y-3">
+                      <Label className="font-bold text-xs uppercase opacity-70">Carregar do Dispositivo</Label>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange}
                       />
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-14 rounded-2xl border-2 flex items-center justify-center gap-3 border-dashed hover:bg-primary/5 hover:border-primary transition-all"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5 text-primary" />}
+                        <span className="font-bold">Selecionar Foto</span>
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <Separator className="flex-1" />
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Ou escolha um preset</span>
+                      <Separator className="flex-1" />
+                    </div>
+
+                    {/* Presets de Avatares */}
+                    <div className="grid grid-cols-3 gap-4">
+                      {PRESET_AVATARS.map((avatar) => (
+                        <button
+                          key={avatar.id}
+                          onClick={() => handleUpdateAvatar(avatar.url)}
+                          className="relative aspect-square rounded-2xl overflow-hidden hover:ring-4 ring-primary transition-all group"
+                        >
+                          <img src={avatar.url} alt="Preset Avatar" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ImageIcon className="text-white h-6 w-6" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="font-bold text-xs uppercase opacity-70">Link Personalizado</Label>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="https://sua-imagem.com/foto.jpg" 
+                          className="rounded-xl h-12 bg-muted/30 border-none" 
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleUpdateAvatar((e.target as HTMLInputElement).value);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </DialogContent>

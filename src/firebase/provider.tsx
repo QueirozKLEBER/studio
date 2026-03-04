@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -80,13 +81,21 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       return;
     }
 
+    let unsubscribeProfile: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(
       auth,
       (firebaseUser) => {
+        // Clean up any existing profile listener from a previous session
+        if (unsubscribeProfile) {
+          unsubscribeProfile();
+          unsubscribeProfile = null;
+        }
+
         if (firebaseUser) {
           // Fetch profile from Firestore
           const profileRef = doc(firestore, 'users', firebaseUser.uid);
-          const unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
+          unsubscribeProfile = onSnapshot(profileRef, (docSnap) => {
             if (docSnap.exists()) {
               setUserAuthState({ 
                 user: firebaseUser, 
@@ -95,6 +104,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
                 userError: null 
               });
             } else {
+              // User exists in Auth but not in Firestore yet (common during signup)
               setUserAuthState({ 
                 user: firebaseUser, 
                 profile: null, 
@@ -103,19 +113,34 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
               });
             }
           }, (err) => {
-            setUserAuthState({ user: firebaseUser, profile: null, isUserLoading: false, userError: err });
+            // This error typically happens if the user logs out while the listener is active
+            // or if the profile document is truly inaccessible.
+            setUserAuthState({ 
+              user: firebaseUser, 
+              profile: null, 
+              isUserLoading: false, 
+              userError: err 
+            });
           });
-
-          return () => unsubscribeProfile();
         } else {
-          setUserAuthState({ user: null, profile: null, isUserLoading: false, userError: null });
+          // User is logged out
+          setUserAuthState({ 
+            user: null, 
+            profile: null, 
+            isUserLoading: false, 
+            userError: null 
+          });
         }
       },
       (error) => {
         setUserAuthState({ user: null, profile: null, isUserLoading: false, userError: error });
       }
     );
-    return () => unsubscribeAuth();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, [auth, firestore]);
 
   const contextValue = useMemo((): FirebaseContextState => {

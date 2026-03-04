@@ -65,6 +65,19 @@
         "exerciseCount": { "type": "number" },
         "completedExercisesCount": { "type": "number" }
       }
+    },
+    "BodyMeasurement": {
+      "title": "BodyMeasurement",
+      "type": "object",
+      "description": "Historical record of student physical measurements.",
+      "properties": {
+        "id": { "type": "string" },
+        "weight": { "type": "number" },
+        "height": { "type": "number" },
+        "bmi": { "type": "number" },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["weight", "height", "bmi", "createdAt"]
     }
   },
   "auth": {
@@ -86,6 +99,10 @@
     "/users/{userId}/workoutHistory/{historyId}": {
       "schema": { "$ref": "#/entities/WorkoutHistory" },
       "description": "Records of completed workouts"
+    },
+    "/users/{userId}/bodyMeasurements/{measurementId}": {
+      "schema": { "$ref": "#/entities/BodyMeasurement" },
+      "description": "Physical assessment history for evolution tracking"
     }
   }
 }

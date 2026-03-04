@@ -24,7 +24,6 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Allow authenticated users to read profiles (needed for trainer/student interaction)
       allow get, list: if isSignedIn();
       allow create: if isOwner(userId);
       allow update, delete: if isOwner(userId) || isAdmin();
@@ -41,6 +40,11 @@ service cloud.firestore {
 
       match /workoutHistory/{historyId} {
         allow get, list, create: if isOwner(userId);
+      }
+
+      match /bodyMeasurements/{measurementId} {
+        allow get, list, create: if isOwner(userId) || isTrainer() || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
       }
     }
 

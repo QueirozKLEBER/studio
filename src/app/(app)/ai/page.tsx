@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { Bot, Send, User, Sparkles, Loader2, Dumbbell, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mfitAssistant } from '@/ai/flows/mfit-assistant-flow';

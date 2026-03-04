@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, Suspense, useEffect } from 'react';
@@ -25,24 +24,37 @@ type WorkoutExercise = Exercise & {
   notes: string;
 };
 
+/**
+ * Loading placeholder consistent between Suspense fallback and initial hydration state.
+ */
+function BuilderLoading() {
+  return (
+    <div className="p-8 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] flex items-center justify-center bg-muted/20 rounded-[2.5rem]">
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-sm font-bold text-muted-foreground animate-pulse uppercase tracking-widest">Carregando Construtor...</p>
+      </div>
+    </div>
+  );
+}
+
 function BuilderContent() {
   const searchParams = useSearchParams();
   const studentId = searchParams.get('studentId');
   const planId = searchParams.get('planId');
   
+  const [hasMounted, setHasMounted] = useState(false);
   const [selectedMuscle, setSelectedMuscle] = useState<string>('peito');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentWorkout, setCurrentWorkout] = useState<WorkoutExercise[]>([]);
   const [workoutName, setWorkoutName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
   
   const db = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useUser();
 
-  // Se existir um planId, carregar os dados do treino existente
   const planRef = useMemoFirebase(() => {
     if (!studentId || !planId) return null;
     return doc(db, 'users', studentId, 'trainingPlans', planId);
@@ -60,6 +72,8 @@ function BuilderContent() {
       setCurrentWorkout(existingPlan.exercises || []);
     }
   }, [existingPlan]);
+
+  if (!hasMounted) return <BuilderLoading />;
 
   const filteredExercises = allExercises[selectedMuscle as keyof typeof allExercises]?.filter(ex =>
     ex.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -135,15 +149,6 @@ function BuilderContent() {
     }
   };
 
-  // Previne erros de hidratação mantendo a estrutura base consistente
-  if (!hasMounted) {
-    return (
-      <div className="flex flex-col gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] w-full max-w-none items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] w-full max-w-none">
       {isPlanLoading ? (
@@ -162,7 +167,7 @@ function BuilderContent() {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar Rascunho
               </Button>
-              <Button onClick={handleSaveWorkout} className="rounded-2xl font-bold" disabled={isSaving}>
+              <Button onClick={handleSaveWorkout} className="rounded-2xl font-bold bg-primary text-white shadow-lg" disabled={isSaving}>
                 <Send className="h-4 w-4 mr-2" />
                 {planId ? "Salvar Alterações" : "Publicar Treino"}
               </Button>
@@ -170,14 +175,13 @@ function BuilderContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden w-full">
-            {/* Biblioteca de Exercícios */}
             <div className="lg:col-span-4 flex flex-col gap-4 overflow-hidden h-full">
               <Card className="rounded-[2.5rem] border-none shadow-sm flex flex-col h-full bg-white">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-bold">Biblioteca</CardTitle>
                   <div className="space-y-4 pt-2">
                     <Select value={selectedMuscle} onValueChange={setSelectedMuscle}>
-                      <SelectTrigger className="rounded-2xl border-none bg-muted">
+                      <SelectTrigger className="rounded-2xl border-none bg-muted h-12">
                         <SelectValue placeholder="Músculo" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
@@ -190,7 +194,7 @@ function BuilderContent() {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input 
                         placeholder="Buscar exercício..." 
-                        className="pl-10 rounded-2xl border-none bg-muted"
+                        className="pl-10 rounded-2xl border-none bg-muted h-12"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -217,7 +221,6 @@ function BuilderContent() {
               </Card>
             </div>
 
-            {/* Construtor do Treino */}
             <div className="lg:col-span-8 flex flex-col gap-4 overflow-hidden h-full">
               <Card className="rounded-[2.5rem] border-none shadow-sm flex flex-col h-full bg-white">
                 <CardHeader className="pb-2">
@@ -239,8 +242,8 @@ function BuilderContent() {
                     {currentWorkout.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground opacity-50">
                         <Dumbbell className="h-16 w-16 mb-4" />
-                        <p className="font-bold">Nenhum exercício adicionado ainda.</p>
-                        <p className="text-sm">Selecione exercícios ao lado para começar.</p>
+                        <p className="font-bold uppercase tracking-widest">Nenhum exercício selecionado</p>
+                        <p className="text-xs">Clique nos exercícios da biblioteca ao lado.</p>
                       </div>
                     ) : (
                       currentWorkout.map((ex, index) => (
@@ -268,7 +271,7 @@ function BuilderContent() {
                                 <Input 
                                   value={ex.targetSets} 
                                   onChange={(e) => updateExercise(ex.id, 'targetSets', e.target.value)}
-                                  className="rounded-xl h-9 bg-white border-none shadow-sm"
+                                  className="rounded-xl h-10 bg-white border-none shadow-sm font-bold text-center"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -276,7 +279,7 @@ function BuilderContent() {
                                 <Input 
                                   value={ex.targetReps} 
                                   onChange={(e) => updateExercise(ex.id, 'targetReps', e.target.value)}
-                                  className="rounded-xl h-9 bg-white border-none shadow-sm"
+                                  className="rounded-xl h-10 bg-white border-none shadow-sm font-bold text-center"
                                 />
                               </div>
                               <div className="space-y-1">
@@ -284,7 +287,7 @@ function BuilderContent() {
                                 <Input 
                                   value={ex.targetRest} 
                                   onChange={(e) => updateExercise(ex.id, 'targetRest', e.target.value)}
-                                  className="rounded-xl h-9 bg-white border-none shadow-sm"
+                                  className="rounded-xl h-10 bg-white border-none shadow-sm font-bold text-center"
                                 />
                               </div>
                             </div>
@@ -295,7 +298,7 @@ function BuilderContent() {
                                 value={ex.notes} 
                                 placeholder="Adicione instruções..."
                                 onChange={(e) => updateExercise(ex.id, 'notes', e.target.value)}
-                                className="rounded-xl h-9 bg-white border-none shadow-sm"
+                                className="rounded-xl h-10 bg-white border-none shadow-sm"
                               />
                             </div>
                           </div>
@@ -315,9 +318,7 @@ function BuilderContent() {
 
 export default function WorkoutBuilder() {
   return (
-    <Suspense fallback={<div className="p-8 animate-pulse bg-muted h-screen flex items-center justify-center">
-      <Loader2 className="h-10 w-10 animate-spin text-primary" />
-    </div>}>
+    <Suspense fallback={<BuilderLoading />}>
       <BuilderContent />
     </Suspense>
   );

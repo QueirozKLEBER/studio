@@ -111,6 +111,7 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('triceps-testa', 'Tríceps Testa', 'triceps', 'Barra', 'Isolar', 'Intermediário'),
     createEx('triceps-banco', 'Mergulho no Banco', 'triceps', 'Peso do corpo', 'Empurrar', 'Iniciante'),
     createEx('triceps-corda', 'Tríceps Corda', 'triceps', 'Cabo/Polia', 'Isolar', 'Iniciante'),
+    createEx('triceps-francesa-halter', 'Tríceps Francesa com Halter', 'triceps', 'Halteres', 'Isolar', 'Iniciante'),
   ],
   pernas: [
     createEx('agachamento-livre-com-barra', 'Agachamento Livre com Barra', 'pernas', 'Barra', 'Agachar', 'Avançado'),

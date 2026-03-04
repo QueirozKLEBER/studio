@@ -55,7 +55,6 @@ export default function ProfilePage() {
     try {
       const userRef = doc(db, 'users', user.uid);
       
-      // Update Firestore
       await updateDoc(userRef, {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -63,7 +62,6 @@ export default function ProfilePage() {
         weight: formData.weight,
       });
 
-      // Update Auth DisplayName
       await updateProfile(user, {
         displayName: `${formData.firstName} ${formData.lastName}`.trim(),
       });
@@ -90,12 +88,10 @@ export default function ProfilePage() {
     try {
       const userRef = doc(db, 'users', user.uid);
       
-      // Update Firestore
       await updateDoc(userRef, {
         photoURL: url,
       });
 
-      // Update Auth Photo
       await updateProfile(user, {
         photoURL: url,
       });
@@ -120,21 +116,52 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size (limit to 1MB for base64 storage in Firestore)
-    if (file.size > 1024 * 1024) {
+    setIsUpdating(true);
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        // Create canvas for compression/resizing
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400;
+        const MAX_HEIGHT = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert to highly compressed JPEG to ensure it fits in Firestore (limit 1MB)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        handleUpdateAvatar(compressedBase64);
+      };
+      img.src = event.target?.result as string;
+    };
+    
+    reader.onerror = () => {
+      setIsUpdating(false);
       toast({
         variant: "destructive",
-        title: "Arquivo muito grande",
-        description: "Por favor, escolha uma imagem de até 1MB.",
+        title: "Erro no arquivo",
+        description: "Não foi possível ler a imagem selecionada.",
       });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      handleUpdateAvatar(base64String);
     };
+
     reader.readAsDataURL(file);
   };
 
@@ -153,7 +180,6 @@ export default function ProfilePage() {
         subtitle="Gerencie seus dados e acompanhe suas medidas de elite."
       />
 
-      {/* Header com Avatar */}
       <Card className="rounded-[2.5rem] border-none shadow-md bg-white overflow-hidden">
         <CardContent className="p-8">
           <div className="flex flex-col md:flex-row items-center gap-8">
@@ -180,9 +206,9 @@ export default function ProfilePage() {
                   </DialogHeader>
                   
                   <div className="flex flex-col gap-6 py-4">
-                    {/* Opção de Upload de Arquivo */}
                     <div className="space-y-3">
                       <Label className="font-bold text-xs uppercase opacity-70">Carregar do Dispositivo</Label>
+                      <p className="text-[10px] text-muted-foreground">Sua foto será otimizada automaticamente para o app.</p>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -207,13 +233,13 @@ export default function ProfilePage() {
                       <Separator className="flex-1" />
                     </div>
 
-                    {/* Presets de Avatares */}
                     <div className="grid grid-cols-3 gap-4">
                       {PRESET_AVATARS.map((avatar) => (
                         <button
                           key={avatar.id}
+                          disabled={isUpdating}
                           onClick={() => handleUpdateAvatar(avatar.url)}
-                          className="relative aspect-square rounded-2xl overflow-hidden hover:ring-4 ring-primary transition-all group"
+                          className="relative aspect-square rounded-2xl overflow-hidden hover:ring-4 ring-primary transition-all group disabled:opacity-50"
                         >
                           <img src={avatar.url} alt="Preset Avatar" className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -225,15 +251,14 @@ export default function ProfilePage() {
 
                     <div className="space-y-3">
                       <Label className="font-bold text-xs uppercase opacity-70">Link Personalizado</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          placeholder="https://sua-imagem.com/foto.jpg" 
-                          className="rounded-xl h-12 bg-muted/30 border-none" 
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleUpdateAvatar((e.target as HTMLInputElement).value);
-                          }}
-                        />
-                      </div>
+                      <Input 
+                        placeholder="https://sua-imagem.com/foto.jpg" 
+                        className="rounded-xl h-12 bg-muted/30 border-none" 
+                        disabled={isUpdating}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleUpdateAvatar((e.target as HTMLInputElement).value);
+                        }}
+                      />
                     </div>
                   </div>
                 </DialogContent>
@@ -258,7 +283,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Formulários de Edição */}
       <Tabs defaultValue="account" className="w-full">
         <TabsList className="bg-muted p-1 rounded-2xl h-12 gap-1 mb-6">
           <TabsTrigger value="account" className="rounded-xl font-bold px-6 flex items-center gap-2">

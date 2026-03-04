@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense, useEffect, useMemo } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,16 +24,12 @@ type WorkoutExercise = Exercise & {
   notes: string;
 };
 
-/**
- * Loading placeholder consistent between Suspense fallback and initial hydration state.
- */
 function BuilderLoading() {
   return (
-    <div className="p-8 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] flex items-center justify-center bg-muted/20 rounded-[2.5rem]">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-sm font-bold text-muted-foreground animate-pulse uppercase tracking-widest">Carregando Construtor...</p>
-      </div>
+    <div className="flex flex-col gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] w-full max-w-none">
+       <div className="flex-1 flex items-center justify-center bg-muted/20 rounded-[2.5rem]">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+       </div>
     </div>
   );
 }
@@ -73,11 +69,13 @@ function BuilderContent() {
     }
   }, [existingPlan]);
 
-  if (!hasMounted) return <BuilderLoading />;
+  const filteredExercises = useMemo(() => {
+    const list = allExercises[selectedMuscle as keyof typeof allExercises] || [];
+    if (!searchTerm) return list;
+    return list.filter(ex => ex.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [selectedMuscle, searchTerm]);
 
-  const filteredExercises = allExercises[selectedMuscle as keyof typeof allExercises]?.filter(ex =>
-    ex.name.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  if (!hasMounted) return <BuilderLoading />;
 
   const addExercise = (ex: Exercise) => {
     if (currentWorkout.some(w => w.id === ex.id)) {
@@ -202,7 +200,7 @@ function BuilderContent() {
                   </div>
                 </CardHeader>
                 <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2" key={selectedMuscle}>
                     {filteredExercises.map(ex => (
                       <button 
                         key={ex.id}
@@ -216,6 +214,9 @@ function BuilderContent() {
                         <Plus className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
                       </button>
                     ))}
+                    {filteredExercises.length === 0 && (
+                      <p className="text-center text-xs text-muted-foreground py-8">Nenhum exercício encontrado.</p>
+                    )}
                   </div>
                 </ScrollArea>
               </Card>

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDoc, useUser, useCollection } from '@/firebase';
-import { doc, updateDoc, collection, query, orderBy } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, orderBy, deleteDoc } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
 import { 
   Dumbbell, 
@@ -18,7 +18,8 @@ import {
   ArrowLeft,
   Settings,
   Edit2,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -30,6 +31,17 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
@@ -78,6 +90,17 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar o perfil." });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeletePlan = async (planId: string) => {
+    if (!id) return;
+    try {
+      const planDocRef = doc(db, 'users', id, 'trainingPlans', planId);
+      await deleteDoc(planDocRef);
+      toast({ title: "Treino excluído", description: "O plano de treino foi removido com sucesso." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erro", description: "Não foi possível excluir o treino." });
     }
   };
 
@@ -250,6 +273,32 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
                       Editar
                     </Link>
                   </Button>
+                  
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 text-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="rounded-[2rem]">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir Treino?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta ação não pode ser desfeita. O treino "{plan.name}" será removido permanentemente do perfil do aluno.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleDeletePlan(plan.id)}
+                          className="rounded-xl bg-destructive text-white hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
                   <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 border-2">
                     <ChevronRight className="h-5 w-5" />
                   </Button>

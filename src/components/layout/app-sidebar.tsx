@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   Settings,
   Utensils,
+  History,
+  Clock
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth, useUser } from '@/firebase';
@@ -54,6 +56,7 @@ export const AppSidebar = () => {
     return [
       { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
       { href: '/workouts', label: 'Meus Treinos', icon: Dumbbell },
+      { href: '/activity', label: 'Atividades', icon: Clock },
       { href: '/diet', label: 'Minha Dieta', icon: Utensils },
       { href: '/assessment', label: 'Avaliação Física', icon: Activity },
       { href: '/pricing', label: 'Planos', icon: CreditCard },

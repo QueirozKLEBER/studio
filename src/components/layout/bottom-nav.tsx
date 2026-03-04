@@ -3,14 +3,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Dumbbell, Activity, User, Utensils } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Activity, User, Utensils, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/workouts', label: 'Treinos', icon: Dumbbell },
+  { href: '/activity', label: 'Atividades', icon: Clock },
   { href: '/diet', label: 'Dieta', icon: Utensils },
-  { href: '/assessment', label: 'Avaliação', icon: Activity },
   { href: '/profile', label: 'Perfil', icon: User },
 ];
 

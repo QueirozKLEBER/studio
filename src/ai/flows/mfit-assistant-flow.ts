@@ -1,8 +1,8 @@
 'use server';
 
 /**
- * @fileOverview Fluxo de IA para o Assistente MFIT Personal.
- * Implementa um modo de simulação (Mock) caso a chave de API não esteja presente.
+ * @fileOverview Fluxo de IA aprimorado para o Assistente MFIT Personal.
+ * Agora utiliza o contexto biômetro do usuário para respostas personalizadas.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,6 +10,12 @@ import { z } from 'genkit';
 
 const MfitAssistantInputSchema = z.object({
   message: z.string().describe('A pergunta ou mensagem enviada pelo usuário.'),
+  userProfile: z.object({
+    firstName: z.string().optional(),
+    height: z.string().optional(),
+    weight: z.string().optional(),
+    userType: z.string().optional(),
+  }).optional().describe('Dados biométricos do usuário para contexto.'),
 });
 
 export type MfitAssistantInput = z.infer<typeof MfitAssistantInputSchema>;
@@ -21,14 +27,13 @@ const MfitAssistantOutputSchema = z.object({
 export type MfitAssistantOutput = z.infer<typeof MfitAssistantOutputSchema>;
 
 /**
- * Respostas simuladas para quando a chave de API não está configurada.
+ * Respostas simuladas inteligentes para o modo DEMO.
  */
-const MOCK_RESPONSES: Record<string, string> = {
-  'default': 'Como seu Professor MFIT, recomendo focar na técnica hoje! Qual sua dúvida específica sobre o treino?',
-  'dieta': 'Para melhores resultados, mantenha uma ingestão constante de proteínas e hidrate-se bem. Quer uma sugestão de pré-treino?',
-  'supino': 'No supino, mantenha as escápulas aduzidas e os pés firmes no chão para maior estabilidade e ativação do peitoral.',
-  'braço': 'Para braços maiores, não negligencie o tríceps! Ele compõe 2/3 do volume do braço. Vamos focar em extensões hoje?',
-};
+const MOCK_RESPONSES = (name?: string) => ({
+  'default': `Olá ${name || 'atleta'}! Como seu Professor MFIT, recomendo focar na cadência do movimento hoje. Qual sua dúvida técnica?`,
+  'dieta': `Para seu perfil, manter a ingestão de proteínas alta é crucial. Lembre-se de beber 35ml de água por kg de peso corporal.`,
+  'supino': `No supino, foque na adução das escápulas. Isso protege seus ombros e isola melhor o peitoral.`,
+});
 
 export async function mfitAssistant(input: MfitAssistantInput): Promise<MfitAssistantOutput> {
   return mfitAssistantFlow(input);
@@ -41,45 +46,43 @@ const mfitAssistantFlow = ai.defineFlow(
     outputSchema: MfitAssistantOutputSchema,
   },
   async (input) => {
-    // Verifica se a chave de API existe
     const hasApiKey = !!process.env.GOOGLE_GENAI_API_KEY;
+    const name = input.userProfile?.firstName;
 
     if (!hasApiKey) {
-      // Retorna uma resposta simulada para não travar a experiência do usuário
       const msg = input.message.toLowerCase();
-      let response = MOCK_RESPONSES.default;
+      let response = MOCK_RESPONSES(name).default;
       
-      if (msg.includes('diet') || msg.includes('comê') || msg.includes('nutri')) response = MOCK_RESPONSES.dieta;
-      if (msg.includes('supino')) response = MOCK_RESPONSES.supino;
-      if (msg.includes('braço') || msg.includes('bíceps')) response = MOCK_RESPONSES.braço;
+      if (msg.includes('diet') || msg.includes('comê') || msg.includes('nutri')) response = MOCK_RESPONSES(name).dieta;
+      if (msg.includes('supino')) response = MOCK_RESPONSES(name).supino;
 
       return {
-        response: `[MODO DEMO] ${response}\n\n(Nota: Para respostas reais da IA, adicione sua GOOGLE_GENAI_API_KEY no arquivo .env)`,
+        response: `[MODO DEMO] ${response}\n\n(Dica: Adicione sua API KEY para desbloquear o Professor em sua potência máxima!)`,
       };
     }
 
-    try {
-      const response = await ai.generate({
-        model: 'googleai/gemini-1.5-flash',
-        system: `Você é o Professor MFIT, o personal trainer virtual oficial do app MFIT Personal. 
-        Sua missão é ser o melhor parceiro de treino do usuário.
-        
-        Diretrizes:
-        1. Responda de forma motivadora, técnica e profissional.
-        2. Foco em: Execução de exercícios, nutrição esportiva e disciplina.
-        3. Idioma: Português do Brasil.
-        4. Seja conciso mas completo.`,
-        prompt: input.message,
-      });
+    const { output } = await ai.generate({
+      model: 'googleai/gemini-1.5-flash',
+      system: `Você é o Professor MFIT, um Personal Trainer de elite com especialização em Biomecânica e Fisiologia.
+      
+      CONTEXTO DO ALUNO:
+      - Nome: ${name || 'Desconhecido'}
+      - Altura: ${input.userProfile?.height || 'Não informada'} cm
+      - Peso: ${input.userProfile?.weight || 'Não informado'} kg
+      - Perfil: ${input.userProfile?.userType || 'Aluno'}
+      
+      DIRETRIZES DE RESPOSTA:
+      1. Use o nome do aluno para criar conexão.
+      2. Seja técnico: Explique a biomecânica (ex: falar de torque, plano de movimento, recrutamento de fibras).
+      3. Seja motivador: Use frases de impacto de "elite".
+      4. Foco em segurança: Sempre mencione a postura correta.
+      5. Nutrição: Dê sugestões baseadas no peso do aluno (se informado).
+      6. Idioma: Português do Brasil.`,
+      prompt: input.message,
+    });
 
-      return {
-        response: response.text || 'Desculpe, não consegui processar sua dúvida agora.',
-      };
-    } catch (error: any) {
-      console.error('Erro na geração da IA:', error);
-      return {
-        response: 'Estou com uma instabilidade técnica momentânea. Pode tentar novamente em alguns instantes?',
-      };
-    }
+    return {
+      response: output?.text || 'Tive uma falha na conexão, mas não desista! Pode repetir?',
+    };
   }
 );

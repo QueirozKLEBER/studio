@@ -11,7 +11,9 @@
         "firstName": { "type": "string" },
         "lastName": { "type": "string" },
         "dateJoined": { "type": "string", "format": "date-time" },
-        "userType": { "type": "string", "enum": ["student", "trainer", "admin"] }
+        "userType": { "type": "string", "enum": ["student", "trainer", "admin"] },
+        "height": { "type": "string" },
+        "weight": { "type": "string" }
       },
       "required": ["id", "email", "firstName", "lastName", "dateJoined", "userType"]
     },
@@ -28,6 +30,29 @@
         "status": { "type": "string" }
       },
       "required": ["id", "name", "userId", "exercises"]
+    },
+    "DietSuggestion": {
+      "title": "DietSuggestion",
+      "type": "object",
+      "description": "Nutritional guidance provided by a trainer.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "meals": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "time": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          } 
+        },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["id", "title", "description"]
     },
     "WorkoutHistory": {
       "title": "WorkoutHistory",
@@ -53,6 +78,10 @@
     "/users/{userId}/trainingPlans/{planId}": {
       "schema": { "$ref": "#/entities/TrainingPlan" },
       "description": "Workouts assigned to users"
+    },
+    "/users/{userId}/dietSuggestions/{suggestionId}": {
+      "schema": { "$ref": "#/entities/DietSuggestion" },
+      "description": "Dietary guidance for students"
     },
     "/users/{userId}/workoutHistory/{historyId}": {
       "schema": { "$ref": "#/entities/WorkoutHistory" },

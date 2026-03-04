@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Logo } from '../icons/logo';
@@ -14,6 +15,7 @@ import {
   Users,
   ShieldCheck,
   Settings,
+  Utensils,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth, useUser } from '@/firebase';
@@ -48,13 +50,13 @@ export const AppSidebar = () => {
         { href: '/trainer/dashboard', label: 'Dashboard Prof', icon: LayoutDashboard },
         { href: '/trainer/students', label: 'Meus Alunos', icon: Users },
         { href: '/trainer/workouts/builder', label: 'Montar Treino', icon: Dumbbell },
-        { href: '/trainer/tips', label: 'Dicas Prof', icon: BookOpen },
       ];
     }
 
     return [
       { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
       { href: '/workouts', label: 'Meus Treinos', icon: Dumbbell },
+      { href: '/diet', label: 'Minha Dieta', icon: Utensils },
       { href: '/assessment', label: 'Avaliação Física', icon: Activity },
       { href: '/blog', label: 'Blog MFIT', icon: BookOpen },
       { href: '/ai', label: 'IA Professor', icon: Bot },

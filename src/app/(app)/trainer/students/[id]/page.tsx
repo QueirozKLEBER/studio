@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDoc, useUser, useCollection } from '@/firebase';
-import { doc, updateDoc, collection, query, orderBy, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, orderBy, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
 import { 
   Dumbbell, 
@@ -19,7 +19,9 @@ import {
   Settings,
   Edit2,
   ChevronRight,
-  Trash2
+  Trash2,
+  Utensils,
+  Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -44,7 +46,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function StudentDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -54,6 +58,7 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
   const { user, profile } = useUser();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDietModalOpen, setIsDietModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const studentRef = useMemoFirebase(() => {
@@ -66,8 +71,14 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
     return query(collection(db, 'users', id, 'trainingPlans'), orderBy('createdAt', 'desc'));
   }, [db, id, user]);
 
+  const dietsQuery = useMemoFirebase(() => {
+    if (!user || !id) return null;
+    return query(collection(db, 'users', id, 'dietSuggestions'), orderBy('createdAt', 'desc'));
+  }, [db, id, user]);
+
   const { data: student, isLoading } = useDoc(studentRef);
   const { data: plans } = useCollection(plansQuery);
+  const { data: diets } = useCollection(dietsQuery);
 
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -93,6 +104,29 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const handleAddDiet = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!id) return;
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      createdAt: serverTimestamp(),
+    };
+
+    setIsUpdating(true);
+    try {
+      await addDoc(collection(db, 'users', id, 'dietSuggestions'), data);
+      toast({ title: "Dieta adicionada", description: "Sugestão enviada com sucesso." });
+      setIsDietModalOpen(false);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erro", description: "Erro ao salvar sugestão." });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDeletePlan = async (planId: string) => {
     if (!id) return;
     try {
@@ -104,11 +138,22 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const handleDeleteDiet = async (dietId: string) => {
+    if (!id) return;
+    try {
+      const dietDocRef = doc(db, 'users', id, 'dietSuggestions', dietId);
+      await deleteDoc(dietDocRef);
+      toast({ title: "Sugestão excluída", description: "A orientação alimentar foi removida." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erro", description: "Erro ao excluir dieta." });
+    }
+  };
+
   if (isLoading || !profile) return <div className="p-8 animate-pulse bg-muted h-screen" />;
   if (!student) return <div className="p-8 text-center py-20">Aluno não encontrado ou sem permissão de acesso.</div>;
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-none">
+    <div className="flex flex-col gap-6 w-full max-w-none pb-20">
       <div className="flex items-center gap-4">
         <Button variant="ghost" className="rounded-2xl" onClick={() => router.back()}>
           <ArrowLeft className="h-5 w-5" />
@@ -221,7 +266,7 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
           </CardContent>
         </Card>
 
-        {/* Ações do Professor */}
+        {/* Ações Rápidas */}
         <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold">Ações do Professor</CardTitle>
@@ -233,47 +278,124 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
                 Montar Novo Treino
               </Link>
             </Button>
+            
+            <Dialog open={isDietModalOpen} onOpenChange={setIsDietModalOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="rounded-2xl h-14 font-bold border-2 w-full">
+                  <Utensils className="h-5 w-5 mr-2" />
+                  Sugerir Dieta
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="rounded-3xl max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold">Nova Sugestão de Dieta</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddDiet} className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título da Orientação</Label>
+                    <Input id="title" name="title" placeholder="Ex: Dieta para Hipertrofia - Fase 1" className="rounded-xl" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Detalhes / Cardápio Sugerido</Label>
+                    <Textarea id="description" name="description" placeholder="Descreva as refeições, horários e macros..." className="rounded-xl min-h-[200px]" required />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" className="w-full rounded-2xl font-bold" disabled={isUpdating}>
+                      {isUpdating ? "Enviando..." : "Liberar Dieta para Aluno"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+
             <Button variant="outline" className="rounded-2xl h-14 font-bold border-2 w-full">
               <History className="h-5 w-5 mr-2" />
-              Ver Histórico Completo
-            </Button>
-            <Button variant="outline" className="rounded-2xl h-14 font-bold border-2 w-full">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Enviar Dica Direta
+              Ver Histórico
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Lista de Treinos Atribuídos */}
-      <div className="mt-4">
-        <h2 className="text-xl font-bold font-headline mb-4 px-1">Planos de Treino</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plans?.map((plan) => (
-            <Card key={plan.id} className="rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
-              <CardContent className="p-5 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Dumbbell className="h-5 w-5 text-primary" />
+      <Tabs defaultValue="workouts" className="mt-8">
+        <TabsList className="bg-muted p-1 rounded-2xl h-12 gap-1">
+          <TabsTrigger value="workouts" className="rounded-xl font-bold px-8">Treinos</TabsTrigger>
+          <TabsTrigger value="diets" className="rounded-xl font-bold px-8">Dieta</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="workouts" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {plans?.map((plan) => (
+              <Card key={plan.id} className="rounded-3xl border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-shadow">
+                <CardContent className="p-5 flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase">
+                      {plan.exercises?.length || 0} Ex.
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="text-[10px] font-bold uppercase">
-                    {plan.exercises?.length || 0} Ex.
-                  </Badge>
-                </div>
-                <div>
-                  <h4 className="font-bold text-lg leading-tight uppercase">{plan.name}</h4>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">
-                    Criado em: {plan.createdAt?.toDate().toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <Button asChild variant="outline" className="flex-1 rounded-xl font-bold border-2 h-10">
-                    <Link href={`/trainer/workouts/builder?studentId=${id}&planId=${plan.id}`}>
-                      <Edit2 className="h-4 w-4 mr-2" />
-                      Editar
-                    </Link>
-                  </Button>
-                  
+                  <div>
+                    <h4 className="font-bold text-lg leading-tight uppercase">{plan.name}</h4>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">
+                      Criado em: {plan.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Button asChild variant="outline" className="flex-1 rounded-xl font-bold border-2 h-10">
+                      <Link href={`/trainer/workouts/builder?studentId=${id}&planId=${plan.id}`}>
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Editar
+                      </Link>
+                    </Button>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 text-destructive hover:bg-destructive/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="rounded-[2rem]">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir Treino?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. O treino "{plan.name}" será removido permanentemente.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeletePlan(plan.id)}
+                            className="rounded-xl bg-destructive text-white hover:bg-destructive/90"
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {plans?.length === 0 && (
+              <div className="col-span-full py-12 text-center border-2 border-dashed rounded-[2.5rem] bg-muted/20">
+                <p className="text-muted-foreground font-medium">Nenhum plano de treino criado.</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="diets" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {diets?.map((diet) => (
+              <Card key={diet.id} className="rounded-3xl border-none shadow-sm bg-white overflow-hidden">
+                <CardHeader className="bg-blue-50/30 flex flex-row items-center justify-between pb-4">
+                  <div>
+                    <CardTitle className="text-lg font-bold">{diet.title}</CardTitle>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">
+                      Enviada em: {diet.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 text-destructive hover:bg-destructive/10">
@@ -282,37 +404,38 @@ export default function StudentDetails({ params }: { params: Promise<{ id: strin
                     </AlertDialogTrigger>
                     <AlertDialogContent className="rounded-[2rem]">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Excluir Treino?</AlertDialogTitle>
+                        <AlertDialogTitle>Remover Dieta?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          Esta ação não pode ser desfeita. O treino "{plan.name}" será removido permanentemente do perfil do aluno.
+                          A orientação alimentar será removida do perfil do aluno.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
                         <AlertDialogAction 
-                          onClick={() => handleDeletePlan(plan.id)}
+                          onClick={() => handleDeleteDiet(diet.id)}
                           className="rounded-xl bg-destructive text-white hover:bg-destructive/90"
                         >
-                          Excluir
+                          Remover
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-
-                  <Button variant="ghost" size="icon" className="rounded-xl h-10 w-10 border-2">
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {plans?.length === 0 && (
-            <div className="col-span-full py-12 text-center border-2 border-dashed rounded-[2.5rem] bg-muted/20">
-              <p className="text-muted-foreground font-medium">Nenhum plano de treino criado para este aluno.</p>
-            </div>
-          )}
-        </div>
-      </div>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed bg-muted/20 p-4 rounded-2xl">
+                    {diet.description}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {diets?.length === 0 && (
+              <div className="col-span-full py-12 text-center border-2 border-dashed rounded-[2.5rem] bg-muted/20">
+                <p className="text-muted-foreground font-medium">Nenhuma sugestão de dieta enviada ainda.</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

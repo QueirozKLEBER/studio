@@ -34,6 +34,11 @@ service cloud.firestore {
         allow create, update, delete: if isOwner(userId) || isTrainer() || isAdmin();
       }
 
+      match /dietSuggestions/{suggestionId} {
+        allow get, list: if isOwner(userId) || isTrainer() || isAdmin();
+        allow create, update, delete: if isTrainer() || isAdmin();
+      }
+
       match /workoutHistory/{historyId} {
         allow get, list, create: if isOwner(userId);
       }

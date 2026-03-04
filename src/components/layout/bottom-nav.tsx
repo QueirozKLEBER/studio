@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Dumbbell, Activity, Bot, User, Utensils } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Activity, User, Utensils } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,7 +11,6 @@ const navItems = [
   { href: '/workouts', label: 'Treinos', icon: Dumbbell },
   { href: '/diet', label: 'Dieta', icon: Utensils },
   { href: '/assessment', label: 'Avaliação', icon: Activity },
-  { href: '/ai', label: 'IA Professor', icon: Bot },
   { href: '/profile', label: 'Perfil', icon: User },
 ];
 

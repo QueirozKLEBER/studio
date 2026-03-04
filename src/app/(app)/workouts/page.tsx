@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dumbbell, Calendar, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { Dumbbell, Calendar, ArrowRight, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { muscleGroups } from '@/lib/placeholder-data';
 import * as MuscleIcons from '@/components/icons/muscle-groups';
@@ -121,15 +121,8 @@ export default function WorkoutsPage() {
                 <h3 className="text-2xl font-bold">Nenhum treino encontrado</h3>
                 <p className="text-muted-foreground max-w-sm mx-auto">
                   Seu professor ainda está preparando sua planilha de treinos de elite. 
-                  Enquanto isso, você pode consultar nossa IA para dicas!
                 </p>
               </div>
-              <Button asChild variant="outline" className="rounded-2xl h-12 border-2 px-8 font-bold">
-                <Link href="/ai">
-                  <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                  Falar com Professor IA
-                </Link>
-              </Button>
             </Card>
           </div>
         )}

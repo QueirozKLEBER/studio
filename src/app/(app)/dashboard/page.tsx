@@ -7,11 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { 
   Dumbbell, 
-  Flame, 
   TrendingUp, 
   Clock, 
   ChevronRight,
-  Sparkles,
   AlertCircle,
   Utensils
 } from 'lucide-react';
@@ -60,12 +58,11 @@ export default function Dashboard() {
       </header>
 
       {/* Quick Access Grid */}
-      <div className="grid grid-cols-3 gap-3 md:grid-cols-6 w-full">
+      <div className="grid grid-cols-3 gap-3 md:grid-cols-5 w-full">
         {[
           { icon: Dumbbell, label: 'Treinos', href: '/workouts', color: 'bg-blue-100 text-blue-600' },
           { icon: Utensils, label: 'Dieta', href: '/diet', color: 'bg-orange-100 text-orange-600' },
           { icon: TrendingUp, label: 'Avaliação', href: '/assessment', color: 'bg-green-100 text-green-600' },
-          { icon: Sparkles, label: 'IA Prof', href: '/ai', color: 'bg-purple-100 text-purple-600' },
           { icon: Clock, label: 'Histórico', href: '/profile', color: 'bg-gray-100 text-gray-600' },
           { icon: ChevronRight, label: 'Planos', href: '/pricing', color: 'bg-red-100 text-red-600' },
         ].map((item, i) => (
@@ -103,7 +100,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Workout of the Day (REAL DATA FROM PROFESSOR) */}
+        {/* Workout of the Day */}
         <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground p-2">
           <CardHeader>
             <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -144,9 +141,6 @@ export default function Dashboard() {
                 <AlertCircle className="h-12 w-12 mx-auto opacity-50" />
                 <p className="font-bold">Nenhum treino atribuído ainda.</p>
                 <p className="text-xs opacity-70">Aguarde seu professor liberar seu primeiro treino de elite.</p>
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 rounded-2xl" asChild>
-                  <Link href="/ai">Falar com Assistente IA</Link>
-                </Button>
               </div>
             )}
           </CardContent>

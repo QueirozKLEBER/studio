@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,11 @@ export default function ActivityLogPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [formData, setFormData] = useState({
     type: 'cardio',
@@ -72,6 +76,8 @@ export default function ActivityLogPage() {
       setIsSaving(false);
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-4xl mx-auto w-full">

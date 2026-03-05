@@ -1,6 +1,6 @@
-
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,11 +25,16 @@ import {
   Tooltip,
   Cell
 } from 'recharts';
-import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
-  const { user, profile } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Busca o último plano de treino
   const plansQuery = useMemoFirebase(() => {
@@ -58,8 +63,9 @@ export default function Dashboard() {
 
   const activePlan = latestPlans && latestPlans.length > 0 ? latestPlans[0] : null;
 
-  // Processa dados reais para o gráfico semanal
+  // Processa dados reais para o gráfico semanal - Apenas no cliente
   const weeklyData = useMemo(() => {
+    if (!mounted) return [];
     const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     const today = new Date();
     const result = [];
@@ -82,13 +88,24 @@ export default function Dashboard() {
       });
     }
     return result;
-  }, [history]);
+  }, [history, mounted]);
 
-  // Verifica se o aluno treinou hoje
+  // Verifica se o aluno treinou hoje - Apenas no cliente
   const trainedToday = useMemo(() => {
+    if (!mounted || !history) return false;
     const todayStr = new Date().toLocaleDateString('pt-BR');
-    return history?.some(h => h.completedAt?.toDate?.()?.toLocaleDateString('pt-BR') === todayStr);
-  }, [history]);
+    return history.some(h => h.completedAt?.toDate?.()?.toLocaleDateString('pt-BR') === todayStr);
+  }, [history, mounted]);
+
+  if (!mounted) {
+    return (
+      <div className="flex flex-col gap-6 w-full animate-pulse">
+        <div className="h-10 w-48 bg-muted rounded-xl" />
+        <div className="h-32 bg-muted rounded-[2rem]" />
+        <div className="grid grid-cols-5 gap-3 h-24 bg-muted/20 rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-none pb-20">
@@ -139,7 +156,10 @@ export default function Dashboard() {
           { icon: ChevronRight, label: 'Histórico', href: '/profile', color: 'bg-gray-100 text-gray-600' },
         ].map((item, i) => (
           <Link key={i} href={item.href} className="flex flex-col items-center gap-2 group">
-            <div className={`p-4 rounded-3xl ${item.color} shadow-sm transition-transform group-active:scale-95 w-full aspect-square flex items-center justify-center`}>
+            <div className={cn(
+              "p-4 rounded-3xl shadow-sm transition-transform group-active:scale-95 w-full aspect-square flex items-center justify-center",
+              item.color
+            )}>
               <item.icon className="h-8 w-8" />
             </div>
             <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
@@ -154,7 +174,7 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold flex items-center justify-between">
               Frequência da Semana
-              <Badge variant="secondary" className="bg-primary/10 text-primary">Real Time</Badge>
+              <Badge variant="secondary" className="bg-primary/10 text-primary">Tempo Real</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="h-64 pt-0">
@@ -236,8 +256,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}
-
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
 }

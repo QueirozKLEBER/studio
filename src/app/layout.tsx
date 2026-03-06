@@ -1,10 +1,9 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { cn } from '@/lib/utils';
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'TreinusFit Personal',
-  description: 'Aplicativo de Treino Android',
+  title: "TreinusFit Personal",
+  description: "Seu personal trainer mobile",
 };
 
 export default function RootLayout({
@@ -14,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={cn('antialiased font-sans select-none')}>
+      <body className="antialiased font-sans bg-slate-50 text-slate-900 min-h-screen">
         {children}
       </body>
     </html>

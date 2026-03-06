@@ -1,8 +1,9 @@
+
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.mfit.personal',
-  appName: 'MFIT Personal',
+  appId: 'com.treinusfit.personal',
+  appName: 'TreinusFit Personal',
   webDir: 'out',
   bundledWebRuntime: false,
   server: {

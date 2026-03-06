@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,11 @@ export default function AssessmentPage() {
   const [weight, setWeight] = useState(profile?.weight || '');
   const [bmi, setBmi] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Busca histórico de medidas
   const measurementsQuery = useMemoFirebase(() => {
@@ -104,13 +109,17 @@ export default function AssessmentPage() {
   };
 
   const chartData = useMemo(() => {
-    if (!history) return [];
+    if (!mounted || !history) return [];
     return history.map(m => ({
       date: m.createdAt?.toDate ? m.createdAt.toDate().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : '...',
       weight: m.weight,
       bmi: m.bmi
     }));
-  }, [history]);
+  }, [history, mounted]);
+
+  if (!mounted) {
+    return <div className="p-8 animate-pulse bg-muted h-screen" />;
+  }
 
   return (
     <div className="flex flex-col gap-8 pb-20">

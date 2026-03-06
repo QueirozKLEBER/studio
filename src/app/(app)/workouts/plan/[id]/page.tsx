@@ -1,3 +1,4 @@
+
 'use client';
 
 import { use, useState, useEffect, useMemo } from 'react';
@@ -65,15 +66,8 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
     });
 
     if (!catalogMatch) {
-      console.warn(`[MFIT TEST] ❌ UNRESOLVED: ${planEx.name || 'Unknown'}`, {
-        provided: { id: planEx.id, exerciseId: planEx.exerciseId, slug: planEx.slug },
-        reason: (!planId && !planExerciseId && !planSlug) ? 'Missing all ID fields' : 'No match in flatCatalog'
-      });
       return planEx;
     }
-
-    // Success log
-    console.log(`[MFIT TEST] ✅ RESOLVED: ${catalogMatch.id} | GIF: ${catalogMatch.gifPrincipalUrl}`);
 
     return {
       ...catalogMatch,       // Catalog master data (Media Priority)

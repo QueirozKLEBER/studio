@@ -1,6 +1,7 @@
 'use client';
 
 import { Dumbbell } from 'lucide-react';
+import Link from 'next/link';
 
 export default function LandingPage() {
   return (
@@ -14,9 +15,13 @@ export default function LandingPage() {
       <p className="text-slate-500 mb-10 max-w-xs font-medium">
         Sua plataforma de treino de elite na palma da sua mão.
       </p>
-      <button className="w-full max-w-sm h-16 rounded-2xl text-xl font-bold bg-blue-600 text-white shadow-xl active:scale-95 transition-transform flex items-center justify-center">
+      
+      <Link 
+        href="/login" 
+        className="w-full max-w-sm h-16 rounded-2xl text-xl font-bold bg-blue-600 text-white shadow-xl active:scale-95 transition-transform flex items-center justify-center decoration-transparent"
+      >
         Iniciar Treino
-      </button>
+      </Link>
     </div>
   );
 }

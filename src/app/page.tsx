@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Dumbbell } from 'lucide-react';
 
@@ -15,7 +14,7 @@ export default function LandingPage() {
         Sua plataforma de treino de elite na palma da sua mão.
       </p>
       <Button className="w-full max-w-sm h-16 rounded-2xl text-xl font-bold bg-primary text-white shadow-xl active:scale-95 transition-transform">
-        INICIAR TREINO
+        Iniciar Treino
       </Button>
     </div>
   );

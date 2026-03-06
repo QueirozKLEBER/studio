@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "TreinusFit Personal",
@@ -14,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased font-sans bg-slate-50 text-slate-900 min-h-screen">
-        {children}
+        <FirebaseClientProvider>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

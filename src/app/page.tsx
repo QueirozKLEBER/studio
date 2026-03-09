@@ -1,8 +1,7 @@
 'use client';
 
-import { Dumbbell } from 'lucide-react';
-import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
+import Link from 'next/link';
 
 export default function LandingPage() {
   return (

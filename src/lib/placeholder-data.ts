@@ -139,3 +139,21 @@ export const exercises: Record<string, Exercise[]> = {
     createEx('hiperextensao-lombar', 'Hiperextensão Lombar', 'lombar', 'Máquina', 'Core', 'Iniciante'),
   ]
 };
+
+export const nutritionTips = {
+  emagrecimento: {
+    tips: [
+      { title: 'Déficit Calórico', content: 'Consuma menos calorias do que gasta, priorizando alimentos densos em nutrientes.' },
+      { title: 'Proteína é Chave', content: 'Mantenha a ingestão de proteínas alta para preservar massa muscular durante o emagrecimento.' }
+    ]
+  },
+  hipertrofia: {
+    tips: [
+      { title: 'Superávit Leve', content: 'Coma um pouco mais do que gasta para dar suporte ao crescimento muscular.' },
+      { title: 'Janela Anabólica', content: 'Foque em carboidratos e proteínas após o treino para recuperação.' }
+    ]
+  },
+  energia: { tips: [] },
+  'pre-treino': { tips: [] },
+  'pos-treino': { tips: [] }
+};

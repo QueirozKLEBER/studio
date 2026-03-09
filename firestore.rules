@@ -3,38 +3,40 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Função para obter o cargo do usuário sem causar loop infinito
-    // Só deve ser chamada se o usuário NÃO for o dono do documento sendo acessado
-    function getUserType() {
+    // Função central para obter o cargo do usuário logado
+    function getRole() {
+      // O get() aqui disparará a regra 'read' do documento do usuário logado.
+      // Como a regra de 'read' para o próprio dono não chama funções, não haverá loop.
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType;
     }
 
     match /users/{userId} {
       
-      // 1. REGRA DO DONO (Prioridade Total)
-      // O usuário tem acesso total a si mesmo e a todas as suas subcoleções (appointments, trainingPlans, etc)
-      // O uso de {allPaths=**} garante que a operação 'list' em subcoleções funcione.
+      // 1. REGRA DO DONO: Acesso total ao próprio perfil e subcoleções.
+      // O acesso por UID é instantâneo e não dispara outras funções, evitando recursão.
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
       match /{allPaths=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
-      // 2. REGRA DE STAFF (Para gerenciar ALUNOS)
-      // Importante: request.auth.uid != userId garante que não haja recursão ao ler o próprio perfil
+      // 2. REGRA DE STAFF (Trainer/Admin):
+      // Permite listar usuários e gerenciar subcoleções de alunos.
+      // O 'userId != request.auth.uid' garante que a função getRole() nunca seja chamada recursivamente para o próprio usuário.
       allow list, get, update: if request.auth != null && 
                                 request.auth.uid != userId && 
-                                getUserType() in ['trainer', 'admin'];
+                                getRole() in ['trainer', 'admin'];
 
-      // Permite que trainers gerenciem subcoleções de alunos (Treinos, Dieta, etc)
       match /{subCollection}/{allSubPaths=**} {
         allow read, write: if request.auth != null && 
                              request.auth.uid != userId && 
-                             getUserType() in ['trainer', 'admin'];
+                             getRole() in ['trainer', 'admin'];
       }
       
       // Apenas Admin pode deletar usuários
-      allow delete: if request.auth != null && getUserType() == 'admin';
+      allow delete: if request.auth != null && 
+                      request.auth.uid != userId && 
+                      getRole() == 'admin';
     }
 
     // Coleções de referência globais

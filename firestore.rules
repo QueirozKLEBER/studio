@@ -3,63 +3,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper para verificar autenticação básica
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Helper para verificar se o usuário logado é Professor ou Admin (Staff)
-    // Nota: O uso de get() aqui é seguro pois o allow get do dono não depende desta função (curto-circuito)
+    // Função auxiliar para verificar se é Staff (Professor ou Admin)
     function isStaff() {
-      return isSignedIn() && 
+      return request.auth != null && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
     }
 
-    // Regras para o nó de usuários e suas subcoleções
     match /users/{userId} {
       
-      // O DONO sempre tem acesso total aos seus próprios dados de perfil
-      // Validamos o UID primeiro para evitar recursão na função isStaff()
-      allow get, write: if isSignedIn() && request.auth.uid == userId;
+      // 1. ACESSO DO DONO (Proprietário da conta)
+      // O dono tem acesso total ao seu próprio documento de perfil.
+      allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // STAFF pode ler e atualizar qualquer perfil (necessário para gestão de alunos)
-      allow get, list, update: if isStaff();
-      
-      // Apenas ADMIN pode deletar contas
-      allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      // RECURSIVIDADE PARA O DONO:
+      // Garante que o dono possa listar e ler qualquer subcoleção (como appointments, trainingPlans, etc)
+      // O wildcard {allPaths=**} resolve o erro de permissão na operação 'list'.
+      match /{allPaths=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
 
-      // REGRAS DE SUBCOLEÇÕES (Agendamentos, Treinos, etc.)
-      // Devem ser declaradas explicitamente para permitir a operação 'list' na coleção.
-      // O uso do padrão {doc=**} libera a listagem da coleção e acesso a todos os documentos internos.
-      
-      match /appointments/{doc=**} {
-        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      // 2. ACESSO DE STAFF (Professor ou Admin)
+      // Permite que a equipe técnica gerencie os alunos (Listar usuários, Ver perfis).
+      allow list, get, update: if isStaff();
+
+      // Permite que a equipe técnica gerencie as subcoleções dos alunos (Treinos, Agendamentos, etc).
+      match /{subCollection}/{allSubPaths=**} {
+        allow read, write: if isStaff();
       }
       
-      match /trainingPlans/{doc=**} {
-        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
-      }
-      
-      match /dietSuggestions/{doc=**} {
-        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
-      }
-      
-      match /workoutHistory/{doc=**} {
-        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
-      }
-      
-      match /bodyMeasurements/{doc=**} {
-        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
-      }
+      // Regra de exclusão: Apenas Admin pode deletar usuários
+      allow delete: if request.auth != null && 
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
-    // Coleções globais de referência (Exercícios e Dicas de Nutrição)
+    // Coleções de referência globais (Exercícios e Dicas)
     match /exercises/{exerciseId} {
-      allow read: if isSignedIn();
+      allow read: if request.auth != null;
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow read: if isSignedIn();
+      allow read: if request.auth != null;
     }
   }
 }

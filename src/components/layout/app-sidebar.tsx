@@ -64,20 +64,20 @@ export const AppSidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <div className="flex flex-col h-full bg-black border-r border-white/5">
-      <div className="p-6">
+    <div className="flex flex-col h-full bg-white border-r border-slate-200 shadow-xl">
+      <div className="p-6 border-b border-slate-50">
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="bg-transparent p-1">
             <Logo className="w-10 h-10" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-black font-headline text-white leading-tight uppercase tracking-tighter">TreinusFit</span>
-            <span className="text-xs font-bold text-primary leading-tight uppercase tracking-widest">Personal</span>
+            <span className="text-lg font-black font-headline text-slate-900 leading-tight uppercase tracking-tighter">TreinusFit</span>
+            <span className="text-xs font-black text-primary leading-tight uppercase tracking-widest">Personal</span>
           </div>
         </Link>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2 mt-4">
+      <nav className="flex-1 px-4 space-y-2 mt-6">
         {menuItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
@@ -85,28 +85,28 @@ export const AppSidebar = () => {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group",
+                "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group",
                 isActive 
-                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                  ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
               )}
             >
-              <item.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-muted-foreground")} />
-              <span className="font-black text-xs uppercase tracking-wider">{item.label}</span>
+              <item.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-slate-400")} />
+              <span className="font-black text-[11px] uppercase tracking-wider">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-white/5">
+      <div className="p-4 mt-auto bg-slate-50/80 border-t border-slate-200">
         <Link 
           href="/profile"
           className={cn(
             "flex items-center gap-3 p-3 rounded-2xl transition-all mb-2 border border-transparent",
-            pathname === '/profile' ? "bg-white/5 border-white/10" : "hover:bg-white/5"
+            pathname === '/profile' ? "bg-white border-slate-200 shadow-sm" : "hover:bg-white"
           )}
         >
-          <Avatar className="h-10 w-10 rounded-xl border-2 border-primary/20 overflow-hidden shadow-lg">
+          <Avatar className="h-10 w-10 rounded-xl border-2 border-primary/10 overflow-hidden shadow-sm">
             <AvatarImage 
               src={profile?.photoURL || user?.photoURL || ''} 
               className="object-cover"
@@ -116,7 +116,7 @@ export const AppSidebar = () => {
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-black text-white truncate uppercase tracking-tight">
+            <span className="text-sm font-black text-slate-900 truncate uppercase tracking-tight">
               {profile?.firstName || 'Atleta'}
             </span>
             <span className="text-[9px] text-primary font-black uppercase tracking-[0.2em]">
@@ -126,10 +126,10 @@ export const AppSidebar = () => {
         </Link>
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all group"
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-slate-400 hover:text-primary hover:bg-white transition-all group font-black text-[10px] uppercase tracking-widest"
         >
           <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
-          <span className="font-black text-xs uppercase tracking-widest">Sair do App</span>
+          Sair do App
         </button>
       </div>
     </div>

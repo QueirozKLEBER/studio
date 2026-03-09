@@ -20,28 +20,28 @@ export function AuthCard({
   footerLinkText,
 }: AuthCardProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4">
-      <Card className="w-full max-w-md shadow-2xl rounded-[3rem] border-none bg-card/50 backdrop-blur-xl">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[3rem] border border-slate-200 bg-white/90 backdrop-blur-xl">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-6">
             <Link href="/" className="flex flex-col items-center gap-2">
               <Logo className="w-20 h-20" />
-              <span className="text-2xl font-black font-headline text-primary uppercase tracking-tighter mt-2">
-                TreinusFit <span className="text-white">Personal</span>
+              <span className="text-2xl font-black font-headline text-slate-900 uppercase tracking-tighter mt-2">
+                TreinusFit <span className="text-primary">Personal</span>
               </span>
             </Link>
           </div>
-          <CardTitle className="text-2xl font-black uppercase tracking-tight text-white">{title}</CardTitle>
-          <CardDescription className="text-muted-foreground font-medium">{description}</CardDescription>
+          <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">{title}</CardTitle>
+          <CardDescription className="text-slate-500 font-medium">{description}</CardDescription>
         </CardHeader>
         <CardContent>
           {children}
         </CardContent>
         {footerText && footerLink && footerLinkText && (
-          <CardFooter className="justify-center text-sm">
-            <p className="text-muted-foreground font-medium">
+          <CardFooter className="justify-center text-sm border-t border-slate-50 mt-4 pt-6">
+            <p className="text-slate-500 font-medium">
               {footerText}{' '}
-              <Link href={footerLink} className="font-bold text-primary hover:text-white transition-colors">
+              <Link href={footerLink} className="font-bold text-primary hover:underline transition-colors">
                 {footerLinkText}
               </Link>
             </p>

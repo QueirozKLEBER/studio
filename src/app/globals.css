@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    /* Tema Elite: Preto, Vermelho e Prata */
-    --background: 0 0% 0%; /* Preto Absoluto */
-    --foreground: 0 0% 98%;
+    /* Tema Elite Pro Clean: Branco, Vermelho, Cinza e Crômio */
+    --background: 210 20% 98%; /* Branco Gelo / Cinza muito claro */
+    --foreground: 222 47% 11%; /* Marinho Profundo / Quase preto */
     
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
     
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
     
-    --primary: 0 84% 50%; /* Vermelho Intenso */
+    --primary: 0 84% 50%; /* Vermelho Treinus */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 75%; /* Prata / Silver */
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 210 10% 80%; /* Cinza Cromado / Prata */
+    --secondary-foreground: 222 47% 11%;
     
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 210 10% 92%;
+    --muted-foreground: 215 16% 47%;
     
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 210 10% 94%;
+    --accent-foreground: 222 47% 11%;
     
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 210 20% 98%;
     
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
     --ring: 0 84% 50%;
     
     --radius: 2rem;
@@ -46,10 +46,14 @@
   }
 }
 
-.silver-text {
-  background: linear-gradient(to bottom, #ffffff 0%, #a0a0a0 100%);
+.chrome-gradient {
+  background: linear-gradient(135deg, #f0f0f0 0%, #c0c0c0 50%, #e0e0e0 100%);
+}
+
+.chrome-text {
+  background: linear-gradient(to bottom, #4a4a4a 0%, #000000 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  -webkit-fill-color: transparent;
 }
 
 ::-webkit-scrollbar {
@@ -59,5 +63,5 @@
   @apply bg-background;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/30 rounded-full;
+  @apply bg-primary/20 rounded-full;
 }

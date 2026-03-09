@@ -7,31 +7,47 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
     }
 
+    // Verifica se o usuário autenticado não está bloqueado
     function isNotBlocked() {
-      return !isSignedIn() || getUserData().get('status', 'active') != 'blocked';
+      let data = getUserData(request.auth.uid);
+      return data == null || data.get('status', 'active') != 'blocked';
     }
 
+    // Verificação básica de propriedade
     function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId && isNotBlocked();
+      return isSignedIn() && request.auth.uid == userId;
     }
     
+    // Verifica se o usuário autenticado é um professor
     function isTrainer() {
-      return isSignedIn() && getUserData().get('userType', 'student') == 'trainer' && isNotBlocked();
+      return isSignedIn() && getUserData(request.auth.uid).get('userType', 'student') == 'trainer';
     }
 
+    // Verifica se o usuário autenticado é um administrador
     function isAdmin() {
-      return isSignedIn() && getUserData().get('userType', 'student') == 'admin';
+      return isSignedIn() && getUserData(request.auth.uid).get('userType', 'student') == 'admin';
     }
 
     match /users/{userId} {
+      // QUEBRA DE RECURSÃO: 
+      // 1. Um usuário sempre pode dar GET no seu próprio perfil (necessário para o app carregar status e tipo)
+      // 2. Professores e Admins podem dar GET em qualquer perfil
       allow get: if isSignedIn() && (request.auth.uid == userId || isTrainer() || isAdmin());
-      allow list: if isSignedIn() && (isAdmin() || isTrainer());
+      
+      // Professores e Admins podem listar a coleção de usuários
+      allow list: if isSignedIn() && (isTrainer() || isAdmin());
+      
+      // Usuários podem criar seu perfil no cadastro
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isOwner(userId) || isTrainer() || isAdmin();
+      
+      // Update: Dono (se não estiver bloqueado), ou Professor/Admin
+      allow update: if (isOwner(userId) && isNotBlocked()) || isTrainer() || isAdmin();
+      
+      // Delete: Apenas Admins
       allow delete: if isAdmin();
 
       match /trainingPlans/{trainingPlanId} {
@@ -46,27 +62,28 @@ service cloud.firestore {
 
       match /workoutHistory/{historyId} {
         allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
-        allow create: if isOwner(userId);
+        allow create: if isOwner(userId) && isNotBlocked();
       }
 
       match /bodyMeasurements/{measurementId} {
         allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
-        allow create: if isOwner(userId) || isTrainer() || isAdmin();
+        allow create: if (isOwner(userId) && isNotBlocked()) || isTrainer() || isAdmin();
         allow delete: if isOwner(userId) || isAdmin();
       }
 
       match /appointments/{appointmentId} {
-        allow get, list, write: if isOwner(userId);
+        // O dono (professor) pode gerenciar seus agendamentos
+        allow get, list, write: if isOwner(userId) && isNotBlocked();
       }
     }
 
     match /exercises/{exerciseId} {
-      allow read: if isNotBlocked();
+      allow read: if isSignedIn() && isNotBlocked();
       allow write: if isAdmin();
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow read: if isNotBlocked();
+      allow read: if isSignedIn() && isNotBlocked();
       allow write: if isAdmin();
     }
   }

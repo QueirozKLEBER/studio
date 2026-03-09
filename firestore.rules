@@ -3,37 +3,46 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Função central para obter o cargo do usuário logado
-    // Firestore faz cache de get() dentro da mesma requisição, evitando custos excessivos.
-    function getRole() {
+    /**
+     * Função para obter o cargo do usuário.
+     * Importante: Firestore faz cache de get() dentro da mesma requisição.
+     */
+    function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType;
     }
 
-    // Regras para a coleção de usuários e seus perfis
+    /**
+     * Regras para a coleção de usuários.
+     * O wildcard {userId} captura o ID do documento.
+     */
     match /users/{userId} {
       
-      // 1. REGRA DO DONO: Acesso total ao próprio perfil.
-      // Avaliada primeiro. Se for o dono, não precisa checar cargo, evitando recursão.
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // 2. REGRA DE STAFF (Trainer/Admin):
-      // Permite que Professores e Admins listem a coleção /users e leiam/atualizem perfis de alunos.
-      allow list, get, update: if request.auth != null && getRole() in ['trainer', 'admin'];
-      
-      // Apenas Admin pode deletar usuários
-      allow delete: if request.auth != null && getRole() == 'admin';
-
-      // 3. SUBCOLEÇÕES (Treinos, Agendamentos, Dietas, etc.)
-      match /{subCollection}/{document=**} {
-        // O dono sempre acessa suas próprias subcoleções
+      // REGRA 1: O DONO tem acesso total e imediato.
+      // Usamos {allPaths=**} para que esta regra se aplique a TODAS as subcoleções 
+      // (appointments, trainingPlans, workoutHistory, etc.) sem precisar de matches extras.
+      match /{allPaths=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
-        
-        // Staff pode gerenciar subcoleções de qualquer usuário (útil para o professor montar treinos para o aluno)
-        allow read, write: if request.auth != null && getRole() in ['trainer', 'admin'];
+      }
+
+      // REGRA 2: STAFF (Trainer/Admin) pode gerenciar alunos.
+      // Esta regra só precisa ser avaliada se o usuário logado NÃO for o dono do perfil.
+      allow list, get, update: if request.auth != null 
+        && request.auth.uid != userId 
+        && getUserRole() in ['trainer', 'admin'];
+      
+      allow delete: if request.auth != null 
+        && request.auth.uid != userId 
+        && getUserRole() == 'admin';
+
+      // STAFF também precisa acessar subcoleções dos alunos para montar treinos/dietas.
+      match /{subCollection}/{document=**} {
+        allow read, write: if request.auth != null 
+          && request.auth.uid != userId 
+          && getUserRole() in ['trainer', 'admin'];
       }
     }
 
-    // Coleções de referência globais (Biblioteca de Exercícios e Dicas)
+    // Coleções de referência globais
     match /exercises/{exerciseId} {
       allow read: if request.auth != null;
     }

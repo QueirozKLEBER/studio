@@ -106,7 +106,7 @@ export default function Dashboard() {
     <div className="flex flex-col gap-6 w-full max-w-none pb-20">
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-black font-headline text-slate-900 uppercase tracking-tight">TreinusFit <span className="text-primary">Personal</span></h1>
-        <p className="text-muted-foreground font-bold italic text-xs uppercase tracking-widest">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
+        <p className="text-slate-500 font-black italic text-[10px] uppercase tracking-[0.2em]">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
       </header>
 
       {/* Alerta de Treino do Dia */}
@@ -126,7 +126,7 @@ export default function Dashboard() {
               <h3 className="font-black uppercase tracking-tight text-xl">
                 {trainedToday ? "Missão Cumprida!" : "Pronto para Treinar?"}
               </h3>
-              <p className="text-sm font-bold text-muted-foreground mt-1">
+              <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">
                 {trainedToday 
                   ? "Você já registrou sua atividade hoje. Excelente!" 
                   : "Seu professor atualizou sua planilha. Vamos lá!"}
@@ -134,7 +134,7 @@ export default function Dashboard() {
             </div>
           </div>
           {!trainedToday && (
-            <Button asChild className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg bg-primary text-white hover:bg-primary/90 transition-transform active:scale-95">
+            <Button asChild className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg bg-primary text-white hover:bg-primary/90 transition-transform active:scale-95 uppercase tracking-tighter">
               <Link href="/activity">REGISTRAR</Link>
             </Button>
           )}
@@ -154,7 +154,7 @@ export default function Dashboard() {
             <div className="p-6 rounded-[2rem] shadow-sm bg-white border border-slate-100 transition-all group-active:scale-90 w-full aspect-square flex items-center justify-center hover:bg-primary hover:text-white group-hover:shadow-xl group-hover:shadow-primary/20">
               <item.icon className="h-8 w-8" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 group-hover:text-primary transition-colors">{item.label}</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-500 group-hover:text-primary transition-colors text-center">{item.label}</span>
           </Link>
         ))}
       </div>
@@ -163,7 +163,7 @@ export default function Dashboard() {
         {/* Weekly Progress Chart */}
         <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black flex items-center justify-between uppercase tracking-widest text-slate-400">
+            <CardTitle className="text-xs font-black flex items-center justify-between uppercase tracking-[0.2em] text-slate-400">
               Frequência Semanal
               <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-black uppercase text-[10px]">Ativo</Badge>
             </CardTitle>
@@ -195,8 +195,8 @@ export default function Dashboard() {
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 opacity-20">
-                <CalendarDays className="h-16 w-16 mb-2" />
-                <p className="text-[10px] font-black uppercase tracking-widest">Sem registros</p>
+                <CalendarDays className="h-16 w-16 mb-2 text-slate-400" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sem registros</p>
               </div>
             )}
           </CardContent>
@@ -205,7 +205,7 @@ export default function Dashboard() {
         {/* Workout of the Day */}
         <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground p-2">
           <CardHeader>
-            <CardTitle className="text-xs font-black flex items-center gap-2 uppercase tracking-widest text-white/70">
+            <CardTitle className="text-xs font-black flex items-center gap-2 uppercase tracking-[0.2em] text-white/70">
               <Dumbbell className="h-5 w-5" />
               Treino do Dia
             </CardTitle>
@@ -220,7 +220,7 @@ export default function Dashboard() {
               <>
                 <div>
                   <h3 className="text-4xl font-black uppercase tracking-tighter leading-none">{activePlan.name}</h3>
-                  <p className="text-white/80 text-sm mt-4 font-bold italic">
+                  <p className="text-white/80 text-[10px] mt-4 font-black uppercase tracking-widest italic">
                     Foque na intensidade e técnica perfeita hoje.
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default function Dashboard() {
                     {activePlan.exercises?.length || 0} EXERCÍCIOS
                   </Badge>
                 </div>
-                <Button asChild className="w-full bg-white text-primary hover:bg-white/90 h-16 rounded-[1.8rem] font-black text-xl shadow-2xl transition-all active:scale-95">
+                <Button asChild className="w-full bg-white text-primary hover:bg-white/90 h-16 rounded-[1.8rem] font-black text-xl shadow-2xl transition-all active:scale-95 uppercase tracking-tight">
                   <Link href={`/workouts/plan?id=${activePlan.id}`}>
                     INICIAR AGORA
                   </Link>
@@ -240,7 +240,7 @@ export default function Dashboard() {
                 <AlertCircle className="h-16 w-16 mx-auto text-white/30" />
                 <div className="space-y-2">
                   <p className="font-black uppercase tracking-widest">Nenhum treino liberado</p>
-                  <p className="text-xs font-bold text-white/60">Aguardando atualização do seu professor.</p>
+                  <p className="text-[10px] font-black uppercase text-white/60">Aguardando atualização do seu professor.</p>
                 </div>
               </div>
             )}

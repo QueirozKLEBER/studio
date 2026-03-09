@@ -4,11 +4,11 @@
 
 @layer base {
   :root {
-    /* Tema Pro Clean: Branco, Cinza e Vermelho */
-    --background: 210 20% 98%; /* Branco Gelo / Cinza muito claro */
-    --foreground: 222 47% 11%; /* Marinho Profundo / Quase preto */
+    /* Paleta Elite Pro: Cinza, Branco e Vermelho */
+    --background: 210 10% 94%; /* Fundo Cinza Claro Tecnológico */
+    --foreground: 222 47% 11%; /* Marinho Profundo para leitura */
     
-    --card: 0 0% 100%; /* Branco Puro */
+    --card: 0 0% 100%; /* Cards Branco Puro */
     --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
@@ -17,20 +17,20 @@
     --primary: 0 84% 50%; /* Vermelho Treinus Vibrante */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 210 10% 80%; /* Cinza Cromado / Prata */
+    --secondary: 210 10% 80%; /* Prata / Cromado */
     --secondary-foreground: 222 47% 11%;
     
-    --muted: 210 10% 92%;
+    --muted: 210 10% 90%;
     --muted-foreground: 215 16% 47%;
     
-    --accent: 210 10% 94%;
+    --accent: 210 10% 92%;
     --accent-foreground: 222 47% 11%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 20% 98%;
     
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 214 32% 85%;
+    --input: 214 32% 85%;
     --ring: 0 84% 50%;
     
     --radius: 2rem;
@@ -48,12 +48,6 @@
 
 .chrome-gradient {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
-}
-
-.chrome-text {
-  background: linear-gradient(to bottom, #4a4a4a 0%, #000000 100%);
-  -webkit-background-clip: text;
-  -webkit-fill-color: transparent;
 }
 
 ::-webkit-scrollbar {

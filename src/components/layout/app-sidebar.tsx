@@ -65,7 +65,7 @@ export const AppSidebar = () => {
 
   return (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 shadow-sm">
-      <div className="p-6 border-b border-slate-50">
+      <div className="p-6 border-b border-slate-100">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Logo className="w-10 h-10" />
           <div className="flex flex-col">
@@ -96,7 +96,7 @@ export const AppSidebar = () => {
         })}
       </nav>
 
-      <div className="p-4 mt-auto bg-slate-50/80 border-t border-slate-200">
+      <div className="p-4 mt-auto bg-slate-50 border-t border-slate-100">
         <Link 
           href="/profile"
           className={cn(

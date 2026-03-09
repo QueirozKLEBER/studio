@@ -6,7 +6,7 @@ import Link from 'next/link';
 export default function LandingPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6 text-center">
-      <div className="p-10 rounded-[4rem] shadow-xl mb-12 bg-white border border-slate-100 flex items-center justify-center scale-110">
+      <div className="p-10 rounded-[4rem] shadow-xl mb-12 bg-white border border-slate-200 flex items-center justify-center scale-110">
         <Logo className="h-40 w-40" />
       </div>
       
@@ -14,7 +14,7 @@ export default function LandingPage() {
         TreinusFit <span className="text-primary">Personal</span>
       </h1>
       
-      <p className="text-slate-400 mb-12 max-w-xs font-black uppercase tracking-[0.3em] text-[10px]">
+      <p className="text-slate-500 mb-12 max-w-xs font-black uppercase tracking-[0.3em] text-[10px]">
         Elite Training Systems • Pro Clean Edition
       </p>
       
@@ -30,8 +30,8 @@ export default function LandingPage() {
       
       <div className="mt-16 flex gap-3">
         <div className="h-2 w-12 bg-primary rounded-full" />
-        <div className="h-2 w-6 bg-slate-200 rounded-full" />
-        <div className="h-2 w-6 bg-slate-200 rounded-full" />
+        <div className="h-2 w-6 bg-slate-300 rounded-full" />
+        <div className="h-2 w-6 bg-slate-300 rounded-full" />
       </div>
     </div>
   );

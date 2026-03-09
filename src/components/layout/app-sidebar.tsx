@@ -64,17 +64,20 @@ export const AppSidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <div className="flex flex-col h-full bg-card">
+    <div className="flex flex-col h-full bg-black border-r border-white/5">
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded-xl shadow-lg shadow-primary/10">
-            <Logo className="w-8 h-8" />
+          <div className="bg-transparent p-1">
+            <Logo className="w-10 h-10" />
           </div>
-          <span className="text-xl font-headline font-bold tracking-tight">TreinusFit Personal</span>
+          <div className="flex flex-col">
+            <span className="text-lg font-black font-headline text-white leading-tight uppercase tracking-tighter">TreinusFit</span>
+            <span className="text-xs font-bold text-primary leading-tight uppercase tracking-widest">Personal</span>
+          </div>
         </Link>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="flex-1 px-4 space-y-2 mt-4">
         {menuItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
@@ -82,46 +85,51 @@ export const AppSidebar = () => {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                "flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group",
                 isActive 
-                  ? "bg-primary text-white shadow-md shadow-primary/20" 
-                  : "text-muted-foreground hover:bg-muted"
+                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
+                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
               )}
             >
-              <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "text-muted-foreground")} />
-              <span className="font-bold text-sm">{item.label}</span>
+              <item.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-muted-foreground")} />
+              <span className="font-black text-xs uppercase tracking-wider">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 mt-auto border-t">
+      <div className="p-4 mt-auto border-t border-white/5">
         <Link 
           href="/profile"
           className={cn(
-            "flex items-center gap-3 p-3 rounded-xl transition-all mb-2",
-            pathname === '/profile' ? "bg-muted" : "hover:bg-muted"
+            "flex items-center gap-3 p-3 rounded-2xl transition-all mb-2 border border-transparent",
+            pathname === '/profile' ? "bg-white/5 border-white/10" : "hover:bg-white/5"
           )}
         >
-          <Avatar className="h-9 w-9 rounded-xl border-2 border-primary/10">
-            <AvatarImage src={user?.photoURL || ''} />
-            <AvatarFallback className="rounded-xl bg-blue-50 text-primary font-bold">
+          <Avatar className="h-10 w-10 rounded-xl border-2 border-primary/20 overflow-hidden shadow-lg">
+            <AvatarImage 
+              src={profile?.photoURL || user?.photoURL || ''} 
+              className="object-cover"
+            />
+            <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-black uppercase text-sm">
               {profile?.firstName?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-bold truncate">{profile?.firstName || 'Usuário'}</span>
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-              {profile?.userType === 'trainer' ? 'Professor' : profile?.userType === 'admin' ? 'Administrador' : 'Aluno'}
+            <span className="text-sm font-black text-white truncate uppercase tracking-tight">
+              {profile?.firstName || 'Atleta'}
+            </span>
+            <span className="text-[9px] text-primary font-black uppercase tracking-[0.2em]">
+              {profile?.userType === 'trainer' ? 'Professor' : profile?.userType === 'admin' ? 'Admin' : 'Aluno Elite'}
             </span>
           </div>
         </Link>
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-destructive hover:bg-destructive/5 transition-colors"
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all group"
         >
-          <LogOut className="h-5 w-5" />
-          <span className="font-bold text-sm">Sair do App</span>
+          <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
+          <span className="font-black text-xs uppercase tracking-widest">Sair do App</span>
         </button>
       </div>
     </div>

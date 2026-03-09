@@ -1,14 +1,15 @@
+
 'use client';
 
 import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { Dumbbell, Activity, TrendingUp, ArrowLeft, Utensils, Zap, Flame, Clock, Settings, CheckCircle2, History } from 'lucide-react';
+import { Dumbbell, Activity, TrendingUp, ArrowLeft, Utensils, Zap, Flame, Clock, Settings, CheckCircle2, History, CreditCard, Calendar, AlertTriangle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +52,7 @@ function StudentDetailsContent() {
       lastName: formData.get('lastName') as string,
       height: formData.get('height') as string,
       weight: formData.get('weight') as string,
+      paymentDueDate: formData.get('paymentDueDate') as string,
     };
 
     setIsUpdating(true);
@@ -60,6 +62,23 @@ function StudentDetailsContent() {
       setIsEditModalOpen(false);
     } catch (error) {
       toast({ variant: "destructive", title: "Erro ao atualizar" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleUpdatePayment = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!studentRef) return;
+    const formData = new FormData(e.currentTarget);
+    const date = formData.get('paymentDueDate') as string;
+
+    setIsUpdating(true);
+    try {
+      await updateDoc(studentRef, { paymentDueDate: date });
+      toast({ title: "Pagamento atualizado", description: "Próximo vencimento definido." });
+    } catch (e) {
+      toast({ variant: 'destructive', title: "Erro ao salvar" });
     } finally {
       setIsUpdating(false);
     }
@@ -95,6 +114,8 @@ function StudentDetailsContent() {
     ? (parseFloat(student.weight) / ((parseFloat(student.height)/100)**2)).toFixed(1)
     : '--';
 
+  const isExpired = student.paymentDueDate && new Date(student.paymentDueDate) < new Date();
+
   return (
     <div className="flex flex-col gap-8 w-full pb-20 max-w-6xl mx-auto px-1">
       <div className="flex items-center gap-4">
@@ -104,9 +125,7 @@ function StudentDetailsContent() {
         <PageHeader title={`${student.firstName} ${student.lastName}`} subtitle="GESTÃO TOTAL DO ALUNO." />
       </div>
 
-      {/* Grid Superior - Alinhamento Uniforme */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-        {/* Card Perfil */}
         <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl relative overflow-hidden flex flex-col min-h-[340px]">
           <div className="absolute top-6 right-6 z-10">
             <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -138,6 +157,10 @@ function StudentDetailsContent() {
                       <Input name="weight" type="number" defaultValue={student.weight || ''} className="rounded-xl bg-white/5 border-none h-12 font-bold" />
                     </div>
                   </div>
+                  <div className="space-y-2">
+                    <Label className="font-black text-[10px] uppercase text-white/40">Vencimento Mensalidade</Label>
+                    <Input name="paymentDueDate" type="date" defaultValue={student.paymentDueDate || ''} className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                  </div>
                   <DialogFooter><Button type="submit" className="w-full rounded-2xl h-14 bg-primary font-black uppercase shadow-lg shadow-primary/20" disabled={isUpdating}>Salvar Alterações</Button></DialogFooter>
                 </form>
               </DialogContent>
@@ -152,7 +175,6 @@ function StudentDetailsContent() {
           </CardContent>
         </Card>
 
-        {/* Card Evolução */}
         <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl flex flex-col min-h-[340px]">
           <CardHeader className="p-8 pb-0 text-center">
             <CardTitle className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Evolução Corporal</CardTitle>
@@ -164,14 +186,18 @@ function StudentDetailsContent() {
             </div>
             <div className="mt-10 w-full">
               <div className="flex items-center justify-between bg-white/5 p-5 rounded-[1.8rem] border border-white/5">
-                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">STATUS DO ALUNO</span>
-                <Badge variant="outline" className="bg-green-500/10 text-green-500 border-none font-black text-[9px] uppercase tracking-widest px-4 py-1">ATIVO</Badge>
+                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">STATUS FINANCEIRO</span>
+                <Badge variant="outline" className={cn(
+                  "border-none font-black text-[9px] uppercase tracking-widest px-4 py-1",
+                  isExpired ? "bg-red-500/10 text-red-500" : "bg-green-500/10 text-green-500"
+                )}>
+                  {isExpired ? 'VENCIDO' : 'EM DIA'}
+                </Badge>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Card Ações Rápidas */}
         <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl flex flex-col min-h-[340px]">
           <CardContent className="p-8 flex flex-col justify-center gap-4 flex-1 h-full">
             <Button asChild className="w-full h-20 rounded-[1.8rem] font-black text-lg bg-primary text-white shadow-xl shadow-primary/20 uppercase tracking-tight transition-all active:scale-95 group">
@@ -203,12 +229,12 @@ function StudentDetailsContent() {
         </Card>
       </div>
 
-      {/* Abas de Gestão */}
       <Tabs defaultValue="workouts" className="mt-4">
-        <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full md:w-auto border border-white/5 gap-1 shadow-inner">
-          <TabsTrigger value="workouts" className="px-10 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Treinos</TabsTrigger>
-          <TabsTrigger value="report" className="px-10 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Relatório</TabsTrigger>
-          <TabsTrigger value="diets" className="px-10 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Dieta</TabsTrigger>
+        <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full md:w-auto border border-white/5 gap-1 shadow-inner overflow-x-auto no-scrollbar">
+          <TabsTrigger value="workouts" className="px-8 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Treinos</TabsTrigger>
+          <TabsTrigger value="report" className="px-8 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Relatório</TabsTrigger>
+          <TabsTrigger value="diets" className="px-8 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Dieta</TabsTrigger>
+          <TabsTrigger value="billing" className="px-8 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all">Financeiro</TabsTrigger>
         </TabsList>
         
         <TabsContent value="workouts" className="mt-8">
@@ -235,12 +261,59 @@ function StudentDetailsContent() {
                 </div>
               </Card>
             ))}
-            {(!plans || plans.length === 0) && (
-              <div className="col-span-full py-24 text-center bg-white/[0.02] rounded-[3rem] border-2 border-dashed border-white/5">
-                <p className="text-white/20 font-black uppercase tracking-[0.3em] italic text-xs">Nenhum treino planejado disponível</p>
-              </div>
-            )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="billing" className="mt-8">
+          <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden">
+            <CardHeader className="bg-white/5 p-8 border-b border-white/5">
+              <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
+                <CreditCard className="h-6 w-6 text-primary" />
+                Controle de Mensalidades
+              </CardTitle>
+              <CardDescription className="text-[10px] font-bold uppercase text-white/40 tracking-widest">
+                Defina a data de vencimento. O sistema bloqueará o acesso automaticamente após esta data.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
+                <form onSubmit={handleUpdatePayment} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest flex items-center gap-2">
+                      <Calendar className="h-3 w-3 text-primary" /> Próximo Vencimento
+                    </Label>
+                    <Input 
+                      name="paymentDueDate" 
+                      type="date" 
+                      defaultValue={student.paymentDueDate || ''} 
+                      className="rounded-xl h-12 bg-white/5 border-none text-white font-bold" 
+                    />
+                  </div>
+                  <Button type="submit" className="w-full h-14 rounded-2xl bg-primary font-black uppercase shadow-lg shadow-primary/20" disabled={isUpdating}>
+                    ATUALIZAR VENCIMENTO
+                  </Button>
+                </form>
+
+                <div className={cn(
+                  "p-8 rounded-[2rem] border flex flex-col items-center justify-center text-center gap-4",
+                  isExpired ? "bg-red-500/5 border-red-500/20" : "bg-green-500/5 border-green-500/20"
+                )}>
+                  <div className={cn(
+                    "h-16 w-16 rounded-full flex items-center justify-center shadow-2xl",
+                    isExpired ? "bg-red-500 text-white" : "bg-green-500 text-white"
+                  )}>
+                    {isExpired ? <AlertTriangle className="h-8 w-8" /> : <CheckCircle2 className="h-8 w-8" />}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-white/40 tracking-[0.2em]">Status de Acesso</p>
+                    <p className={cn("text-2xl font-black uppercase tracking-tighter mt-1", isExpired ? "text-red-500" : "text-green-500")}>
+                      {isExpired ? 'ACESSO BLOQUEADO' : 'ACESSO LIBERADO'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="report" className="mt-8">
@@ -272,14 +345,6 @@ function StudentDetailsContent() {
                     <Badge variant="outline" className="hidden sm:flex border-primary/20 text-primary font-black text-[9px] uppercase tracking-widest px-4 py-1 rounded-full">CONCLUÍDO</Badge>
                   </div>
                 ))}
-                {(!history || history.length === 0) && (
-                  <div className="py-24 text-center opacity-30 flex flex-col items-center gap-6">
-                    <div className="p-6 bg-white/5 rounded-full">
-                      <Activity className="h-16 w-16 text-white" />
-                    </div>
-                    <p className="font-black uppercase tracking-[0.3em] text-xs italic">Nenhuma atividade registrada no histórico.</p>
-                  </div>
-                )}
               </div>
             </ScrollArea>
           </Card>
@@ -301,11 +366,6 @@ function StudentDetailsContent() {
                 </div>
               </Card>
             ))}
-            {(!diets || diets.length === 0) && (
-              <div className="col-span-full py-24 text-center bg-white/[0.02] rounded-[3rem] border-2 border-dashed border-white/5">
-                <p className="text-white/20 font-black uppercase tracking-[0.3em] italic text-xs">Sem sugestões de dieta enviadas para este aluno</p>
-              </div>
-            )}
           </div>
         </TabsContent>
       </Tabs>

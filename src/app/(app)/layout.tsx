@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { useUser, useAuth } from '@/firebase';
@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldBan, LogOut } from 'lucide-react';
+import { ShieldBan, LogOut, CreditCard, AlertTriangle } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, isUserLoading } = useUser();
@@ -23,7 +23,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  // Alerta visual de bloqueio
+  // Lógica de verificação de vencimento automática (Client-side enforcement)
+  const isExpired = useMemo(() => {
+    if (profile?.userType !== 'student' || !profile?.paymentDueDate) return false;
+    const dueDate = new Date(profile.paymentDueDate);
+    const today = new Date();
+    // Normaliza para comparar apenas datas sem horas
+    today.setHours(0, 0, 0, 0);
+    return today > dueDate;
+  }, [profile]);
+
   useEffect(() => {
     if (!isUserLoading && profile?.status === 'blocked') {
       toast({
@@ -31,10 +40,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         title: "Acesso Suspenso",
         description: "Sua conta está inativa no momento.",
       });
+    } else if (!isUserLoading && isExpired) {
+      toast({
+        variant: 'destructive',
+        title: "Mensalidade Vencida",
+        description: "Regularize seu acesso para continuar treinando.",
+      });
     }
-  }, [profile, isUserLoading, toast]);
+  }, [profile, isUserLoading, toast, isExpired]);
 
-  // Enquanto carrega os dados
   if (isUserLoading) {
     return (
       <div className="flex min-h-screen w-full bg-background items-center justify-center p-8">
@@ -53,20 +67,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Se não estiver logado (o useEffect redirecionará, mas evitamos renderizar o resto)
   if (!user) return null;
 
-  // TELA DE BLOQUEIO ELITE DARK
-  if (profile?.status === 'blocked') {
+  // TELA DE BLOQUEIO (Manual ou Automático por Vencimento)
+  if (profile?.status === 'blocked' || isExpired) {
     return (
       <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 overflow-hidden relative">
-        {/* Efeito de brilho de fundo */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full -z-10" />
         
         <div className="text-center space-y-10 flex flex-col items-center max-w-sm animate-in fade-in zoom-in duration-500">
           <div className="relative">
             <div className="h-32 w-32 bg-primary/10 text-primary rounded-[3rem] flex items-center justify-center shadow-2xl border border-primary/20 animate-pulse">
-              <ShieldBan className="h-16 w-16" />
+              {isExpired ? <CreditCard className="h-16 w-16" /> : <ShieldBan className="h-16 w-16" />}
             </div>
             <div className="absolute -top-2 -right-2 h-8 w-8 bg-primary rounded-full flex items-center justify-center shadow-lg border-4 border-background">
               <span className="text-white font-black text-[10px]">!</span>
@@ -75,11 +87,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           <div className="space-y-4">
             <h2 className="text-4xl font-black uppercase text-white tracking-tighter leading-none">
-              ACESSO <span className="text-primary">RESTRITO</span>
+              {isExpired ? 'PAGAMENTO' : 'ACESSO'} <span className="text-primary">{isExpired ? 'PENDENTE' : 'RESTRITO'}</span>
             </h2>
             <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 backdrop-blur-sm">
               <p className="text-primary font-black uppercase text-xs tracking-[0.15em] leading-relaxed">
-                Sua conta está bloqueada.<br />
+                {isExpired 
+                  ? "Sua mensalidade venceu. Regularize seu pagamento para desbloquear sua planilha de treinos." 
+                  : "Sua conta está bloqueada no momento."
+                }
+                <br /><br />
                 <span className="text-white">Entre em contato com o seu professor</span> para regularizar seu acesso.
               </p>
             </div>
@@ -97,7 +113,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Layout normal para usuários ativos
   return (
     <div className="flex min-h-screen w-full bg-background overflow-x-hidden relative">
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-primary/10 bg-card z-50">

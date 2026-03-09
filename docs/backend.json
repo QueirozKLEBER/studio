@@ -10,11 +10,17 @@
         "email": { "type": "string", "format": "email" },
         "firstName": { "type": "string" },
         "lastName": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "cref": { "type": "string" },
+        "pixKey": { "type": "string" },
         "dateJoined": { "type": "string", "format": "date-time" },
         "userType": { "type": "string", "enum": ["student", "trainer", "admin"] },
         "height": { "type": "string" },
         "weight": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" }
+        "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" },
+        "paymentDueDate": { "type": "string", "format": "date" },
+        "trainerId": { "type": "string" }
       },
       "required": ["id", "email", "firstName", "lastName", "dateJoined", "userType"]
     },

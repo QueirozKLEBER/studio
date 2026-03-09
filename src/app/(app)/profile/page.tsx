@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { useUser, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, LogOut } from 'lucide-react';
+import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, LogOut, Phone, CreditCard, ShieldCheck } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
@@ -38,11 +39,30 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    firstName: profile?.firstName || '',
-    lastName: profile?.lastName || '',
-    height: profile?.height || '',
-    weight: profile?.weight || '',
+    firstName: '',
+    lastName: '',
+    fullName: '',
+    phone: '',
+    cref: '',
+    pixKey: '',
+    height: '',
+    weight: '',
   });
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        firstName: profile.firstName || '',
+        lastName: profile.lastName || '',
+        fullName: profile.fullName || '',
+        phone: profile.phone || '',
+        cref: profile.cref || '',
+        pixKey: profile.pixKey || '',
+        height: profile.height || '',
+        weight: profile.weight || '',
+      });
+    }
+  }, [profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -57,15 +77,27 @@ export default function ProfilePage() {
     try {
       const userRef = doc(db, 'users', user.uid);
       
-      await updateDoc(userRef, {
+      const updateData: any = {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        height: formData.height,
-        weight: formData.weight,
-      });
+        fullName: formData.fullName,
+        phone: formData.phone,
+      };
+
+      if (profile.userType === 'trainer') {
+        updateData.cref = formData.cref;
+        updateData.pixKey = formData.pixKey;
+      }
+
+      if (profile.userType === 'student') {
+        updateData.height = formData.height;
+        updateData.weight = formData.weight;
+      }
+
+      await updateDoc(userRef, updateData);
 
       await updateProfile(user, {
-        displayName: `${formData.firstName} ${formData.lastName}`.trim(),
+        displayName: formData.fullName || `${formData.firstName} ${formData.lastName}`.trim(),
       });
 
       toast({
@@ -176,7 +208,7 @@ export default function ProfilePage() {
     <div className="flex flex-col gap-8 pb-32 max-w-4xl mx-auto w-full px-1">
       <PageHeader
         title="Meu Perfil"
-        subtitle="Gerencie seus dados e acompanhe suas medidas de elite."
+        subtitle="Gerencie seus dados profissionais e acompanhe sua conta de elite."
       />
 
       <Card className="rounded-[2.5rem] border border-white/10 shadow-xl bg-card overflow-hidden">
@@ -251,15 +283,17 @@ export default function ProfilePage() {
 
             <div className="text-center md:text-left flex-1 space-y-2">
               <h2 className="text-3xl font-black uppercase tracking-tighter text-white">
-                {profile?.firstName} {profile?.lastName}
+                {profile?.fullName || `${profile?.firstName} ${profile?.lastName}`}
               </h2>
               <div className="flex flex-wrap justify-center md:justify-start gap-2">
                 <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-bold uppercase tracking-widest text-[10px]">
                   {profile?.userType === 'trainer' ? 'PROFESSOR MFIT' : profile?.userType === 'admin' ? 'ADMINISTRADOR' : 'ALUNO ELITE'}
                 </Badge>
-                <Badge variant="outline" className="border-white/10 text-white/40 font-bold text-[10px]">
-                  MEMBRO DESDE {profile?.dateJoined ? new Date(profile.dateJoined).getFullYear() : '2024'}
-                </Badge>
+                {profile?.cref && (
+                  <Badge variant="outline" className="border-primary/20 text-primary font-bold text-[10px]">
+                    CREF: {profile.cref}
+                  </Badge>
+                )}
               </div>
               <p className="text-sm text-white/40 font-medium">{profile?.email}</p>
             </div>
@@ -273,10 +307,17 @@ export default function ProfilePage() {
             <User className="h-4 w-4" />
             Dados Pessoais
           </TabsTrigger>
-          <TabsTrigger value="fitness" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Settings className="h-4 w-4" />
-            Medidas
-          </TabsTrigger>
+          {profile?.userType === 'trainer' ? (
+            <TabsTrigger value="pro" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+              <ShieldCheck className="h-4 w-4" />
+              Profissional
+            </TabsTrigger>
+          ) : (
+            <TabsTrigger value="fitness" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+              <Settings className="h-4 w-4" />
+              Biometria
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <form onSubmit={handleUpdateProfile}>
@@ -284,34 +325,75 @@ export default function ProfilePage() {
             <Card className="rounded-[2.5rem] border border-white/5 shadow-xl bg-card overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-xl font-black uppercase tracking-tight text-white">Informações Básicas</CardTitle>
-                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Atualize seus dados de cadastro.</CardDescription>
+                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Mantenha seus dados de contato atualizados.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="font-black text-[10px] uppercase text-white/40 tracking-widest">Primeiro Nome</Label>
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Nome Completo</Label>
                     <Input 
-                      id="firstName" 
-                      name="firstName" 
-                      defaultValue={profile?.firstName} 
+                      name="fullName" 
+                      value={formData.fullName} 
                       onChange={handleInputChange}
+                      placeholder="Ex: João da Silva Santos"
                       className="rounded-xl h-12 bg-white/5 border-none text-white font-bold"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="font-black text-[10px] uppercase text-white/40 tracking-widest">Sobrenome</Label>
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest flex items-center gap-2">
+                      <Phone className="h-3 w-3 text-primary" /> Celular / WhatsApp
+                    </Label>
                     <Input 
-                      id="lastName" 
-                      name="lastName" 
-                      defaultValue={profile?.lastName} 
+                      name="phone" 
+                      value={formData.phone} 
                       onChange={handleInputChange}
+                      placeholder="(00) 00000-0000"
                       className="rounded-xl h-12 bg-white/5 border-none text-white font-bold"
                     />
                   </div>
                 </div>
-                <div className="space-y-2 opacity-40">
-                  <Label htmlFor="email" className="font-black text-[10px] uppercase tracking-widest">E-mail (Privado)</Label>
-                  <Input id="email" value={profile?.email} disabled className="rounded-xl h-12 bg-black/20 text-white" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">E-mail de Cadastro</Label>
+                    <Input value={profile?.email} disabled className="rounded-xl h-12 bg-black/20 border-none text-white/40" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pro">
+            <Card className="rounded-[2.5rem] border border-white/5 shadow-xl bg-card overflow-hidden">
+              <CardHeader>
+                <CardTitle className="text-xl font-black uppercase tracking-tight text-white">Credenciais e Pagamentos</CardTitle>
+                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Essencial para que seus alunos efetuem pagamentos.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest flex items-center gap-2">
+                      <ShieldCheck className="h-3 w-3 text-primary" /> Registro CREF
+                    </Label>
+                    <Input 
+                      name="cref" 
+                      value={formData.cref} 
+                      onChange={handleInputChange}
+                      placeholder="Ex: 000000-G/SP"
+                      className="rounded-xl h-12 bg-white/5 border-none text-white font-bold uppercase"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest flex items-center gap-2">
+                      <CreditCard className="h-3 w-3 text-primary" /> Chave PIX para Mensalidades
+                    </Label>
+                    <Input 
+                      name="pixKey" 
+                      value={formData.pixKey} 
+                      onChange={handleInputChange}
+                      placeholder="CPF, E-mail ou Celular"
+                      className="rounded-xl h-12 bg-white/5 border-none text-white font-bold"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -321,20 +403,19 @@ export default function ProfilePage() {
             <Card className="rounded-[2.5rem] border border-white/5 shadow-xl bg-card overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-xl font-black uppercase tracking-tight text-white">Sua Biometria</CardTitle>
-                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Essencial para o cálculo de macros.</CardDescription>
+                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Essencial para o cálculo de macros e evolução.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-primary">
                       <Ruler className="h-5 w-5" />
-                      <Label htmlFor="height" className="font-black text-[10px] uppercase">Altura (cm)</Label>
+                      <Label className="font-black text-[10px] uppercase">Altura (cm)</Label>
                     </div>
                     <Input 
-                      id="height" 
                       name="height" 
                       type="number" 
-                      defaultValue={profile?.height} 
+                      value={formData.height} 
                       onChange={handleInputChange}
                       className="rounded-2xl h-16 text-2xl font-black bg-white/5 border-2 border-primary/10 focus:border-primary text-center text-white"
                     />
@@ -342,13 +423,12 @@ export default function ProfilePage() {
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-primary">
                       <Weight className="h-5 w-5" />
-                      <Label htmlFor="weight" className="font-black text-[10px] uppercase">Peso Atual (kg)</Label>
+                      <Label className="font-black text-[10px] uppercase">Peso Atual (kg)</Label>
                     </div>
                     <Input 
-                      id="weight" 
                       name="weight" 
                       type="number" 
-                      defaultValue={profile?.weight} 
+                      value={formData.weight} 
                       onChange={handleInputChange}
                       className="rounded-2xl h-16 text-2xl font-black bg-white/5 border-2 border-primary/10 focus:border-primary text-center text-white"
                     />
@@ -367,7 +447,6 @@ export default function ProfilePage() {
               {isUpdating ? <Loader2 className="h-6 w-6 animate-spin" /> : 'SALVAR ALTERAÇÕES'}
             </Button>
 
-            {/* BOTÃO DE SAIR - EXCLUSIVO MOBILE/TABLET VISIBLE */}
             <Button 
               type="button"
               variant="outline"

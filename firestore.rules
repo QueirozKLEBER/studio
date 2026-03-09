@@ -7,12 +7,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Função auxiliar para obter os dados do usuário logado com segurança
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Verifica se o usuário não está bloqueado, tratando documentos sem o campo status
     function isNotBlocked() {
       return !isSignedIn() || getUserData().get('status', 'active') != 'blocked';
     }
@@ -30,21 +28,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // PERMISSÃO CRÍTICA: Permite que o dono do perfil SEMPRE leia seu próprio documento (get).
-      // Isso é necessário para que o app identifique o status 'blocked'.
-      // Professores e Admins também podem ler qualquer perfil.
       allow get: if isSignedIn() && (request.auth.uid == userId || isTrainer() || isAdmin());
-      
-      // Listagem (list) continua restrita a quem não está bloqueado ou é admin/trainer
       allow list: if isSignedIn() && (isAdmin() || isTrainer());
-
-      // Apenas o próprio usuário cria seu perfil no signup
       allow create: if isSignedIn() && request.auth.uid == userId;
       
-      // Dono (se não bloqueado) ou Admin podem atualizar
-      allow update: if isOwner(userId) || isAdmin();
+      // Permitir que o Trainer e Admin atualizem campos específicos como status e paymentDueDate
+      allow update: if isOwner(userId) || isTrainer() || isAdmin();
       
-      // Apenas Admin deleta
       allow delete: if isAdmin();
 
       match /trainingPlans/{trainingPlanId} {

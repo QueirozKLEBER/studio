@@ -3,15 +3,22 @@
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { Activity, UserPlus, Clock, ShieldCheck } from 'lucide-react';
+import { collection, query, orderBy, limit, where } from 'firebase/firestore';
+import { Clock, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AdminAuditPage() {
   const db = useFirestore();
 
-  // Auditoria baseada em novos usuários (já que não temos um log global dedicado ainda)
-  const auditQuery = useMemoFirebase(() => query(collection(db, 'users'), orderBy('dateJoined', 'desc'), limit(20)), [db]);
+  // Auditoria baseada em usuários (ajustada para query válida por segurança)
+  const auditQuery = useMemoFirebase(() => 
+    query(
+      collection(db, 'users'), 
+      where('userType', 'in', ['student', 'trainer']), 
+      orderBy('dateJoined', 'desc'), 
+      limit(20)
+    ), [db]);
+    
   const { data: actions, isLoading } = useCollection(auditQuery);
 
   return (

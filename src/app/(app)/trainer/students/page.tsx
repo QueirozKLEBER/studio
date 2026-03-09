@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { Users, ChevronRight, Search, User, Activity } from 'lucide-react';
+import { Users, ChevronRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -18,10 +17,10 @@ export default function TrainerStudentsPage() {
   const db = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Consulta real: busca alunos onde o userType é 'student'
-  // Nota: Poderia ser filtrado por trainerId == profile.id se os alunos forem vinculados
+  // Consulta real filtrada por tipo para satisfazer as regras de segurança
   const studentsQuery = useMemoFirebase(() => {
     if (!profile) return null;
+    // O professor lista apenas quem tem o tipo 'student'
     return query(collection(db, 'users'), where('userType', '==', 'student'));
   }, [db, profile]);
 
@@ -69,7 +68,7 @@ export default function TrainerStudentsPage() {
                     <h3 className="font-black text-white uppercase tracking-tight truncate">{student.firstName} {student.lastName}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="border-none bg-primary/10 text-primary font-black text-[8px] uppercase px-2 py-0.5">
-                        ALUNO PREMIUM
+                        ALUNO ELITE
                       </Badge>
                       <span className="text-[10px] text-white/20 font-bold uppercase tracking-widest truncate">{student.email}</span>
                     </div>
@@ -78,8 +77,13 @@ export default function TrainerStudentsPage() {
                 
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                   <div className="hidden md:flex flex-col items-end mr-4">
-                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Peso Atual</p>
-                    <p className="text-xs font-black text-white">{student.weight || '--'} KG</p>
+                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Vencimento</p>
+                    <p className={cn(
+                      "text-xs font-black",
+                      student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? "text-primary" : "text-white"
+                    )}>
+                      {student.paymentDueDate ? new Date(student.paymentDueDate).toLocaleDateString('pt-BR') : '--'}
+                    </p>
                   </div>
 
                   <Button variant="ghost" size="icon" asChild className="rounded-2xl h-12 w-12 hover:bg-primary hover:text-white transition-all">

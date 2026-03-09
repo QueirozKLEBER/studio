@@ -3,59 +3,60 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * Funções auxiliares otimizadas para evitar recursão infinita.
+     * Funções Auxiliares
      */
-    function isAuthenticated() {
+    function isSignedIn() {
       return request.auth != null;
     }
 
+    // Verifica se o usuário é o dono do caminho (UID match)
+    // Importante: Não faz chamadas get() para evitar recursão
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Busca dados do usuário logado. O Firestore cacheia este get() durante a execução.
-    function getAuthenticatedData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    // Busca o cargo do usuário no banco de dados
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType;
     }
 
-    function hasRole(role) {
-      return isAuthenticated() && getAuthenticatedData().userType == role;
+    function isStaff() {
+      return isSignedIn() && (getUserRole() == 'trainer' || getUserRole() == 'admin');
     }
 
     /**
-     * Regras para a coleção de usuários e suas subcoleções.
+     * Regras para Usuários e Subcoleções
      */
     match /users/{userId} {
       
-      // REGRA PRIORITÁRIA (Dono): O usuário tem acesso total e imediato a si mesmo.
-      // O uso de {allPaths=**} garante que subcoleções como 'appointments' herdem o acesso.
-      // Esta regra é validada APENAS pelo UID, evitando recursão (loops de get).
+      // 1. ACESSO DO DONO (Prioritário)
+      // Garante acesso total ao próprio documento e a TODAS as subcoleções (appointments, workouts, etc.)
+      // O uso do wildcard recursivo {allPaths=**} permite a operação 'list' em subcoleções.
+      allow read, write: if isOwner(userId);
+      
       match /{allPaths=**} {
         allow read, write: if isOwner(userId);
       }
 
-      // REGRA DE LISTAGEM (Staff): Permite que Professores e Admins listem a coleção /users.
-      // Essencial para o Dashboard do Professor carregar a lista de alunos.
-      allow list: if isAuthenticated() && (hasRole('trainer') || hasRole('admin'));
-
-      // REGRA DE PERFIL (Staff): Permite que Staff veja perfis de outros usuários.
-      allow get: if isAuthenticated() && (hasRole('trainer') || hasRole('admin'));
-
-      // REGRA DE GERENCIAMENTO (Staff): Permite gerenciar subcoleções de outros usuários (alunos).
+      // 2. ACESSO DA EQUIPE (Staff)
+      // Permite que Professores e Admins listem a coleção /users para ver alunos
+      allow list, get: if isStaff();
+      
+      // Permite que Staff gerencie dados de qualquer aluno
       match /{subCollection}/{document=**} {
-        allow read, write: if isAuthenticated() && (hasRole('trainer') || hasRole('admin'));
+        allow read, write: if isStaff();
       }
     }
 
     /**
-     * Coleções globais de referência.
+     * Coleções de Referência (Exercícios e Dicas)
      */
     match /exercises/{exerciseId} {
-      allow read: if isAuthenticated();
+      allow read: if isSignedIn();
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow read: if isAuthenticated();
+      allow read: if isSignedIn();
     }
   }
 }

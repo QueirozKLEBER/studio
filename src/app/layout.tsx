@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="antialiased font-sans bg-slate-50 text-slate-900 min-h-screen">
+    <html lang="pt-BR" className="dark">
+      <body className="antialiased font-sans bg-background text-foreground min-h-screen">
         <FirebaseClientProvider>
           {children}
           <Toaster />

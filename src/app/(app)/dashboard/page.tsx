@@ -36,7 +36,6 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  // Busca o último plano de treino
   const plansQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -46,7 +45,6 @@ export default function Dashboard() {
     );
   }, [db, user]);
 
-  // Busca o histórico dos últimos 7 dias para o gráfico
   const historyQuery = useMemoFirebase(() => {
     if (!user) return null;
     const sevenDaysAgo = new Date();
@@ -63,7 +61,6 @@ export default function Dashboard() {
 
   const activePlan = latestPlans && latestPlans.length > 0 ? latestPlans[0] : null;
 
-  // Processa dados reais para o gráfico semanal - Apenas no cliente
   const weeklyData = useMemo(() => {
     if (!mounted) return [];
     const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -90,7 +87,6 @@ export default function Dashboard() {
     return result;
   }, [history, mounted]);
 
-  // Verifica se o aluno treinou hoje - Apenas no cliente
   const trainedToday = useMemo(() => {
     if (!mounted || !history) return false;
     const todayStr = new Date().toLocaleDateString('pt-BR');
@@ -102,7 +98,6 @@ export default function Dashboard() {
       <div className="flex flex-col gap-6 w-full animate-pulse">
         <div className="h-10 w-48 bg-muted rounded-xl" />
         <div className="h-32 bg-muted rounded-[2rem]" />
-        <div className="grid grid-cols-5 gap-3 h-24 bg-muted/20 rounded-2xl" />
       </div>
     );
   }
@@ -117,13 +112,13 @@ export default function Dashboard() {
       {/* Alerta de Treino do Dia */}
       <Card className={cn(
         "rounded-[2rem] border-none shadow-lg overflow-hidden transition-all",
-        trainedToday ? "bg-green-50 border-2 border-green-200" : "bg-primary/5 border-2 border-primary/20"
+        trainedToday ? "bg-green-900/20 border-2 border-green-500/30" : "bg-primary/10 border-2 border-primary/20"
       )}>
         <CardContent className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
               "p-4 rounded-2xl shadow-sm",
-              trainedToday ? "bg-green-500 text-white" : "bg-primary text-white"
+              trainedToday ? "bg-green-600 text-white" : "bg-primary text-white"
             )}>
               {trainedToday ? <CheckCircle2 className="h-6 w-6" /> : <CalendarDays className="h-6 w-6" />}
             </div>
@@ -139,7 +134,7 @@ export default function Dashboard() {
             </div>
           </div>
           {!trainedToday && (
-            <Button asChild className="rounded-xl font-bold shadow-md">
+            <Button asChild className="rounded-xl font-bold shadow-md bg-primary text-white hover:bg-primary/90">
               <Link href="/activity">Registrar</Link>
             </Button>
           )}
@@ -149,45 +144,45 @@ export default function Dashboard() {
       {/* Quick Access Grid */}
       <div className="grid grid-cols-3 gap-3 md:grid-cols-5 w-full">
         {[
-          { icon: Dumbbell, label: 'Treinos', href: '/workouts', color: 'bg-blue-100 text-blue-600' },
-          { icon: Clock, label: 'Atividades', href: '/activity', color: 'bg-purple-100 text-purple-600' },
-          { icon: Utensils, label: 'Dieta', href: '/diet', color: 'bg-orange-100 text-orange-600' },
-          { icon: TrendingUp, label: 'Avaliação', href: '/assessment', color: 'bg-green-100 text-green-600' },
-          { icon: ChevronRight, label: 'Histórico', href: '/profile', color: 'bg-gray-100 text-gray-600' },
+          { icon: Dumbbell, label: 'Treinos', href: '/workouts', color: 'bg-muted text-primary' },
+          { icon: Clock, label: 'Atividades', href: '/activity', color: 'bg-muted text-primary' },
+          { icon: Utensils, label: 'Dieta', href: '/diet', color: 'bg-muted text-primary' },
+          { icon: TrendingUp, label: 'Avaliação', href: '/assessment', color: 'bg-muted text-primary' },
+          { icon: ChevronRight, label: 'Histórico', href: '/profile', color: 'bg-muted text-primary' },
         ].map((item, i) => (
           <Link key={i} href={item.href} className="flex flex-col items-center gap-2 group">
             <div className={cn(
               "p-4 rounded-3xl shadow-sm transition-transform group-active:scale-95 w-full aspect-square flex items-center justify-center",
-              item.color
+              item.color,
+              "hover:bg-primary hover:text-white transition-colors"
             )}>
               <item.icon className="h-8 w-8" />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{item.label}</span>
           </Link>
         ))}
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {/* Weekly Progress Chart */}
-        <Card className="rounded-[2.5rem] border-none shadow-md overflow-hidden bg-white">
+        <Card className="rounded-[2.5rem] border-none shadow-md overflow-hidden bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold flex items-center justify-between">
-              Frequência da Semana
-              <Badge variant="secondary" className="bg-primary/10 text-primary">Tempo Real</Badge>
+            <CardTitle className="text-sm font-bold flex items-center justify-between uppercase tracking-widest text-muted-foreground">
+              Frequência Semanal
+              <Badge variant="secondary" className="bg-primary/20 text-primary border-none">Elite</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="h-64 pt-0">
             {history && history.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData}>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={12} dy={8} />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={12} dy={8} stroke="#666" />
                   <Tooltip 
-                    cursor={{fill: 'rgba(0,0,0,0.02)'}} 
+                    cursor={{fill: 'rgba(255,255,255,0.05)'}} 
                     content={({active, payload}) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-white p-2 rounded-lg shadow-xl border border-muted text-[10px] font-bold">
+                          <div className="bg-muted p-2 rounded-lg shadow-xl border border-border text-[10px] font-bold text-white">
                             {payload[0].payload.sessions} Atividade(s)
                           </div>
                         );
@@ -214,9 +209,9 @@ export default function Dashboard() {
         {/* Workout of the Day */}
         <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground p-2">
           <CardHeader>
-            <CardTitle className="text-sm font-bold flex items-center gap-2">
+            <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-tighter">
               <Dumbbell className="h-5 w-5" />
-              Treino Sugerido
+              Treino do Dia
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">

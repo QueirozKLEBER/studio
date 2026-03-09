@@ -3,54 +3,39 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * FUNÇÕES AUXILIARES
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Verifica se o usuário é o dono do registro sem disparar leituras extras
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Busca dados do perfil do usuário logado
-    function getAuthData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // Verifica cargo específico
-    function hasRole(role) {
-      return isSignedIn() && getAuthData().userType == role;
-    }
-
-    function isStaff() {
-      let authData = getAuthData();
-      return isSignedIn() && (authData.userType == 'trainer' || authData.userType == 'admin');
-    }
-
-    /**
-     * REGRAS PARA USUÁRIOS
+     * REGRAS PARA USUÁRIOS E SUBCOLEÇÕES
      */
     match /users/{userId} {
       
-      // 1. ACESSO DO DONO (Prioridade Máxima e Absoluta)
+      // 1. ACESSO DO DONO (Prioridade Absoluta)
       // Permite que o usuário acesse seu próprio perfil e TODAS as subcoleções (appointments, plans, etc)
-      // Usamos isSignedIn() direto para evitar loops de get() no próprio documento
-      allow read, write: if isOwner(userId);
+      // O uso de {allPaths=**} garante que a operação 'list' em subcoleções funcione.
+      allow read, write: if request.auth != null && request.auth.uid == userId;
       
       match /{allPaths=**} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
       // 2. ACESSO DA EQUIPE (Staff / Admin)
-      // Permite que Staff liste a coleção de usuários
-      allow list: if isStaff();
+      // Funções auxiliares para Staff
+      function isSignedIn() {
+        return request.auth != null;
+      }
       
-      // Permite que Staff leia o perfil de qualquer usuário (especialmente alunos)
+      function getAuthData() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      }
+
+      function isStaff() {
+        let authData = getAuthData();
+        return isSignedIn() && (authData.userType == 'trainer' || authData.userType == 'admin');
+      }
+
+      // Permite que Staff liste a coleção de usuários e leia perfis
+      allow list: if isStaff();
       allow get: if isStaff();
       
-      // Permite que Staff gerencie as subcoleções de qualquer usuário
+      // Permite que Staff gerencie as subcoleções de outros usuários (especialmente alunos)
       match /{subCollection}/{document=**} {
         allow read, write: if isStaff();
       }
@@ -60,11 +45,11 @@ service cloud.firestore {
      * COLEÇÕES GLOBAIS
      */
     match /exercises/{exerciseId} {
-      allow read: if isSignedIn();
+      allow read: if request.auth != null;
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow read: if isSignedIn();
+      allow read: if request.auth != null;
     }
   }
 }

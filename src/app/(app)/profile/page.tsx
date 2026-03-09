@@ -9,13 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, X } from 'lucide-react';
+import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, LogOut } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { useRouter } from 'next/navigation';
 
 const PRESET_AVATARS = [
   { id: 'av1', url: 'https://picsum.photos/seed/fitness_user1/200' },
@@ -29,6 +30,8 @@ const PRESET_AVATARS = [
 export default function ProfilePage() {
   const { user, profile, isUserLoading } = useUser();
   const db = useFirestore();
+  const auth = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
@@ -80,6 +83,15 @@ export default function ProfilePage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao sair' });
+    }
+  };
+
   const handleUpdateAvatar = async (url: string) => {
     if (!user || !profile) return;
 
@@ -119,7 +131,6 @@ export default function ProfilePage() {
     const reader = new FileReader();
     
     reader.onload = (event) => {
-      // Use globalThis.Image to avoid conflict with Next.js Image component
       const img = new globalThis.Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -145,32 +156,11 @@ export default function ProfilePage() {
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
 
-        // Convert to highly compressed JPEG
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
         handleUpdateAvatar(compressedBase64);
       };
-      
-      img.onerror = () => {
-        setIsUpdating(false);
-        toast({
-          variant: "destructive",
-          title: "Erro na imagem",
-          description: "O arquivo selecionado não é uma imagem válida.",
-        });
-      };
-      
       img.src = event.target?.result as string;
     };
-    
-    reader.onerror = () => {
-      setIsUpdating(false);
-      toast({
-        variant: "destructive",
-        title: "Erro no arquivo",
-        description: "Não foi possível ler o arquivo selecionado.",
-      });
-    };
-
     reader.readAsDataURL(file);
   };
 
@@ -183,17 +173,17 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-20 max-w-4xl mx-auto w-full">
+    <div className="flex flex-col gap-8 pb-32 max-w-4xl mx-auto w-full px-1">
       <PageHeader
         title="Meu Perfil"
         subtitle="Gerencie seus dados e acompanhe suas medidas de elite."
       />
 
-      <Card className="rounded-[2.5rem] border-none shadow-md bg-white overflow-hidden">
+      <Card className="rounded-[2.5rem] border border-white/10 shadow-xl bg-card overflow-hidden">
         <CardContent className="p-8">
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="relative group">
-              <Avatar className="h-32 w-32 rounded-[2.5rem] border-4 border-primary/10 shadow-xl overflow-hidden">
+              <Avatar className="h-32 w-32 rounded-[2.5rem] border-4 border-primary/20 shadow-2xl overflow-hidden">
                 <AvatarImage src={profile?.photoURL || user?.photoURL || ''} className="object-cover" />
                 <AvatarFallback className="bg-primary/10 text-primary text-4xl font-black rounded-[2.5rem]">
                   {profile?.firstName?.charAt(0) || 'U'}
@@ -202,20 +192,19 @@ export default function ProfilePage() {
               <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
                 <DialogTrigger asChild>
                   <button 
-                    className="absolute -bottom-2 -right-2 p-2 bg-secondary text-white rounded-2xl shadow-lg border-2 border-white hover:scale-110 transition-transform flex items-center justify-center"
+                    className="absolute -bottom-2 -right-2 p-2 bg-primary text-white rounded-2xl shadow-lg border-2 border-card hover:scale-110 transition-transform flex items-center justify-center"
                   >
                     <Camera className="h-5 w-5" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="rounded-[2.5rem] max-w-md">
+                <DialogContent className="rounded-[2.5rem] max-w-md bg-card border-white/10">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-black uppercase tracking-tight">Escolher Novo Avatar</DialogTitle>
+                    <DialogTitle className="text-xl font-black uppercase tracking-tight text-white">Escolher Novo Avatar</DialogTitle>
                   </DialogHeader>
                   
                   <div className="flex flex-col gap-6 py-4">
                     <div className="space-y-3">
-                      <Label className="font-bold text-xs uppercase opacity-70">Carregar do Dispositivo</Label>
-                      <p className="text-[10px] text-muted-foreground">Sua foto será otimizada automaticamente para o app.</p>
+                      <Label className="font-bold text-xs uppercase opacity-70 text-white/60">Carregar do Dispositivo</Label>
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -225,7 +214,7 @@ export default function ProfilePage() {
                       />
                       <Button 
                         variant="outline" 
-                        className="w-full h-14 rounded-2xl border-2 flex items-center justify-center gap-3 border-dashed hover:bg-primary/5 hover:border-primary transition-all"
+                        className="w-full h-14 rounded-2xl border-2 flex items-center justify-center gap-3 border-dashed border-white/10 hover:bg-white/5 transition-all text-white"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUpdating}
                       >
@@ -235,9 +224,9 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <Separator className="flex-1" />
+                      <Separator className="flex-1 bg-white/5" />
                       <span className="text-[10px] font-bold text-muted-foreground uppercase">Ou escolha um preset</span>
-                      <Separator className="flex-1" />
+                      <Separator className="flex-1 bg-white/5" />
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
@@ -255,156 +244,138 @@ export default function ProfilePage() {
                         </button>
                       ))}
                     </div>
-
-                    <div className="space-y-3">
-                      <Label className="font-bold text-xs uppercase opacity-70">Link Personalizado</Label>
-                      <Input 
-                        placeholder="https://sua-imagem.com/foto.jpg" 
-                        className="rounded-xl h-12 bg-muted/30 border-none" 
-                        disabled={isUpdating}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleUpdateAvatar((e.target as HTMLInputElement).value);
-                        }}
-                      />
-                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
             </div>
 
             <div className="text-center md:text-left flex-1 space-y-2">
-              <h2 className="text-3xl font-black uppercase tracking-tighter">
+              <h2 className="text-3xl font-black uppercase tracking-tighter text-white">
                 {profile?.firstName} {profile?.lastName}
               </h2>
               <div className="flex flex-wrap justify-center md:justify-start gap-2">
                 <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-bold uppercase tracking-widest text-[10px]">
                   {profile?.userType === 'trainer' ? 'PROFESSOR MFIT' : profile?.userType === 'admin' ? 'ADMINISTRADOR' : 'ALUNO ELITE'}
                 </Badge>
-                <Badge variant="outline" className="border-muted-foreground/20 text-muted-foreground font-bold text-[10px]">
+                <Badge variant="outline" className="border-white/10 text-white/40 font-bold text-[10px]">
                   MEMBRO DESDE {profile?.dateJoined ? new Date(profile.dateJoined).getFullYear() : '2024'}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground font-medium">{profile?.email}</p>
+              <p className="text-sm text-white/40 font-medium">{profile?.email}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <Tabs defaultValue="account" className="w-full">
-        <TabsList className="bg-muted p-1 rounded-2xl h-12 gap-1 mb-6">
-          <TabsTrigger value="account" className="rounded-xl font-bold px-6 flex items-center gap-2">
+        <TabsList className="bg-card border border-white/5 p-1 rounded-2xl h-12 gap-1 mb-6">
+          <TabsTrigger value="account" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
             <User className="h-4 w-4" />
             Dados Pessoais
           </TabsTrigger>
-          <TabsTrigger value="fitness" className="rounded-xl font-bold px-6 flex items-center gap-2">
+          <TabsTrigger value="fitness" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
             <Settings className="h-4 w-4" />
-            Medidas e Fitness
+            Medidas
           </TabsTrigger>
         </TabsList>
 
         <form onSubmit={handleUpdateProfile}>
           <TabsContent value="account">
-            <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
+            <Card className="rounded-[2.5rem] border border-white/5 shadow-xl bg-card overflow-hidden">
               <CardHeader>
-                <CardTitle className="text-xl font-bold">Informações Básicas</CardTitle>
-                <CardDescription>Atualize seu nome de exibição no app.</CardDescription>
+                <CardTitle className="text-xl font-black uppercase tracking-tight text-white">Informações Básicas</CardTitle>
+                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Atualize seus dados de cadastro.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName" className="font-bold text-xs uppercase opacity-70">Primeiro Nome</Label>
+                    <Label htmlFor="firstName" className="font-black text-[10px] uppercase text-white/40 tracking-widest">Primeiro Nome</Label>
                     <Input 
                       id="firstName" 
                       name="firstName" 
                       defaultValue={profile?.firstName} 
                       onChange={handleInputChange}
-                      className="rounded-xl h-12 bg-muted/30 border-none shadow-inner"
+                      className="rounded-xl h-12 bg-white/5 border-none text-white font-bold"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName" className="font-bold text-xs uppercase opacity-70">Sobrenome</Label>
+                    <Label htmlFor="lastName" className="font-black text-[10px] uppercase text-white/40 tracking-widest">Sobrenome</Label>
                     <Input 
                       id="lastName" 
                       name="lastName" 
                       defaultValue={profile?.lastName} 
                       onChange={handleInputChange}
-                      className="rounded-xl h-12 bg-muted/30 border-none shadow-inner"
+                      className="rounded-xl h-12 bg-white/5 border-none text-white font-bold"
                     />
                   </div>
                 </div>
-                <div className="space-y-2 opacity-60">
-                  <Label htmlFor="email" className="font-bold text-xs uppercase opacity-70">E-mail (Não editável)</Label>
-                  <Input id="email" value={profile?.email} disabled className="rounded-xl h-12 bg-muted" />
+                <div className="space-y-2 opacity-40">
+                  <Label htmlFor="email" className="font-black text-[10px] uppercase tracking-widest">E-mail (Privado)</Label>
+                  <Input id="email" value={profile?.email} disabled className="rounded-xl h-12 bg-black/20 text-white" />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="fitness">
-            <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
+            <Card className="rounded-[2.5rem] border border-white/5 shadow-xl bg-card overflow-hidden">
               <CardHeader>
-                <CardTitle className="text-xl font-bold">Sua Biometria</CardTitle>
-                <CardDescription>Dados essenciais para cálculos de IMC e evolução corporal.</CardDescription>
+                <CardTitle className="text-xl font-black uppercase tracking-tight text-white">Sua Biometria</CardTitle>
+                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Essencial para o cálculo de macros.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-primary">
                       <Ruler className="h-5 w-5" />
-                      <Label htmlFor="height" className="font-bold text-xs uppercase">Altura (cm)</Label>
+                      <Label htmlFor="height" className="font-black text-[10px] uppercase">Altura (cm)</Label>
                     </div>
                     <Input 
                       id="height" 
                       name="height" 
                       type="number" 
-                      placeholder="Ex: 175" 
                       defaultValue={profile?.height} 
                       onChange={handleInputChange}
-                      className="rounded-2xl h-16 text-2xl font-black border-2 border-primary/10 focus:border-primary transition-colors text-center"
+                      className="rounded-2xl h-16 text-2xl font-black bg-white/5 border-2 border-primary/10 focus:border-primary text-center text-white"
                     />
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-secondary">
+                    <div className="flex items-center gap-2 text-primary">
                       <Weight className="h-5 w-5" />
-                      <Label htmlFor="weight" className="font-bold text-xs uppercase">Peso Atual (kg)</Label>
+                      <Label htmlFor="weight" className="font-black text-[10px] uppercase">Peso Atual (kg)</Label>
                     </div>
                     <Input 
                       id="weight" 
                       name="weight" 
                       type="number" 
-                      placeholder="Ex: 82" 
                       defaultValue={profile?.weight} 
                       onChange={handleInputChange}
-                      className="rounded-2xl h-16 text-2xl font-black border-2 border-secondary/10 focus:border-secondary transition-colors text-center"
+                      className="rounded-2xl h-16 text-2xl font-black bg-white/5 border-2 border-primary/10 focus:border-primary text-center text-white"
                     />
                   </div>
-                </div>
-                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100 flex items-start gap-4">
-                  <div className="p-3 bg-white rounded-2xl shadow-sm">
-                    <Settings className="h-6 w-6 text-primary" />
-                  </div>
-                  <p className="text-sm text-blue-900 leading-relaxed italic">
-                    "Mantenha esses dados atualizados mensalmente para que seu professor possa ajustar o volume de treino e suas macros com precisão cirúrgica."
-                  </p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <div className="mt-8 flex justify-end">
+          <div className="mt-8 flex flex-col gap-4">
             <Button 
               type="submit" 
-              className="rounded-2xl h-14 px-10 font-black text-lg bg-primary text-white shadow-xl hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
+              className="rounded-2xl h-14 w-full font-black text-lg bg-primary text-white shadow-xl hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50 uppercase tracking-tight"
               disabled={isUpdating}
             >
-              {isUpdating ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <>
-                  SALVAR ALTERAÇÕES
-                  <Save className="ml-2 h-5 w-5" />
-                </>
-              )}
+              {isUpdating ? <Loader2 className="h-6 w-6 animate-spin" /> : 'SALVAR ALTERAÇÕES'}
+            </Button>
+
+            {/* BOTÃO DE SAIR - EXCLUSIVO MOBILE/TABLET VISIBLE */}
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={handleLogout}
+              className="md:hidden rounded-2xl h-14 w-full font-black text-lg border-2 border-destructive/20 text-destructive hover:bg-destructive/5 transition-all uppercase tracking-tight"
+            >
+              <LogOut className="mr-2 h-5 w-5" />
+              SAIR DA CONTA
             </Button>
           </div>
         </form>

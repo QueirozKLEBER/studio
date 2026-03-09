@@ -11,13 +11,9 @@ import {
   Users, 
   ChevronRight, 
   Search, 
-  CreditCard, 
-  AlertTriangle, 
   Calendar, 
   Dumbbell, 
   Clock,
-  ArrowUpRight,
-  TrendingUp,
   Plus,
   Loader2,
   Trash2,
@@ -44,22 +40,10 @@ export default function TrainerDashboard() {
     setMounted(true);
   }, []);
 
-  // Busca apenas alunos vinculados a este professor para o Dashboard
-  const studentsQuery = useMemoFirebase(() => {
-    if (!profile || !user) return null;
-    if (profile.userType === 'admin') {
-      return query(collection(db, 'users'), where('userType', '==', 'student'));
-    }
-    return query(
-      collection(db, 'users'), 
-      where('userType', '==', 'student'),
-      where('trainerId', '==', user.uid)
-    );
-  }, [db, profile, user]);
-
-  const { data: students, isLoading: isStudentsLoading } = useCollection(studentsQuery);
-
-  // Busca agendamentos de hoje do professor logado
+  /**
+   * CONSULTA DA AGENDA (FOCO PRINCIPAL)
+   * Aponta exatamente para a subcoleção do usuário logado.
+   */
   const todayStr = new Date().toISOString().split('T')[0];
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -72,22 +56,20 @@ export default function TrainerDashboard() {
 
   const { data: appointments, isLoading: isAgendaLoading } = useCollection(appointmentsQuery);
 
-  // Cálculos de Gestão baseados nos alunos REAIS vinculados
-  const stats = useMemo(() => {
-    if (!students) return { total: 0, expired: 0, active: 0 };
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  /**
+   * SUSPENSÃO TEMPORÁRIA DA CONSULTA DE ALUNOS
+   * Retornamos um array vazio para não disparar erro de permissão no root /users
+   */
+  const students: any[] = [];
+  const isStudentsLoading = false;
 
-    const expired = students.filter(s => s.paymentDueDate && new Date(s.paymentDueDate) < today).length;
-    return {
-      total: students.length,
-      expired: expired,
-      active: students.length - expired
-    };
-  }, [students]);
+  const stats = {
+    total: 0,
+    expired: 0,
+    active: 0
+  };
 
   const filteredStudents = useMemo(() => {
-    if (!students) return [];
     return students.filter(s => 
       `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -113,7 +95,7 @@ export default function TrainerDashboard() {
       toast({ title: "Agendamento Criado!", description: "Compromisso salvo na agenda de hoje." });
       setIsAppointmentModalOpen(false);
     } catch (error) {
-      toast({ variant: 'destructive', title: "Erro ao salvar", description: "Tente novamente mais tarde." });
+      toast({ variant: 'destructive', title: "Erro ao salvar" });
     } finally {
       setIsAddingAppointment(false);
     }
@@ -123,7 +105,7 @@ export default function TrainerDashboard() {
     if (!user) return;
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'appointments', id));
-      toast({ title: "Removido", description: "Compromisso excluído da agenda." });
+      toast({ title: "Removido" });
     } catch (e) {
       toast({ variant: 'destructive', title: "Erro ao remover" });
     }
@@ -135,224 +117,79 @@ export default function TrainerDashboard() {
     <div className="flex flex-col gap-8 w-full max-w-none pb-24 px-1">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
-          title={`Painel Prof. ${profile?.firstName || '...'}`} 
-          subtitle="GESTÃO TÉCNICA E FINANCEIRA DA SUA EQUIPE." 
+          title={`Painel de ${profile?.firstName || '...'}`} 
+          subtitle="MODO DE RESTAURAÇÃO: FOCO NA AGENDA." 
         />
-        <Button asChild className="rounded-2xl h-14 px-8 font-black bg-primary text-white shadow-xl shadow-primary/20 uppercase tracking-widest transition-all active:scale-95">
-          <Link href="/trainer/students">
-            <Users className="mr-2 h-5 w-5" />
-            MEUS ALUNOS
-          </Link>
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-[2rem] bg-card border border-white/5 shadow-xl overflow-hidden hover:border-primary/20 transition-all">
-          <CardContent className="p-6 flex flex-col gap-2">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Seus Alunos</p>
-              <p className="text-2xl font-black text-white">{stats.total}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2rem] bg-card border border-white/5 shadow-xl overflow-hidden hover:border-primary/20 transition-all">
-          <CardContent className="p-6 flex flex-col gap-2">
-            <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Ativos</p>
-              <p className="text-2xl font-black text-white">{stats.active}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2rem] bg-card border border-white/5 shadow-xl overflow-hidden hover:border-primary/20 transition-all">
-          <CardContent className="p-6 flex flex-col gap-2">
-            <div className="h-10 w-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
-              <AlertTriangle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Inadimplentes</p>
-              <p className="text-2xl font-black text-white">{stats.expired}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2rem] bg-card border border-white/5 shadow-xl overflow-hidden hover:border-primary/20 transition-all">
-          <CardContent className="p-6 flex flex-col gap-2">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-              <Dumbbell className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Agenda Hoje</p>
-              <p className="text-2xl font-black text-white">{appointments?.length || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-6">
-          <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl">
-            <CardHeader className="bg-white/5 p-8 border-b border-white/5">
-              <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
-                <Search className="h-6 w-6 text-primary" />
-                Buscar Aluno
-              </CardTitle>
-              <CardDescription className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Localize rapidamente um atleta vinculado a você.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              <div className="relative mb-8">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
-                <Input 
-                  placeholder="DIGITE O NOME..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="rounded-2xl h-14 pl-12 bg-black/20 border-white/5 text-white font-black uppercase text-[10px] tracking-widest focus:ring-primary"
-                />
-              </div>
-
-              <div className="space-y-3">
-                {isStudentsLoading ? (
-                  [1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 animate-pulse rounded-2xl" />)
-                ) : filteredStudents.length > 0 ? (
-                  filteredStudents.slice(0, 5).map((student) => (
-                    <Link key={student.id} href={`/trainer/student-details?id=${student.id}`}>
-                      <div className="p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all group flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-4">
-                          <div className="h-12 w-12 rounded-xl bg-primary text-white flex items-center justify-center font-black text-lg shadow-lg">
-                            {student.firstName?.[0]}
-                          </div>
-                          <div>
-                            <p className="font-black text-white uppercase tracking-tight">{student.firstName} {student.lastName}</p>
-                            <Badge variant="outline" className={cn(
-                              "text-[8px] font-black uppercase px-2 mt-1",
-                              student.paymentDueDate && new Date(student.paymentDueDate) < new Date() 
-                                ? "border-red-500 text-red-500" 
-                                : "border-green-500/30 text-green-500"
-                            )}>
-                              {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'VENCIDO' : 'EM DIA'}
-                            </Badge>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-white/20 group-hover:text-primary transition-colors" />
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <p className="text-center py-10 text-[10px] font-black uppercase text-white/20 italic tracking-widest">Nenhum aluno encontrado ou vinculado.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="lg:col-span-4 space-y-6">
+        {/* Agenda Própria */}
+        <div className="lg:col-span-12">
           <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl">
             <CardHeader className="bg-white/5 p-6 border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-black uppercase text-white flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-primary" />
-                Sua Agenda
+                Sua Agenda do Dia
               </CardTitle>
               <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
                 <DialogTrigger asChild>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white">
-                    <Plus className="h-4 w-4" />
+                  <Button size="icon" variant="ghost" className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white">
+                    <Plus className="h-5 w-5" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="rounded-[2.5rem] bg-card border-white/10 text-white">
                   <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Novo Agendamento</DialogTitle></DialogHeader>
                   <form onSubmit={handleAddAppointment} className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label className="font-black text-[10px] uppercase text-white/40">Título do Evento</Label>
-                      <Input name="title" placeholder="Ex: Avaliação Física" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                      <Label className="font-black text-[10px] uppercase text-white/40">Evento</Label>
+                      <Input name="title" placeholder="Ex: Avaliação" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
                     </div>
                     <div className="space-y-2">
                       <Label className="font-black text-[10px] uppercase text-white/40">Nome do Aluno</Label>
-                      <Input name="studentName" placeholder="Ex: João Silva" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                      <Input name="studentName" placeholder="Ex: João" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="font-black text-[10px] uppercase text-white/40">Horário</Label>
-                        <Input name="time" type="time" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-black text-[10px] uppercase text-white/40">Tipo</Label>
-                        <Select name="type" defaultValue="presencial">
-                          <SelectTrigger className="rounded-xl bg-white/5 border-none h-12 font-bold"><SelectValue /></SelectTrigger>
-                          <SelectContent className="rounded-xl bg-card border-white/10 text-white">
-                            <SelectItem value="presencial">PRESENCIAL</SelectItem>
-                            <SelectItem value="online">ONLINE (MEET)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      <Input name="time" type="time" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                      <Select name="type" defaultValue="presencial">
+                        <SelectTrigger className="rounded-xl bg-white/5 border-none h-12 font-bold"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-xl bg-card border-white/10 text-white">
+                          <SelectItem value="presencial">PRESENCIAL</SelectItem>
+                          <SelectItem value="online">ONLINE</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <DialogFooter><Button type="submit" className="w-full h-14 rounded-2xl bg-primary font-black uppercase shadow-lg shadow-primary/20" disabled={isAddingAppointment}>{isAddingAppointment ? <Loader2 className="animate-spin" /> : 'SALVAR COMPROMISSO'}</Button></DialogFooter>
+                    <DialogFooter><Button type="submit" className="w-full h-14 rounded-2xl bg-primary font-black uppercase" disabled={isAddingAppointment}>{isAddingAppointment ? <Loader2 className="animate-spin" /> : 'SALVAR'}</Button></DialogFooter>
                   </form>
                 </DialogContent>
               </Dialog>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {isAgendaLoading ? (
-                  [1, 2].map(i => <div key={i} className="h-16 bg-white/5 animate-pulse rounded-2xl" />)
+                  [1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 animate-pulse rounded-2xl" />)
                 ) : appointments && appointments.length > 0 ? (
                   appointments.map((apt) => (
-                    <div key={apt.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border-l-4 border-primary group">
+                    <div key={apt.id} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border-l-4 border-primary group">
                       <div className="flex items-start gap-4">
                         <div className="text-center">
-                          <p className="text-[10px] font-black text-white uppercase">{apt.time}</p>
-                          <p className="text-[8px] font-bold text-white/40 uppercase">HOJE</p>
+                          <p className="text-xs font-black text-white">{apt.time}</p>
                         </div>
                         <div>
-                          <p className="text-xs font-black text-white uppercase">{apt.title}</p>
-                          <p className="text-[9px] text-white/40 font-bold uppercase flex items-center gap-1">
-                            {apt.studentName} • {apt.type === 'online' ? <Video className="h-2 w-2" /> : <Users className="h-2 w-2" />} {apt.type}
-                          </p>
+                          <p className="text-sm font-black text-white uppercase">{apt.title}</p>
+                          <p className="text-[10px] text-white/40 font-bold uppercase">{apt.studentName} ({apt.type})</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAppointment(apt.id)} className="opacity-0 group-hover:opacity-100 h-8 w-8 text-white/20 hover:text-red-500">
-                        <Trash2 className="h-3.5 w-3.5" />
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAppointment(apt.id)} className="opacity-0 group-hover:opacity-100 h-8 w-8 text-red-500">
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   ))
                 ) : (
-                  <div className="py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
-                    <p className="text-[9px] font-black uppercase tracking-widest">Agenda livre para hoje</p>
+                  <div className="col-span-full py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
+                    <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhum compromisso carregado.</p>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[2.5rem] border border-white/5 bg-primary text-white overflow-hidden shadow-2xl p-2">
-            <CardHeader>
-              <CardTitle className="text-xs font-black uppercase flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Alertas do Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-0">
-              {stats.expired > 0 ? (
-                <Link href="/trainer/students">
-                  <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/20 transition-all">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-white" />
-                      <p className="text-[10px] font-black uppercase tracking-tight">{stats.expired} ALUNOS BLOQUEADOS</p>
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 opacity-50" />
-                  </div>
-                </Link>
-              ) : (
-                <div className="p-4 rounded-2xl border border-white/20 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest">Sem pendências financeiras</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

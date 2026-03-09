@@ -3,36 +3,20 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * REGRA PARA USUÁRIOS E SUBCOLEÇÕES (APPOINTMENTS, ETC)
+     * REGRA DE TESTE: APENAS O DONO ACESSA SEUS DADOS
+     * Permite ler/escrever o próprio perfil e QUALQUER subcoleção (como appointments)
      */
     match /users/{userId} {
-      
-      // 1. ACESSO DO DONO (Prioridade Absoluta)
-      // Permite ler/escrever o próprio perfil e QUALQUER subcoleção (incluindo appointments)
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // Match explícito para subcoleções (garante que a operação 'list' funcione)
+      // Match recursivo para garantir acesso a todas as subcoleções (appointments, treinos, etc)
       match /{allPaths=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
     /**
-     * ACESSO PARA EQUIPE (STAFF / ADMIN)
-     * Permite que professores gerenciem dados de alunos
-     */
-    match /users/{userId} {
-      allow list, get: if request.auth != null && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
-      
-      match /{subCollection}/{document=**} {
-        allow read, write: if request.auth != null && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
-      }
-    }
-
-    /**
-     * COLEÇÕES GLOBAIS
+     * COLEÇÕES GLOBAIS (LEITURA APENAS)
      */
     match /exercises/{exerciseId} {
       allow read: if request.auth != null;

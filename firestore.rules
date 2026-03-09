@@ -30,12 +30,20 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Permite leitura do perfil se estiver logado e não bloqueado (ou se for Admin)
-      allow get, list: if isSignedIn() && (isNotBlocked() || isAdmin());
+      // PERMISSÃO CRÍTICA: Permite que o dono do perfil SEMPRE leia seu próprio documento (get).
+      // Isso é necessário para que o app identifique o status 'blocked'.
+      // Professores e Admins também podem ler qualquer perfil.
+      allow get: if isSignedIn() && (request.auth.uid == userId || isTrainer() || isAdmin());
+      
+      // Listagem (list) continua restrita a quem não está bloqueado ou é admin/trainer
+      allow list: if isSignedIn() && (isAdmin() || isTrainer());
+
       // Apenas o próprio usuário cria seu perfil no signup
       allow create: if isSignedIn() && request.auth.uid == userId;
-      // Dono ou Admin podem atualizar
+      
+      // Dono (se não bloqueado) ou Admin podem atualizar
       allow update: if isOwner(userId) || isAdmin();
+      
       // Apenas Admin deleta
       allow delete: if isAdmin();
 

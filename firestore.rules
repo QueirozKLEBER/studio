@@ -3,44 +3,57 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Função auxiliar para verificar se o usuário está autenticado
+    // Helper para verificar autenticação básica
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Match principal para a árvore de usuários
-    match /users/{userId} {
-      
-      // REGRA DE PROPRIEDADE: O dono do UID tem acesso total a si mesmo
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
-
-      // REGRA DE SUBCOLEÇÕES: Libera o acesso recursivo para TODA a árvore do próprio usuário
-      // Isso garante que listagens em /appointments, /trainingPlans, etc., funcionem para o dono.
-      match /{allSubcollections=**} {
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
-      }
-
-      // Função para verificar cargo (Trainer ou Admin) para acesso a outros perfis
-      function isStaff() {
-        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
-      }
-
-      // Permissões para Professores e Admins gerenciarem dados dos Alunos
-      allow list, get: if isSignedIn() && isStaff();
-      allow update: if isSignedIn() && isStaff();
-      
-      // Apenas Admins podem deletar contas
-      allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
-
-      // Regras de subcoleção específicas para Staff acessar dados de Alunos
-      match /trainingPlans/{planId} { allow read, write: if isSignedIn() && isStaff(); }
-      match /dietSuggestions/{id} { allow read, write: if isSignedIn() && isStaff(); }
-      match /workoutHistory/{id} { allow read, write: if isSignedIn() && isStaff(); }
-      match /bodyMeasurements/{id} { allow read, write: if isSignedIn() && isStaff(); }
-      match /appointments/{id} { allow read, write: if isSignedIn() && isStaff(); }
+    // Helper para verificar se o usuário logado é Professor ou Admin (Staff)
+    // Nota: O uso de get() aqui é seguro pois o allow get do dono não depende desta função (curto-circuito)
+    function isStaff() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
     }
 
-    // Coleções globais de referência
+    // Regras para o nó de usuários e suas subcoleções
+    match /users/{userId} {
+      
+      // O DONO sempre tem acesso total aos seus próprios dados de perfil
+      // Validamos o UID primeiro para evitar recursão na função isStaff()
+      allow get, write: if isSignedIn() && request.auth.uid == userId;
+      
+      // STAFF pode ler e atualizar qualquer perfil (necessário para gestão de alunos)
+      allow get, list, update: if isStaff();
+      
+      // Apenas ADMIN pode deletar contas
+      allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+
+      // REGRAS DE SUBCOLEÇÕES (Agendamentos, Treinos, etc.)
+      // Devem ser declaradas explicitamente para permitir a operação 'list' na coleção.
+      // O uso do padrão {doc=**} libera a listagem da coleção e acesso a todos os documentos internos.
+      
+      match /appointments/{doc=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      }
+      
+      match /trainingPlans/{doc=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      }
+      
+      match /dietSuggestions/{doc=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      }
+      
+      match /workoutHistory/{doc=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      }
+      
+      match /bodyMeasurements/{doc=**} {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      }
+    }
+
+    // Coleções globais de referência (Exercícios e Dicas de Nutrição)
     match /exercises/{exerciseId} {
       allow read: if isSignedIn();
     }

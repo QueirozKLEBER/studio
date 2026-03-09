@@ -19,7 +19,7 @@ const plans = [
     ],
     cta: 'Começar Agora',
     isPremium: false,
-    color: 'text-gray-500'
+    color: 'text-primary'
   },
   {
     name: 'Premium',
@@ -51,66 +51,66 @@ const plans = [
     ],
     cta: 'Falar com Consultor',
     isPremium: false,
-    color: 'text-secondary'
+    color: 'text-primary'
   },
 ];
 
 export default function PricingPage() {
   return (
-    <div className="flex flex-col gap-8 pb-10">
+    <div className="flex flex-col gap-8 pb-20 max-w-full overflow-x-hidden">
       <PageHeader
         title="Nossos Planos"
-        subtitle="Escolha o nível de suporte ideal para o seu objetivo."
+        subtitle="Escolha o nível de suporte ideal para o seu objetivo de elite."
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {plans.map((plan) => (
           <Card key={plan.name} className={cn(
-            "rounded-[2.5rem] border-none shadow-md flex flex-col relative transition-transform hover:scale-[1.02]",
-            plan.isPremium ? "bg-primary text-primary-foreground shadow-xl ring-4 ring-primary/20" : "bg-white"
+            "rounded-[2.5rem] border border-white/5 shadow-2xl flex flex-col relative transition-all hover:scale-[1.02] bg-card overflow-hidden",
+            plan.isPremium ? "ring-2 ring-primary/50 border-primary/20" : ""
           )}>
             {plan.isPremium && (
-              <div className="absolute top-0 right-10 transform -translate-y-1/2 bg-secondary text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <div className="absolute top-0 right-10 transform -translate-y-1/2 bg-primary text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">
                 Mais Recomendado
               </div>
             )}
-            <CardHeader className="text-center pt-8">
-              <div className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4",
-                plan.isPremium ? "bg-white/20" : "bg-blue-50"
-              )}>
-                <plan.icon className={cn("h-6 w-6", plan.isPremium ? "text-white" : plan.color)} />
+            
+            <CardHeader className="text-center pt-10">
+              <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <plan.icon className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl font-bold font-headline">{plan.name}</CardTitle>
-              <CardDescription className={plan.isPremium ? "text-primary-foreground/70" : ""}>
+              <CardTitle className="text-2xl font-black font-headline text-white uppercase tracking-tight">{plan.name}</CardTitle>
+              <CardDescription className="text-white/40 font-bold uppercase text-[10px] tracking-widest mt-2">
                 {plan.description}
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center flex-grow">
-              <div className="mb-8">
-                <span className="text-4xl font-black">{plan.price}</span>
-                <span className={cn("text-sm font-bold opacity-70", plan.isPremium ? "" : "text-muted-foreground")}>/mês</span>
+
+            <CardContent className="flex flex-col items-center flex-grow px-8">
+              <div className="mb-10 text-center">
+                <span className="text-5xl font-black text-white tracking-tighter">{plan.price}</span>
+                <span className="text-xs font-black text-primary uppercase ml-2 tracking-widest">/mês</span>
               </div>
-              <ul className="space-y-4 w-full">
+              
+              <ul className="space-y-5 w-full">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-3">
-                    <div className={cn(
-                      "h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0",
-                      plan.isPremium ? "bg-white/20" : "bg-blue-50"
-                    )}>
-                      <Check className={cn("h-3 w-3", plan.isPremium ? "text-white" : "text-primary")} />
+                  <li key={feature} className="flex items-center gap-4">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Check className="h-3.5 w-3.5 text-primary stroke-[3px]" />
                     </div>
-                    <span className={cn("text-sm font-medium", plan.isPremium ? "" : "text-muted-foreground")}>
+                    <span className="text-sm font-bold text-white/70 uppercase tracking-tight">
                       {feature}
                     </span>
                   </li>
                 ))}
               </ul>
             </CardContent>
-            <CardFooter className="pb-8">
+
+            <CardFooter className="p-8">
               <Button className={cn(
-                "w-full rounded-2xl h-12 font-bold shadow-lg transition-transform active:scale-95",
-                plan.isPremium ? "bg-white text-primary hover:bg-white/90" : "bg-primary text-white hover:bg-primary/90"
+                "w-full rounded-[1.5rem] h-14 font-black text-lg shadow-xl transition-all active:scale-95 uppercase tracking-widest",
+                plan.isPremium 
+                  ? "bg-primary text-white hover:bg-primary/90 shadow-primary/20" 
+                  : "bg-white/5 text-white border-2 border-white/10 hover:bg-white/10"
               )}>
                 {plan.cta}
               </Button>

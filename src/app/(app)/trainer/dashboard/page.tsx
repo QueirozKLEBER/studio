@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { 
   Users, 
   ChevronRight, 
@@ -18,29 +18,53 @@ import {
   Dumbbell, 
   Clock,
   ArrowUpRight,
-  TrendingUp
+  TrendingUp,
+  Plus,
+  Loader2,
+  Trash2,
+  Video
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 export default function TrainerDashboard() {
-  const { profile } = useUser();
+  const { profile, user } = useUser();
   const db = useFirestore();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [isAddingAppointment, setIsAddingAppointment] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Busca todos os alunos (Idealmente filtraria por trainerId == profile.id)
+  // Busca todos os alunos
   const studentsQuery = useMemoFirebase(() => {
     if (!profile) return null;
     return query(collection(db, 'users'), where('userType', '==', 'student'));
   }, [db, profile]);
 
-  const { data: students, isLoading } = useCollection(studentsQuery);
+  const { data: students, isLoading: isStudentsLoading } = useCollection(studentsQuery);
+
+  // Busca agendamentos de hoje
+  const todayStr = new Date().toISOString().split('T')[0];
+  const appointmentsQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(db, 'users', user.uid, 'appointments'),
+      where('date', '==', todayStr),
+      orderBy('time', 'asc')
+    );
+  }, [db, user, todayStr]);
+
+  const { data: appointments, isLoading: isAgendaLoading } = useCollection(appointmentsQuery);
 
   // Cálculos de Gestão
   const stats = useMemo(() => {
@@ -63,6 +87,42 @@ export default function TrainerDashboard() {
     );
   }, [students, searchTerm]);
 
+  const handleAddAppointment = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      title: formData.get('title') as string,
+      studentName: formData.get('studentName') as string,
+      time: formData.get('time') as string,
+      date: todayStr,
+      type: formData.get('type') as 'presencial' | 'online',
+      createdAt: serverTimestamp(),
+    };
+
+    setIsAddingAppointment(true);
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'appointments'), data);
+      toast({ title: "Agendamento Criado!", description: "Compromisso salvo na agenda de hoje." });
+      setIsAppointmentModalOpen(false);
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Erro ao salvar", description: "Tente novamente mais tarde." });
+    } finally {
+      setIsAddingAppointment(false);
+    }
+  };
+
+  const handleDeleteAppointment = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'appointments', id));
+      toast({ title: "Removido", description: "Compromisso excluído da agenda." });
+    } catch (e) {
+      toast({ variant: 'destructive', title: "Erro ao remover" });
+    }
+  };
+
   if (!mounted) return null;
 
   return (
@@ -80,7 +140,6 @@ export default function TrainerDashboard() {
         </Button>
       </div>
 
-      {/* Cards de Métricas Rápidas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="rounded-[2rem] bg-card border border-white/5 shadow-xl overflow-hidden hover:border-primary/20 transition-all">
           <CardContent className="p-6 flex flex-col gap-2">
@@ -132,17 +191,14 @@ export default function TrainerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Gestão de Alunos */}
         <div className="lg:col-span-8 space-y-6">
           <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl">
-            <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
-                  <Search className="h-6 w-6 text-primary" />
-                  Localizar Atleta
-                </CardTitle>
-                <CardDescription className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Acesso rápido ao histórico e planilhas.</CardDescription>
-              </div>
+            <CardHeader className="bg-white/5 p-8 border-b border-white/5">
+              <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
+                <Search className="h-6 w-6 text-primary" />
+                Localizar Atleta
+              </CardTitle>
+              <CardDescription className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Acesso rápido ao histórico e planilhas.</CardDescription>
             </CardHeader>
             <CardContent className="p-8">
               <div className="relative mb-8">
@@ -156,7 +212,7 @@ export default function TrainerDashboard() {
               </div>
 
               <div className="space-y-3">
-                {isLoading ? (
+                {isStudentsLoading ? (
                   [1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 animate-pulse rounded-2xl" />)
                 ) : filteredStudents.length > 0 ? (
                   filteredStudents.slice(0, 5).map((student) => (
@@ -168,16 +224,14 @@ export default function TrainerDashboard() {
                           </div>
                           <div>
                             <p className="font-black text-white uppercase tracking-tight">{student.firstName} {student.lastName}</p>
-                            <div className="flex items-center gap-3">
-                              <Badge variant="outline" className={cn(
-                                "text-[8px] font-black uppercase px-2",
-                                stats.expired > 0 && student.paymentDueDate && new Date(student.paymentDueDate) < new Date() 
-                                  ? "border-red-500 text-red-500" 
-                                  : "border-green-500/30 text-green-500"
-                              )}>
-                                {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'INADIMPLENTE' : 'EM DIA'}
-                              </Badge>
-                            </div>
+                            <Badge variant="outline" className={cn(
+                              "text-[8px] font-black uppercase px-2 mt-1",
+                              student.paymentDueDate && new Date(student.paymentDueDate) < new Date() 
+                                ? "border-red-500 text-red-500" 
+                                : "border-green-500/30 text-green-500"
+                            )}>
+                              {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'INADIMPLENTE' : 'EM DIA'}
+                            </Badge>
                           </div>
                         </div>
                         <ChevronRight className="h-5 w-5 text-white/20 group-hover:text-primary transition-colors" />
@@ -192,31 +246,80 @@ export default function TrainerDashboard() {
           </Card>
         </div>
 
-        {/* Agendamentos e Avisos */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl">
-            <CardHeader className="bg-white/5 p-6 border-b border-white/5">
+            <CardHeader className="bg-white/5 p-6 border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-black uppercase text-white flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-primary" />
                 Agenda do Dia
               </CardTitle>
+              <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
+                <DialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="rounded-[2.5rem] bg-card border-white/10 text-white">
+                  <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Novo Agendamento</DialogTitle></DialogHeader>
+                  <form onSubmit={handleAddAppointment} className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40">Título do Evento</Label>
+                      <Input name="title" placeholder="Ex: Avaliação Física" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40">Nome do Aluno</Label>
+                      <Input name="studentName" placeholder="Ex: João Silva" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="font-black text-[10px] uppercase text-white/40">Horário</Label>
+                        <Input name="time" type="time" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="font-black text-[10px] uppercase text-white/40">Tipo</Label>
+                        <Select name="type" defaultValue="presencial">
+                          <SelectTrigger className="rounded-xl bg-white/5 border-none h-12 font-bold"><SelectValue /></SelectTrigger>
+                          <SelectContent className="rounded-xl bg-card border-white/10 text-white">
+                            <SelectItem value="presencial">PRESENCIAL</SelectItem>
+                            <SelectItem value="online">ONLINE (MEET)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <DialogFooter><Button type="submit" className="w-full h-14 rounded-2xl bg-primary font-black uppercase shadow-lg shadow-primary/20" disabled={isAddingAppointment}>{isAddingAppointment ? <Loader2 className="animate-spin" /> : 'SALVAR COMPROMISSO'}</Button></DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 bg-white/5 rounded-2xl border-l-4 border-primary">
-                  <div className="text-center">
-                    <p className="text-[10px] font-black text-white uppercase">08:00</p>
-                    <p className="text-[8px] font-bold text-white/40 uppercase">MANHÃ</p>
+                {isAgendaLoading ? (
+                  [1, 2].map(i => <div key={i} className="h-16 bg-white/5 animate-pulse rounded-2xl" />)
+                ) : appointments && appointments.length > 0 ? (
+                  appointments.map((apt) => (
+                    <div key={apt.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border-l-4 border-primary group">
+                      <div className="flex items-start gap-4">
+                        <div className="text-center">
+                          <p className="text-[10px] font-black text-white uppercase">{apt.time}</p>
+                          <p className="text-[8px] font-bold text-white/40 uppercase">HOJE</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-white uppercase">{apt.title}</p>
+                          <p className="text-[9px] text-white/40 font-bold uppercase flex items-center gap-1">
+                            {apt.studentName} • {apt.type === 'online' ? <Video className="h-2 w-2" /> : <Users className="h-2 w-2" />} {apt.type}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAppointment(apt.id)} className="opacity-0 group-hover:opacity-100 h-8 w-8 text-white/20 hover:text-red-500">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
+                    <p className="text-[9px] font-black uppercase tracking-widest">Nenhum agendamento para hoje</p>
                   </div>
-                  <div>
-                    <p className="text-xs font-black text-white uppercase">Avaliação Física</p>
-                    <p className="text-[9px] text-white/40 font-bold uppercase">João Silva • Presencial</p>
-                  </div>
-                </div>
-                
-                <div className="py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
-                  <p className="text-[9px] font-black uppercase tracking-widest">Nenhum outro agendamento</p>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -230,13 +333,15 @@ export default function TrainerDashboard() {
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
               {stats.expired > 0 ? (
-                <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/20 transition-all">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-5 w-5 text-white" />
-                    <p className="text-[10px] font-black uppercase tracking-tight">{stats.expired} MENSALIDADES VENCIDAS</p>
+                <Link href="/trainer/students">
+                  <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/20 transition-all">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-5 w-5 text-white" />
+                      <p className="text-[10px] font-black uppercase tracking-tight">{stats.expired} MENSALIDADES VENCIDAS</p>
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 opacity-50" />
                   </div>
-                  <ArrowUpRight className="h-4 w-4 opacity-50" />
-                </div>
+                </Link>
               ) : (
                 <div className="p-4 rounded-2xl border border-white/20 text-center">
                   <p className="text-[9px] font-black uppercase tracking-widest">Tudo em dia!</p>

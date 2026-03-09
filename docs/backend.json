@@ -89,6 +89,21 @@
         "createdAt": { "type": "object" }
       },
       "required": ["weight", "height", "bmi", "createdAt"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "type": "object",
+      "description": "A scheduled event between trainer and student.",
+      "properties": {
+        "id": { "type": "string" },
+        "studentName": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "type": { "type": "string", "enum": ["presencial", "online"] },
+        "createdAt": { "type": "object" }
+      },
+      "required": ["studentName", "title", "date", "time", "type"]
     }
   },
   "auth": {
@@ -114,6 +129,10 @@
     "/users/{userId}/bodyMeasurements/{measurementId}": {
       "schema": { "$ref": "#/entities/BodyMeasurement" },
       "description": "Physical assessment history for evolution tracking"
+    },
+    "/users/{userId}/appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Trainer scheduled appointments"
     }
   }
 }

@@ -13,16 +13,28 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
 export default function TrainerStudentsPage() {
-  const { profile } = useUser();
+  const { profile, user } = useUser();
   const db = useFirestore();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Consulta real filtrada por tipo para satisfazer as regras de segurança
+  // Consulta REAL: Filtra apenas alunos vinculados a ESTE professor
   const studentsQuery = useMemoFirebase(() => {
-    if (!profile) return null;
-    // O professor lista apenas quem tem o tipo 'student'
-    return query(collection(db, 'users'), where('userType', '==', 'student'));
-  }, [db, profile]);
+    if (!profile || !user) return null;
+    
+    // Se for Admin, vê todos. Se for Trainer, vê apenas os dele.
+    if (profile.userType === 'admin') {
+      return query(
+        collection(db, 'users'), 
+        where('userType', '==', 'student')
+      );
+    }
+
+    return query(
+      collection(db, 'users'), 
+      where('userType', '==', 'student'),
+      where('trainerId', '==', user.uid)
+    );
+  }, [db, profile, user]);
 
   const { data: students, isLoading } = useCollection(studentsQuery);
 
@@ -38,13 +50,13 @@ export default function TrainerStudentsPage() {
     <div className="flex flex-col gap-8 w-full max-w-none pb-20">
       <PageHeader 
         title="Meus Alunos" 
-        subtitle="Gestão técnica e acompanhamento de evolução da sua equipe." 
+        subtitle="Gestão técnica dos atletas vinculados ao seu perfil." 
       />
 
       <div className="relative max-w-md">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
         <Input 
-          placeholder="BUSCAR ALUNO PELO NOME..." 
+          placeholder="BUSCAR ALUNO..." 
           className="rounded-2xl h-14 pl-12 bg-card border-white/5 text-white font-black uppercase text-[10px] tracking-widest focus:ring-primary"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -98,7 +110,7 @@ export default function TrainerStudentsPage() {
         ) : (
           <div className="py-24 text-center border-2 border-dashed border-white/5 rounded-[3rem] opacity-20">
             <Users className="h-16 w-16 mx-auto mb-4" />
-            <p className="font-black uppercase tracking-[0.2em] italic">Nenhum aluno encontrado</p>
+            <p className="font-black uppercase tracking-[0.2em] italic">Nenhum aluno encontrado vinculado a você.</p>
           </div>
         )}
       </div>

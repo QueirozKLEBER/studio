@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -45,15 +44,22 @@ export default function TrainerDashboard() {
     setMounted(true);
   }, []);
 
-  // Busca todos os alunos
+  // Busca apenas alunos vinculados a este professor para o Dashboard
   const studentsQuery = useMemoFirebase(() => {
-    if (!profile) return null;
-    return query(collection(db, 'users'), where('userType', '==', 'student'));
-  }, [db, profile]);
+    if (!profile || !user) return null;
+    if (profile.userType === 'admin') {
+      return query(collection(db, 'users'), where('userType', '==', 'student'));
+    }
+    return query(
+      collection(db, 'users'), 
+      where('userType', '==', 'student'),
+      where('trainerId', '==', user.uid)
+    );
+  }, [db, profile, user]);
 
   const { data: students, isLoading: isStudentsLoading } = useCollection(studentsQuery);
 
-  // Busca agendamentos de hoje
+  // Busca agendamentos de hoje do professor logado
   const todayStr = new Date().toISOString().split('T')[0];
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -66,7 +72,7 @@ export default function TrainerDashboard() {
 
   const { data: appointments, isLoading: isAgendaLoading } = useCollection(appointmentsQuery);
 
-  // Cálculos de Gestão
+  // Cálculos de Gestão baseados nos alunos REAIS vinculados
   const stats = useMemo(() => {
     if (!students) return { total: 0, expired: 0, active: 0 };
     const today = new Date();
@@ -135,7 +141,7 @@ export default function TrainerDashboard() {
         <Button asChild className="rounded-2xl h-14 px-8 font-black bg-primary text-white shadow-xl shadow-primary/20 uppercase tracking-widest transition-all active:scale-95">
           <Link href="/trainer/students">
             <Users className="mr-2 h-5 w-5" />
-            GERENCIAR ALUNOS
+            MEUS ALUNOS
           </Link>
         </Button>
       </div>
@@ -147,7 +153,7 @@ export default function TrainerDashboard() {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Total Alunos</p>
+              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Seus Alunos</p>
               <p className="text-2xl font-black text-white">{stats.total}</p>
             </div>
           </CardContent>
@@ -171,7 +177,7 @@ export default function TrainerDashboard() {
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Vencidos</p>
+              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Inadimplentes</p>
               <p className="text-2xl font-black text-white">{stats.expired}</p>
             </div>
           </CardContent>
@@ -183,8 +189,8 @@ export default function TrainerDashboard() {
               <Dumbbell className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Trocar Treino</p>
-              <p className="text-2xl font-black text-white">0</p>
+              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Agenda Hoje</p>
+              <p className="text-2xl font-black text-white">{appointments?.length || 0}</p>
             </div>
           </CardContent>
         </Card>
@@ -196,15 +202,15 @@ export default function TrainerDashboard() {
             <CardHeader className="bg-white/5 p-8 border-b border-white/5">
               <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
                 <Search className="h-6 w-6 text-primary" />
-                Localizar Atleta
+                Buscar Aluno
               </CardTitle>
-              <CardDescription className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Acesso rápido ao histórico e planilhas.</CardDescription>
+              <CardDescription className="text-[10px] font-bold uppercase text-white/40 tracking-widest">Localize rapidamente um atleta vinculado a você.</CardDescription>
             </CardHeader>
             <CardContent className="p-8">
               <div className="relative mb-8">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20" />
                 <Input 
-                  placeholder="BUSCAR PELO NOME..." 
+                  placeholder="DIGITE O NOME..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="rounded-2xl h-14 pl-12 bg-black/20 border-white/5 text-white font-black uppercase text-[10px] tracking-widest focus:ring-primary"
@@ -230,7 +236,7 @@ export default function TrainerDashboard() {
                                 ? "border-red-500 text-red-500" 
                                 : "border-green-500/30 text-green-500"
                             )}>
-                              {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'INADIMPLENTE' : 'EM DIA'}
+                              {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'VENCIDO' : 'EM DIA'}
                             </Badge>
                           </div>
                         </div>
@@ -239,7 +245,7 @@ export default function TrainerDashboard() {
                     </Link>
                   ))
                 ) : (
-                  <p className="text-center py-10 text-[10px] font-black uppercase text-white/20 italic tracking-widest">Nenhum aluno encontrado</p>
+                  <p className="text-center py-10 text-[10px] font-black uppercase text-white/20 italic tracking-widest">Nenhum aluno encontrado ou vinculado.</p>
                 )}
               </div>
             </CardContent>
@@ -251,7 +257,7 @@ export default function TrainerDashboard() {
             <CardHeader className="bg-white/5 p-6 border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-black uppercase text-white flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-primary" />
-                Agenda do Dia
+                Sua Agenda
               </CardTitle>
               <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
                 <DialogTrigger asChild>
@@ -317,7 +323,7 @@ export default function TrainerDashboard() {
                   ))
                 ) : (
                   <div className="py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
-                    <p className="text-[9px] font-black uppercase tracking-widest">Nenhum agendamento para hoje</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest">Agenda livre para hoje</p>
                   </div>
                 )}
               </div>
@@ -328,7 +334,7 @@ export default function TrainerDashboard() {
             <CardHeader>
               <CardTitle className="text-xs font-black uppercase flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                Alertas Urgentes
+                Alertas do Sistema
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-0">
@@ -337,14 +343,14 @@ export default function TrainerDashboard() {
                   <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/20 transition-all">
                     <div className="flex items-center gap-3">
                       <AlertTriangle className="h-5 w-5 text-white" />
-                      <p className="text-[10px] font-black uppercase tracking-tight">{stats.expired} MENSALIDADES VENCIDAS</p>
+                      <p className="text-[10px] font-black uppercase tracking-tight">{stats.expired} ALUNOS BLOQUEADOS</p>
                     </div>
                     <ArrowUpRight className="h-4 w-4 opacity-50" />
                   </div>
                 </Link>
               ) : (
                 <div className="p-4 rounded-2xl border border-white/20 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest">Tudo em dia!</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest">Sem pendências financeiras</p>
                 </div>
               )}
             </CardContent>

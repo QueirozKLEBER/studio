@@ -9,32 +9,34 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Verifica se o usuário é o dono do caminho pelo UID (Sem recursão)
+    // Verifica se o usuário é o dono do registro sem disparar leituras extras
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Busca o cargo do usuário logado no Firestore
-    function getUserData() {
+    // Busca dados do perfil do usuário logado
+    function getAuthData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isStaff() {
-      let data = getUserData();
-      return isSignedIn() && (data.userType == 'trainer' || data.userType == 'admin');
+    // Verifica cargo específico
+    function hasRole(role) {
+      return isSignedIn() && getAuthData().userType == role;
     }
 
-    function isAdmin() {
-      return isSignedIn() && getUserData().userType == 'admin';
+    function isStaff() {
+      let authData = getAuthData();
+      return isSignedIn() && (authData.userType == 'trainer' || authData.userType == 'admin');
     }
 
     /**
-     * REGRAS PARA USUÁRIOS E SUBCOLEÇÕES
+     * REGRAS PARA USUÁRIOS
      */
     match /users/{userId} {
       
-      // 1. ACESSO DO DONO (Prioridade Máxima)
-      // Permite leitura e escrita total em seu próprio documento e TODAS as subcoleções (recursivo)
+      // 1. ACESSO DO DONO (Prioridade Máxima e Absoluta)
+      // Permite que o usuário acesse seu próprio perfil e TODAS as subcoleções (appointments, plans, etc)
+      // Usamos isSignedIn() direto para evitar loops de get() no próprio documento
       allow read, write: if isOwner(userId);
       
       match /{allPaths=**} {
@@ -42,10 +44,13 @@ service cloud.firestore {
       }
 
       // 2. ACESSO DA EQUIPE (Staff / Admin)
-      // Permite que Staff liste a coleção de usuários e veja detalhes de alunos
-      allow get, list: if isStaff();
+      // Permite que Staff liste a coleção de usuários
+      allow list: if isStaff();
       
-      // Permite que Staff gerencie todas as subcoleções de qualquer usuário (planilhas, dietas, etc)
+      // Permite que Staff leia o perfil de qualquer usuário (especialmente alunos)
+      allow get: if isStaff();
+      
+      // Permite que Staff gerencie as subcoleções de qualquer usuário
       match /{subCollection}/{document=**} {
         allow read, write: if isStaff();
       }

@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    /* Tema Elite Pro Clean: Branco, Vermelho, Cinza e Crômio */
+    /* Tema Pro Clean: Branco, Cinza e Vermelho */
     --background: 210 20% 98%; /* Branco Gelo / Cinza muito claro */
     --foreground: 222 47% 11%; /* Marinho Profundo / Quase preto */
     
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* Branco Puro */
     --card-foreground: 222 47% 11%;
     
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
     
-    --primary: 0 84% 50%; /* Vermelho Treinus */
+    --primary: 0 84% 50%; /* Vermelho Treinus Vibrante */
     --primary-foreground: 0 0% 100%;
     
     --secondary: 210 10% 80%; /* Cinza Cromado / Prata */
@@ -47,7 +47,7 @@
 }
 
 .chrome-gradient {
-  background: linear-gradient(135deg, #f0f0f0 0%, #c0c0c0 50%, #e0e0e0 100%);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
 }
 
 .chrome-text {

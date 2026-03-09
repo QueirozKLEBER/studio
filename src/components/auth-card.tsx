@@ -20,8 +20,8 @@ export function AuthCard({
   footerLinkText,
 }: AuthCardProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <Card className="w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[3rem] border border-slate-200 bg-white/90 backdrop-blur-xl">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md shadow-2xl rounded-[3rem] border border-slate-100 bg-white">
         <CardHeader className="text-center pb-2">
           <div className="flex justify-center mb-6">
             <Link href="/" className="flex flex-col items-center gap-2">
@@ -32,16 +32,16 @@ export function AuthCard({
             </Link>
           </div>
           <CardTitle className="text-2xl font-black uppercase tracking-tight text-slate-900">{title}</CardTitle>
-          <CardDescription className="text-slate-500 font-medium">{description}</CardDescription>
+          <CardDescription className="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2">{description}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {children}
         </CardContent>
         {footerText && footerLink && footerLinkText && (
           <CardFooter className="justify-center text-sm border-t border-slate-50 mt-4 pt-6">
-            <p className="text-slate-500 font-medium">
+            <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">
               {footerText}{' '}
-              <Link href={footerLink} className="font-bold text-primary hover:underline transition-colors">
+              <Link href={footerLink} className="font-black text-primary hover:underline transition-colors ml-1">
                 {footerLinkText}
               </Link>
             </p>

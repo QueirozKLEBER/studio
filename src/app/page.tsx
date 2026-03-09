@@ -5,17 +5,17 @@ import Link from 'next/link';
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
-      <div className="p-10 rounded-[4rem] shadow-2xl mb-12 bg-white border border-slate-100 flex items-center justify-center scale-110">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-6 text-center">
+      <div className="p-10 rounded-[4rem] shadow-xl mb-12 bg-white border border-slate-100 flex items-center justify-center scale-110">
         <Logo className="h-40 w-40" />
       </div>
       
-      <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tighter mb-2">
+      <h1 className="text-5xl font-black text-slate-900 uppercase tracking-tighter mb-2 leading-none">
         TreinusFit <span className="text-primary">Personal</span>
       </h1>
       
       <p className="text-slate-400 mb-12 max-w-xs font-black uppercase tracking-[0.3em] text-[10px]">
-        Elite Training Systems • Pro Edition
+        Elite Training Systems • Pro Clean Edition
       </p>
       
       <Link 

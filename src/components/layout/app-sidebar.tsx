@@ -64,12 +64,10 @@ export const AppSidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200 shadow-xl">
+    <div className="flex flex-col h-full bg-white border-r border-slate-200 shadow-sm">
       <div className="p-6 border-b border-slate-50">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="bg-transparent p-1">
-            <Logo className="w-10 h-10" />
-          </div>
+          <Logo className="w-10 h-10" />
           <div className="flex flex-col">
             <span className="text-lg font-black font-headline text-slate-900 leading-tight uppercase tracking-tighter">TreinusFit</span>
             <span className="text-xs font-black text-primary leading-tight uppercase tracking-widest">Personal</span>
@@ -87,7 +85,7 @@ export const AppSidebar = () => {
               className={cn(
                 "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group",
                 isActive 
-                  ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105" 
+                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
               )}
             >

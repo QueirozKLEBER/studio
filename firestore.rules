@@ -2,41 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Funções auxiliares
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getAuthData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isStaff() {
+      return isSignedIn() && (getAuthData().userType == 'trainer' || getAuthData().userType == 'admin');
+    }
+
     /**
      * REGRAS PARA USUÁRIOS E SUBCOLEÇÕES
      */
     match /users/{userId} {
       
-      // 1. ACESSO DO DONO (Prioridade Absoluta)
-      // Permite que o usuário acesse seu próprio perfil e TODAS as subcoleções (appointments, plans, etc)
-      // O uso de {allPaths=**} garante que a operação 'list' em subcoleções funcione.
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // 1. ACESSO DO DONO (Prioridade Máxima e Absoluta)
+      // Permite que o usuário acesse seu próprio perfil e TODAS as subcoleções (appointments, trainingPlans, etc)
+      // O uso do wildcard recursivo {allPaths=**} é essencial para que a operação 'list' funcione em subcoleções.
+      allow read, write: if isOwner(userId);
       
       match /{allPaths=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
 
       // 2. ACESSO DA EQUIPE (Staff / Admin)
-      // Funções auxiliares para Staff
-      function isSignedIn() {
-        return request.auth != null;
-      }
+      // Permite que trainers/admins visualizem perfis e gerenciem dados de alunos
+      allow list, get: if isStaff();
       
-      function getAuthData() {
-        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      }
-
-      function isStaff() {
-        let authData = getAuthData();
-        return isSignedIn() && (authData.userType == 'trainer' || authData.userType == 'admin');
-      }
-
-      // Permite que Staff liste a coleção de usuários e leia perfis
-      allow list: if isStaff();
-      allow get: if isStaff();
-      
-      // Permite que Staff gerencie as subcoleções de outros usuários (especialmente alunos)
       match /{subCollection}/{document=**} {
+        // Staff pode gerenciar subcoleções de outros usuários (ex: alunos)
         allow read, write: if isStaff();
       }
     }
@@ -45,11 +47,11 @@ service cloud.firestore {
      * COLEÇÕES GLOBAIS
      */
     match /exercises/{exerciseId} {
-      allow read: if request.auth != null;
+      allow read: if isSignedIn();
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow read: if request.auth != null;
+      allow read: if isSignedIn();
     }
   }
 }

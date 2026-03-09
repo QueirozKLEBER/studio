@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "TreinusFit Personal",
-  description: "Seu personal trainer mobile",
+  description: "Seu personal trainer mobile de elite",
 };
 
 export default function RootLayout({

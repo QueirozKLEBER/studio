@@ -63,7 +63,7 @@ export default function LoginPage() {
 
   return (
     <AuthCard
-      title="Entrar no MFIT"
+      title="Entrar no TreinusFit"
       description="Escolha seu tipo de acesso para continuar."
       footerText="Não tem uma conta?"
       footerLink="/signup"

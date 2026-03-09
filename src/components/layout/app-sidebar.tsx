@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Logo } from '../icons/logo';
@@ -14,7 +13,6 @@ import {
   ShieldCheck,
   Settings,
   Utensils,
-  History,
   Clock
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -69,10 +67,10 @@ export const AppSidebar = () => {
     <div className="flex flex-col h-full bg-card">
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
-            <Logo className="w-6 h-6 text-white" />
+          <div className="bg-white p-1 rounded-xl shadow-lg shadow-primary/10">
+            <Logo className="w-8 h-8" />
           </div>
-          <span className="text-xl font-headline font-bold tracking-tight">MFIT Personal</span>
+          <span className="text-xl font-headline font-bold tracking-tight">TreinusFit</span>
         </Link>
       </div>
 

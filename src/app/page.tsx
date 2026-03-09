@@ -2,12 +2,13 @@
 
 import { Dumbbell } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from '@/components/icons/logo';
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6 text-center">
-      <div className="bg-blue-600 p-6 rounded-3xl shadow-2xl mb-8 animate-bounce">
-        <Dumbbell className="h-16 w-16 text-white" />
+      <div className="p-6 rounded-3xl shadow-2xl mb-8 animate-bounce bg-white">
+        <Logo className="h-20 w-20" />
       </div>
       <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tighter mb-4">
         TreinusFit Personal
@@ -18,7 +19,7 @@ export default function LandingPage() {
       
       <Link 
         href="/login" 
-        className="w-full max-w-sm h-16 rounded-2xl text-xl font-bold bg-blue-600 text-white shadow-xl active:scale-95 transition-transform flex items-center justify-center decoration-transparent"
+        className="w-full max-w-sm h-16 rounded-2xl text-xl font-bold bg-primary text-white shadow-xl active:scale-95 transition-transform flex items-center justify-center decoration-transparent"
       >
         Iniciar Treino
       </Link>

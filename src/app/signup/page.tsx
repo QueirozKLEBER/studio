@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -78,7 +77,7 @@ export default function SignupPage() {
 
             toast({
                 title: 'Conta criada!',
-                description: `Bem-vindo ao MFIT, ${firstName}!`,
+                description: `Bem-vindo ao TreinusFit, ${firstName}!`,
             });
             
         } catch (error) {

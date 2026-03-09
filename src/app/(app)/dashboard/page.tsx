@@ -110,7 +110,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-none pb-20">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold font-headline text-primary">MFIT Personal</h1>
+        <h1 className="text-3xl font-bold font-headline text-primary uppercase tracking-tight">TreinusFit Personal</h1>
         <p className="text-muted-foreground italic text-sm">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
       </header>
 
@@ -239,7 +239,7 @@ export default function Dashboard() {
                   </Badge>
                 </div>
                 <Button asChild className="w-full bg-white text-primary hover:bg-white/90 h-14 rounded-3xl font-black text-lg shadow-lg">
-                  <Link href={`/workouts/plan/${activePlan.id}`}>
+                  <Link href={`/workouts/plan?id=${activePlan.id}`}>
                     INICIAR AGORA
                   </Link>
                 </Button>

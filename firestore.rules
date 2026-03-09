@@ -39,7 +39,8 @@ service cloud.firestore {
       }
 
       match /workoutHistory/{historyId} {
-        allow get, list, create: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isTrainer() || isAdmin();
+        allow create: if isOwner(userId);
       }
 
       match /bodyMeasurements/{measurementId} {

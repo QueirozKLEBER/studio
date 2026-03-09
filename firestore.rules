@@ -3,48 +3,52 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Função auxiliar básica para verificar se o usuário está logado
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Helper para verificar tipo de usuário de forma segura
-    function isUserType(type) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == type;
-    }
-
+    // Match principal para a árvore de usuários
     match /users/{userId} {
-      // REGRA DE OURO: O dono sempre pode ler e escrever no seu próprio nó e subcoleções
-      // Isso evita recursão e garante que o app funcione mesmo se o perfil estiver incompleto
+      
+      // REGRA DE OURO: O dono do nó sempre tem acesso total e imediato a tudo abaixo dele.
+      // Isso evita recursão infinita e garante que o app carregue o perfil e subcoleções (como appointments).
       allow read, write: if isSignedIn() && request.auth.uid == userId;
       
-      // Professores e Admins podem listar e ler perfis de alunos
-      allow list, get: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
+      // Função para verificar se o usuário logado é da equipe técnica (Professor ou Admin)
+      // Esta função só deve ser chamada se o usuário NÃO for o dono do documento acessado.
+      function isStaff() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
+      }
+
+      // Professores e Admins podem listar e ler perfis de outros usuários (alunos)
+      allow list, get: if isSignedIn() && isStaff();
       
-      // Professores podem atualizar dados de alunos (ex: vincular trainerId)
-      allow update: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
+      // Professores podem atualizar dados de alunos (ex: vincular trainerId ou mudar status)
+      allow update: if isSignedIn() && isStaff();
       
       // Apenas Admins podem deletar usuários
-      allow delete: if isUserType('admin');
+      allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
 
-      // Subcoleções (Treinos, Dieta, Histórico, Medidas, Agendamentos)
+      // Regras para subcoleções (Treinos, Dieta, Histórico, Medidas, Agendamentos)
       match /{allSubcollections=**} {
-        // Permite que o dono acesse suas subcoleções
+        // Dono sempre acessa suas próprias subcoleções (Resolve erro na agenda)
         allow read, write: if isSignedIn() && request.auth.uid == userId;
         
-        // Permite que professores e admins gerenciem dados dos alunos
-        allow read, write: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
+        // Professores e Admins podem gerenciar dados das subcoleções dos alunos
+        allow read, write: if isSignedIn() && isStaff();
       }
     }
 
     // Coleções globais de referência
     match /exercises/{exerciseId} {
       allow read: if isSignedIn();
-      allow write: if isUserType('admin');
+      allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
     match /nutritionTips/{nutritionTipId} {
       allow read: if isSignedIn();
-      allow write: if isUserType('admin');
+      allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
   }
 }

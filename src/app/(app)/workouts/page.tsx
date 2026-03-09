@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -46,14 +45,14 @@ export default function WorkoutsPage() {
             const IconComponent = iconComponents[group.icon];
             return (
               <Link key={group.id} href={`/workouts/${group.id}`} className="group">
-                <Card className="h-full transition-all duration-300 ease-in-out hover:border-primary hover:shadow-lg hover:-translate-y-1 rounded-3xl bg-white border-none shadow-sm">
+                <Card className="h-full transition-all duration-300 ease-in-out hover:border-primary hover:shadow-lg hover:-translate-y-1 rounded-3xl bg-card border border-white/5 shadow-sm">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
                     {IconComponent && (
                       <div className="p-4 bg-primary/10 rounded-2xl">
                           <IconComponent className="h-12 w-12 text-primary transition-transform duration-300 group-hover:scale-110" />
                       </div>
                     )}
-                    <span className="font-headline font-bold text-lg">
+                    <span className="font-headline font-bold text-lg text-white">
                       {group.name}
                     </span>
                     <div className="flex items-center text-xs text-primary font-bold opacity-0 transition-opacity duration-300 group-hover:opacity-100 uppercase tracking-tighter">
@@ -82,27 +81,27 @@ export default function WorkoutsPage() {
           [1, 2, 3].map(i => <Card key={i} className="h-48 rounded-[2.5rem] animate-pulse bg-muted/50" />)
         ) : plans && plans.length > 0 ? (
           plans.map((plan) => (
-            <Card key={plan.id} className="rounded-[2.5rem] border-none shadow-md bg-white overflow-hidden hover:shadow-xl transition-all group">
-              <CardHeader className="bg-primary/5 pb-4">
+            <Card key={plan.id} className="rounded-[2.5rem] border border-white/5 shadow-2xl bg-card overflow-hidden hover:shadow-primary/10 transition-all group">
+              <CardHeader className="bg-white/5 pb-4">
                 <div className="flex justify-between items-start">
                   <div className="p-3 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20">
                     <Dumbbell className="h-6 w-6" />
                   </div>
-                  <Badge variant="secondary" className="bg-white text-primary font-bold border-none">
+                  <Badge variant="secondary" className="bg-primary/10 text-primary font-black border-none uppercase text-[10px] tracking-widest">
                     {plan.exercises?.length || 0} EXERCÍCIOS
                   </Badge>
                 </div>
-                <CardTitle className="text-2xl font-black mt-4 uppercase tracking-tight">{plan.name}</CardTitle>
-                <CardDescription className="flex items-center gap-2 font-bold text-xs uppercase opacity-70">
+                <CardTitle className="text-2xl font-black mt-4 uppercase tracking-tight text-white">{plan.name}</CardTitle>
+                <CardDescription className="flex items-center gap-2 font-bold text-xs uppercase text-white/40 mt-1">
                   <Calendar className="h-3 w-3" />
                   Liberado em {plan.createdAt?.toDate().toLocaleDateString('pt-BR')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                <p className="text-sm text-muted-foreground line-clamp-2 italic mb-6">
-                  Foco total na técnica e progressão de carga conforme orientado.
+                <p className="text-sm text-white/60 line-clamp-2 italic mb-6">
+                  Foco total na técnica e progressão de carga conforme orientado pelo seu personal.
                 </p>
-                <Button asChild className="w-full h-14 rounded-2xl font-black text-lg bg-primary text-white shadow-lg transition-transform active:scale-95">
+                <Button asChild className="w-full h-14 rounded-2xl font-black text-lg bg-primary text-white shadow-lg transition-transform active:scale-95 uppercase tracking-tighter">
                   <Link href={`/workouts/plan/${plan.id}`}>
                     INICIAR TREINO
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -113,13 +112,13 @@ export default function WorkoutsPage() {
           ))
         ) : (
           <div className="col-span-full">
-            <Card className="rounded-[3rem] border-dashed border-2 bg-transparent p-12 text-center flex flex-col items-center gap-6">
+            <Card className="rounded-[3rem] border-dashed border-2 border-white/10 bg-transparent p-12 text-center flex flex-col items-center gap-6">
               <div className="p-6 bg-muted rounded-full">
-                <AlertCircle className="h-16 w-16 text-muted-foreground opacity-30" />
+                <AlertCircle className="h-16 w-16 text-white/20" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold">Nenhum treino encontrado</h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
+                <h3 className="text-2xl font-bold text-white">Nenhum treino encontrado</h3>
+                <p className="text-white/40 max-w-sm mx-auto uppercase text-[10px] font-bold tracking-widest">
                   Seu professor ainda está preparando sua planilha de treinos de elite. 
                 </p>
               </div>

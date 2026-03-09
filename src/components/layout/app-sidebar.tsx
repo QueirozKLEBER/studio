@@ -64,12 +64,12 @@ export const AppSidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200 shadow-sm">
-      <div className="p-6 border-b border-slate-100">
+    <div className="flex flex-col h-full bg-card border-r border-primary/20 shadow-xl">
+      <div className="p-6 border-b border-white/5">
         <Link href="/dashboard" className="flex items-center gap-3">
           <Logo className="w-10 h-10" />
           <div className="flex flex-col">
-            <span className="text-lg font-black font-headline text-slate-900 leading-tight uppercase tracking-tighter">TreinusFit</span>
+            <span className="text-lg font-black font-headline text-white leading-tight uppercase tracking-tighter">TreinusFit</span>
             <span className="text-xs font-black text-primary leading-tight uppercase tracking-widest">Personal</span>
           </div>
         </Link>
@@ -85,36 +85,36 @@ export const AppSidebar = () => {
               className={cn(
                 "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group",
                 isActive 
-                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                  ? "bg-primary text-white shadow-lg shadow-primary/40" 
+                  : "text-white/60 hover:bg-white/5 hover:text-white"
               )}
             >
-              <item.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-slate-400")} />
+              <item.icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", isActive ? "text-white" : "text-primary/60")} />
               <span className="font-black text-[11px] uppercase tracking-wider">{item.label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 mt-auto bg-slate-50 border-t border-slate-100">
+      <div className="p-4 mt-auto bg-black/20 border-t border-white/5">
         <Link 
           href="/profile"
           className={cn(
             "flex items-center gap-3 p-3 rounded-2xl transition-all mb-2 border border-transparent",
-            pathname === '/profile' ? "bg-white border-slate-200 shadow-sm" : "hover:bg-white"
+            pathname === '/profile' ? "bg-white/10 border-primary/30 shadow-sm" : "hover:bg-white/5"
           )}
         >
-          <Avatar className="h-10 w-10 rounded-xl border-2 border-primary/10 overflow-hidden shadow-sm">
+          <Avatar className="h-10 w-10 rounded-xl border-2 border-primary/30 overflow-hidden shadow-sm">
             <AvatarImage 
               src={profile?.photoURL || user?.photoURL || ''} 
               className="object-cover"
             />
-            <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-black uppercase text-sm">
+            <AvatarFallback className="rounded-xl bg-primary/20 text-primary font-black uppercase text-sm">
               {profile?.firstName?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-black text-slate-900 truncate uppercase tracking-tight">
+            <span className="text-sm font-black text-white truncate uppercase tracking-tight">
               {profile?.firstName || 'Atleta'}
             </span>
             <span className="text-[9px] text-primary font-black uppercase tracking-[0.2em]">
@@ -124,7 +124,7 @@ export const AppSidebar = () => {
         </Link>
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-slate-400 hover:text-primary hover:bg-white transition-all group font-black text-[10px] uppercase tracking-widest"
+          className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl text-white/40 hover:text-primary hover:bg-white/5 transition-all group font-black text-[10px] uppercase tracking-widest"
         >
           <LogOut className="h-5 w-5 transition-transform group-hover:-translate-x-1" />
           Sair do App

@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    /* Paleta Elite Pro: Cinza, Branco e Vermelho */
-    --background: 210 10% 94%; /* Fundo Cinza Claro Tecnológico */
-    --foreground: 222 47% 11%; /* Marinho Profundo para leitura */
+    /* Paleta Elite Dark: Cinza Grafite, Branco e Vermelho */
+    --background: 222 15% 10%; /* Fundo Cinza Escuro Profundo */
+    --foreground: 0 0% 100%; /* Letras Brancas */
     
-    --card: 0 0% 100%; /* Cards Branco Puro */
-    --card-foreground: 222 47% 11%;
+    --card: 222 15% 15%; /* Cards Cinza um pouco mais claros */
+    --card-foreground: 0 0% 100%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 222 15% 15%;
+    --popover-foreground: 0 0% 100%;
     
     --primary: 0 84% 50%; /* Vermelho Treinus Vibrante */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 210 10% 80%; /* Prata / Cromado */
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 222 15% 25%; /* Cinza Médio */
+    --secondary-foreground: 0 0% 100%;
     
-    --muted: 210 10% 90%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 222 15% 20%;
+    --muted-foreground: 215 16% 70%;
     
-    --accent: 210 10% 92%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 0 84% 50%;
+    --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 0 0% 100%;
     
-    --border: 214 32% 85%;
-    --input: 214 32% 85%;
+    --border: 0 84% 50% / 0.3; /* Contornos em Vermelho Sutil */
+    --input: 222 15% 20%;
     --ring: 0 84% 50%;
     
     --radius: 2rem;
@@ -47,7 +47,7 @@
 }
 
 .chrome-gradient {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+  background: linear-gradient(135deg, #2c2c2c 0%, #1a1a1a 100%);
 }
 
 ::-webkit-scrollbar {
@@ -57,5 +57,5 @@
   @apply bg-background;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 rounded-full;
+  @apply bg-primary/40 rounded-full;
 }

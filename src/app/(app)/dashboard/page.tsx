@@ -105,28 +105,28 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-none pb-20">
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-black font-headline text-slate-900 uppercase tracking-tight">TreinusFit <span className="text-primary">Personal</span></h1>
-        <p className="text-slate-500 font-black italic text-[10px] uppercase tracking-[0.2em]">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
+        <h1 className="text-3xl font-black font-headline text-white uppercase tracking-tight">TreinusFit <span className="text-primary">Personal</span></h1>
+        <p className="text-primary font-black italic text-[10px] uppercase tracking-[0.2em]">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
       </header>
 
       {/* Alerta de Treino do Dia */}
       <Card className={cn(
-        "rounded-[2.5rem] border-none shadow-sm overflow-hidden transition-all bg-white",
+        "rounded-[2.5rem] border border-white/5 shadow-xl overflow-hidden transition-all bg-card",
         trainedToday ? "border-l-8 border-green-500" : "border-l-8 border-primary"
       )}>
         <CardContent className="p-8 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className={cn(
               "p-4 rounded-2xl shadow-sm",
-              trainedToday ? "bg-green-100 text-green-600" : "bg-primary/10 text-primary"
+              trainedToday ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
             )}>
               {trainedToday ? <CheckCircle2 className="h-8 w-8" /> : <CalendarDays className="h-8 w-8" />}
             </div>
             <div>
-              <h3 className="font-black uppercase tracking-tight text-xl">
+              <h3 className="font-black uppercase tracking-tight text-xl text-white">
                 {trainedToday ? "Missão Cumprida!" : "Pronto para Treinar?"}
               </h3>
-              <p className="text-xs font-bold text-slate-500 mt-1 uppercase tracking-wider">
+              <p className="text-[10px] font-bold text-white/40 mt-1 uppercase tracking-wider">
                 {trainedToday 
                   ? "Você já registrou sua atividade hoje. Excelente!" 
                   : "Seu professor atualizou sua planilha. Vamos lá!"}
@@ -151,19 +151,19 @@ export default function Dashboard() {
           { icon: ChevronRight, label: 'Histórico', href: '/profile' },
         ].map((item, i) => (
           <Link key={i} href={item.href} className="flex flex-col items-center gap-3 group">
-            <div className="p-6 rounded-[2rem] shadow-sm bg-white border border-slate-100 transition-all group-active:scale-90 w-full aspect-square flex items-center justify-center hover:bg-primary hover:text-white group-hover:shadow-xl group-hover:shadow-primary/20">
+            <div className="p-6 rounded-[2rem] shadow-xl bg-card border border-white/5 transition-all group-active:scale-90 w-full aspect-square flex items-center justify-center hover:bg-primary hover:text-white group-hover:border-primary/50">
               <item.icon className="h-8 w-8" />
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-500 group-hover:text-primary transition-colors text-center">{item.label}</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 group-hover:text-primary transition-colors text-center">{item.label}</span>
           </Link>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
         {/* Weekly Progress Chart */}
-        <Card className="rounded-[2.5rem] border-none shadow-sm overflow-hidden bg-white">
+        <Card className="rounded-[2.5rem] border border-white/5 shadow-xl overflow-hidden bg-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-black flex items-center justify-between uppercase tracking-[0.2em] text-slate-400">
+            <CardTitle className="text-xs font-black flex items-center justify-between uppercase tracking-[0.2em] text-white/30">
               Frequência Semanal
               <Badge variant="secondary" className="bg-primary/10 text-primary border-none font-black uppercase text-[10px]">Ativo</Badge>
             </CardTitle>
@@ -172,13 +172,13 @@ export default function Dashboard() {
             {history && history.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyData}>
-                  <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={10} fontWeight="900" dy={8} stroke="#94a3b8" />
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={10} fontWeight="900" dy={8} stroke="#ffffff40" />
                   <Tooltip 
-                    cursor={{fill: 'rgba(0,0,0,0.02)'}} 
+                    cursor={{fill: 'rgba(255,255,255,0.05)'}} 
                     content={({active, payload}) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-slate-900 p-3 rounded-2xl shadow-xl text-[10px] font-black text-white uppercase tracking-tighter">
+                          <div className="bg-white p-3 rounded-2xl shadow-xl text-[10px] font-black text-black uppercase tracking-tighter">
                             {payload[0].payload.sessions} Atividade(s)
                           </div>
                         );
@@ -188,22 +188,22 @@ export default function Dashboard() {
                   />
                   <Bar dataKey="sessions" radius={[8, 8, 8, 8]} barSize={24}>
                     {weeklyData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.sessions > 0 ? 'hsl(var(--primary))' : '#f1f5f9'} />
+                      <Cell key={`cell-${index}`} fill={entry.sessions > 0 ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.05)'} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-6 opacity-20">
-                <CalendarDays className="h-16 w-16 mb-2 text-slate-400" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sem registros</p>
+                <CalendarDays className="h-16 w-16 mb-2 text-white" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-white">Sem registros</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Workout of the Day */}
-        <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground p-2">
+        <Card className="rounded-[2.5rem] border-none shadow-2xl bg-primary text-white p-2">
           <CardHeader>
             <CardTitle className="text-xs font-black flex items-center gap-2 uppercase tracking-[0.2em] text-white/70">
               <Dumbbell className="h-5 w-5" />

@@ -1,20 +1,23 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Dumbbell, Activity, User, Utensils, Clock } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Activity, User, Utensils, Clock, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/workouts', label: 'Treinos', icon: Dumbbell },
-  { href: '/activity', label: 'Logs', icon: Clock },
-  { href: '/diet', label: 'Dieta', icon: Utensils },
-  { href: '/profile', label: 'Perfil', icon: User },
-];
+import { useUser } from '@/firebase';
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { profile } = useUser();
+
+  const navItems = [
+    { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
+    { href: '/workouts', label: 'Treinos', icon: Dumbbell },
+    { href: '/activity', label: 'Logs', icon: Clock },
+    { href: profile?.userType === 'trainer' ? '/trainer/students' : '/billing', label: profile?.userType === 'trainer' ? 'Alunos' : 'Pagar', icon: profile?.userType === 'trainer' ? User : Wallet },
+    { href: '/profile', label: 'Perfil', icon: User },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card/90 backdrop-blur-xl border-t border-primary/10 h-20 md:hidden pb-safe">

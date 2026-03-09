@@ -26,7 +26,7 @@ function StudentDetailsContent() {
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const { profile } = useUser();
+  const { profile: currentUserProfile } = useUser();
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
@@ -46,6 +46,13 @@ function StudentDetailsContent() {
     if (!history) return 0;
     return history.reduce((acc, curr) => acc + (curr.duration || 0), 0);
   }, [history]);
+
+  const isExpired = useMemo(() => {
+    if (!student?.paymentDueDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(student.paymentDueDate) < today;
+  }, [student?.paymentDueDate]);
 
   const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -80,7 +87,10 @@ function StudentDetailsContent() {
 
     setIsUpdating(true);
     try {
-      await updateDoc(studentRef, { paymentDueDate: date });
+      await updateDoc(studentRef, { 
+        paymentDueDate: date,
+        trainerId: currentUserProfile?.id // Vincula o professor ao aluno no pagamento
+      });
       toast({ title: "Pagamento atualizado", description: "Próximo vencimento definido." });
     } catch (e) {
       toast({ variant: 'destructive', title: "Erro ao salvar" });
@@ -112,14 +122,8 @@ function StudentDetailsContent() {
     }
   };
 
-  if (isLoading || !profile) return <div className="p-8 animate-pulse bg-background h-screen" />;
+  if (isLoading || !currentUserProfile) return <div className="p-8 animate-pulse bg-background h-screen" />;
   if (!student) return <div className="p-8 text-center py-20 text-white font-black uppercase">Aluno não encontrado.</div>;
-
-  const imc = student.weight && student.height 
-    ? (parseFloat(student.weight) / ((parseFloat(student.height)/100)**2)).toFixed(1)
-    : '--';
-
-  const isExpired = student.paymentDueDate && new Date(student.paymentDueDate) < new Date();
 
   return (
     <div className="flex flex-col gap-8 w-full pb-20 max-w-6xl mx-auto px-1">

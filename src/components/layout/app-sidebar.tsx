@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Logo } from '../icons/logo';
@@ -13,7 +14,8 @@ import {
   ShieldCheck,
   Settings,
   Utensils,
-  Clock
+  Clock,
+  Wallet
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth, useUser } from '@/firebase';
@@ -57,6 +59,7 @@ export const AppSidebar = () => {
       { href: '/activity', label: 'Atividades', icon: Clock },
       { href: '/diet', label: 'Minha Dieta', icon: Utensils },
       { href: '/assessment', label: 'Avaliação Física', icon: Activity },
+      { href: '/billing', label: 'Pagamento', icon: Wallet },
       { href: '/pricing', label: 'Planos', icon: CreditCard },
     ];
   };

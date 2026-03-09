@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
@@ -6,18 +5,25 @@ interface LogoProps {
 }
 
 /**
- * Componente de Logo otimizado para Next.js.
- * Certifique-se de que o arquivo 'public/logo.png' existe.
+ * Componente de Logo otimizado para TreinusFit Personal.
+ * Utiliza o arquivo 'public/logo.png'. 
+ * Se o logo não aparecer, verifique se o arquivo está na pasta 'public' com o nome exato.
  */
 export const Logo = ({ className }: LogoProps) => (
-  <div className={cn("relative flex items-center justify-center overflow-hidden", className)}>
-    <Image
+  <div className={cn("relative flex items-center justify-center", className)}>
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
       src="/logo.png"
       alt="TreinusFit Personal Logo"
-      fill
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-      className="object-contain"
-      priority
+      className="w-full h-full object-contain pointer-events-none select-none"
+      onError={(e) => {
+        // Fallback caso a imagem não seja encontrada
+        e.currentTarget.style.display = 'none';
+        const parent = e.currentTarget.parentElement;
+        if (parent) {
+          parent.innerHTML = '<div class="text-primary font-black text-6xl italic">TFP</div>';
+        }
+      }}
     />
   </div>
 );

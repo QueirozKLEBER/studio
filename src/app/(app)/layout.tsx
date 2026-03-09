@@ -23,28 +23,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  // Logout imediato se o usuário estiver bloqueado
+  // Logout imediato se o usuário estiver bloqueado (opcional, mantendo a tela de aviso primeiro)
   useEffect(() => {
     if (!isUserLoading && profile?.status === 'blocked') {
       toast({
         variant: 'destructive',
         title: "Acesso Suspenso",
-        description: "Sua conta foi bloqueada pelo administrador. Entre em contato com o suporte.",
+        description: "Sua conta está inativa no momento.",
       });
-      signOut(auth).then(() => router.push('/login'));
+      // Poderia dar signOut aqui, mas vamos manter a tela de aviso ativa para o usuário ler a instrução
     }
-  }, [profile, isUserLoading, auth, router, toast]);
+  }, [profile, isUserLoading, toast]);
 
   if (isUserLoading || !user || profile?.status === 'blocked') {
     return (
       <div className="flex min-h-screen w-full bg-background overflow-x-hidden items-center justify-center p-8">
         {profile?.status === 'blocked' ? (
-          <div className="text-center space-y-6">
-            <div className="h-20 w-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto">
-              <ShieldBan className="h-10 w-10" />
+          <div className="text-center space-y-8 flex flex-col items-center">
+            <div className="h-24 w-24 bg-primary/10 text-primary rounded-[2.5rem] flex items-center justify-center shadow-2xl border border-primary/20 animate-pulse">
+              <ShieldBan className="h-12 w-12" />
             </div>
-            <h2 className="text-2xl font-black uppercase text-white">ACESSO BLOQUEADO</h2>
-            <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest max-w-xs">Consulte o administrador do sistema para mais informações.</p>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black uppercase text-white tracking-tighter">ACESSO BLOQUEADO</h2>
+              <p className="text-primary font-black uppercase text-xs tracking-[0.2em] animate-bounce">
+                Entre em contato com o seu professor
+              </p>
+            </div>
+            <button 
+              onClick={() => signOut(auth).then(() => router.push('/login'))}
+              className="mt-4 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors underline"
+            >
+              Voltar para o Login
+            </button>
           </div>
         ) : (
           <div className="flex-1 max-w-4xl w-full">

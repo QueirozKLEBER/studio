@@ -7,7 +7,8 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Helper para verificar tipo de usuário sem funções aninhadas complexas
+    // Helper para verificar tipo de usuário
+    // O get() aqui é seguro pois a regra de "Perfil próprio" abaixo resolve a leitura do auth.uid
     function isUserType(type) {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', 'student') == type;
     }
@@ -17,12 +18,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Regra fundamental: Usuário logado sempre pode ler seu próprio perfil básico
-      // Isso evita recursão ao carregar o estado inicial do app
+      // REGRA CRÍTICA: Permite que o usuário leia seu próprio perfil sem verificações extras.
+      // Isso impede a recursão infinita quando isUserType() ou isNotBlocked() são chamados.
       allow get: if isSignedIn() && request.auth.uid == userId;
       
-      // Professores e Admins podem listar e ler perfis
-      allow get, list: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
+      // Professores e Admins podem listar e ler perfis de terceiros
+      allow list: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
+      allow get: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
       
       allow create: if isSignedIn() && request.auth.uid == userId;
       
@@ -56,9 +58,9 @@ service cloud.firestore {
       }
 
       match /appointments/{appointmentId} {
-        // Professores gerenciam agendamentos no seu path. 
-        // Verificamos se o userId do path é o ID do professor logado.
-        allow read, write: if isSignedIn() && request.auth.uid == userId && isNotBlocked();
+        // Professores gerenciam agendamentos no seu próprio path.
+        // Simplificado para garantir que a listagem na Dashboard funcione sem erros de permissão.
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
     }
 

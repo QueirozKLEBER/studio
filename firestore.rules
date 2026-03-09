@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Função auxiliar básica para verificar se o usuário está logado
+    // Função auxiliar para verificar se o usuário está autenticado
     function isSignedIn() {
       return request.auth != null;
     }
@@ -11,44 +11,42 @@ service cloud.firestore {
     // Match principal para a árvore de usuários
     match /users/{userId} {
       
-      // REGRA DE OURO: O dono do nó sempre tem acesso total e imediato a tudo abaixo dele.
-      // Isso evita recursão infinita e garante que o app carregue o perfil e subcoleções (como appointments).
+      // REGRA DE PROPRIEDADE: O dono do UID tem acesso total a si mesmo
       allow read, write: if isSignedIn() && request.auth.uid == userId;
-      
-      // Função para verificar se o usuário logado é da equipe técnica (Professor ou Admin)
-      // Esta função só deve ser chamada se o usuário NÃO for o dono do documento acessado.
+
+      // REGRA DE SUBCOLEÇÕES: Libera o acesso recursivo para TODA a árvore do próprio usuário
+      // Isso garante que listagens em /appointments, /trainingPlans, etc., funcionem para o dono.
+      match /{allSubcollections=**} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Função para verificar cargo (Trainer ou Admin) para acesso a outros perfis
       function isStaff() {
         return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
       }
 
-      // Professores e Admins podem listar e ler perfis de outros usuários (alunos)
+      // Permissões para Professores e Admins gerenciarem dados dos Alunos
       allow list, get: if isSignedIn() && isStaff();
-      
-      // Professores podem atualizar dados de alunos (ex: vincular trainerId ou mudar status)
       allow update: if isSignedIn() && isStaff();
       
-      // Apenas Admins podem deletar usuários
+      // Apenas Admins podem deletar contas
       allow delete: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
 
-      // Regras para subcoleções (Treinos, Dieta, Histórico, Medidas, Agendamentos)
-      match /{allSubcollections=**} {
-        // Dono sempre acessa suas próprias subcoleções (Resolve erro na agenda)
-        allow read, write: if isSignedIn() && request.auth.uid == userId;
-        
-        // Professores e Admins podem gerenciar dados das subcoleções dos alunos
-        allow read, write: if isSignedIn() && isStaff();
-      }
+      // Regras de subcoleção específicas para Staff acessar dados de Alunos
+      match /trainingPlans/{planId} { allow read, write: if isSignedIn() && isStaff(); }
+      match /dietSuggestions/{id} { allow read, write: if isSignedIn() && isStaff(); }
+      match /workoutHistory/{id} { allow read, write: if isSignedIn() && isStaff(); }
+      match /bodyMeasurements/{id} { allow read, write: if isSignedIn() && isStaff(); }
+      match /appointments/{id} { allow read, write: if isSignedIn() && isStaff(); }
     }
 
     // Coleções globais de referência
     match /exercises/{exerciseId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
     match /nutritionTips/{nutritionTipId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
   }
 }

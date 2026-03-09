@@ -3,40 +3,41 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Função auxiliar para verificar se é Staff (Professor ou Admin)
-    function isStaff() {
-      return request.auth != null && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType in ['trainer', 'admin'];
+    // Função para obter o cargo do usuário sem causar loop infinito
+    // Só deve ser chamada se o usuário NÃO for o dono do documento sendo acessado
+    function getUserType() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType;
     }
 
     match /users/{userId} {
       
-      // 1. ACESSO DO DONO (Proprietário da conta)
-      // O dono tem acesso total ao seu próprio documento de perfil.
+      // 1. REGRA DO DONO (Prioridade Total)
+      // O usuário tem acesso total a si mesmo e a todas as suas subcoleções (appointments, trainingPlans, etc)
+      // O uso de {allPaths=**} garante que a operação 'list' em subcoleções funcione.
       allow read, write: if request.auth != null && request.auth.uid == userId;
       
-      // RECURSIVIDADE PARA O DONO:
-      // Garante que o dono possa listar e ler qualquer subcoleção (como appointments, trainingPlans, etc)
-      // O wildcard {allPaths=**} resolve o erro de permissão na operação 'list'.
       match /{allPaths=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
-      // 2. ACESSO DE STAFF (Professor ou Admin)
-      // Permite que a equipe técnica gerencie os alunos (Listar usuários, Ver perfis).
-      allow list, get, update: if isStaff();
+      // 2. REGRA DE STAFF (Para gerenciar ALUNOS)
+      // Importante: request.auth.uid != userId garante que não haja recursão ao ler o próprio perfil
+      allow list, get, update: if request.auth != null && 
+                                request.auth.uid != userId && 
+                                getUserType() in ['trainer', 'admin'];
 
-      // Permite que a equipe técnica gerencie as subcoleções dos alunos (Treinos, Agendamentos, etc).
+      // Permite que trainers gerenciem subcoleções de alunos (Treinos, Dieta, etc)
       match /{subCollection}/{allSubPaths=**} {
-        allow read, write: if isStaff();
+        allow read, write: if request.auth != null && 
+                             request.auth.uid != userId && 
+                             getUserType() in ['trainer', 'admin'];
       }
       
-      // Regra de exclusão: Apenas Admin pode deletar usuários
-      allow delete: if request.auth != null && 
-                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      // Apenas Admin pode deletar usuários
+      allow delete: if request.auth != null && getUserType() == 'admin';
     }
 
-    // Coleções de referência globais (Exercícios e Dicas)
+    // Coleções de referência globais
     match /exercises/{exerciseId} {
       allow read: if request.auth != null;
     }

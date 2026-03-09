@@ -7,16 +7,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-    
-    function isExistingOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId && resource != null;
+    function isNotBlocked() {
+      return !isSignedIn() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status != 'blocked';
     }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId && isNotBlocked();
+    }
+    
     function isTrainer() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer';
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer' && isNotBlocked();
     }
 
     function isAdmin() {
@@ -24,38 +24,39 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get, list: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update, delete: if isOwner(userId) || isAdmin();
+      allow get, list: if isSignedIn() && (isNotBlocked() || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
 
       match /trainingPlans/{trainingPlanId} {
-        allow get, list: if isSignedIn();
+        allow get, list: if isSignedIn() && isNotBlocked();
         allow create, update, delete: if isOwner(userId) || isTrainer() || isAdmin();
       }
 
       match /dietSuggestions/{suggestionId} {
-        allow get, list: if isOwner(userId) || isTrainer() || isAdmin();
+        allow get, list: if (isOwner(userId) || isTrainer() || isAdmin()) && isNotBlocked();
         allow create, update, delete: if isTrainer() || isAdmin();
       }
 
       match /workoutHistory/{historyId} {
-        allow get, list: if isOwner(userId) || isTrainer() || isAdmin();
+        allow get, list: if (isOwner(userId) || isTrainer() || isAdmin()) && isNotBlocked();
         allow create: if isOwner(userId);
       }
 
       match /bodyMeasurements/{measurementId} {
-        allow get, list, create: if isOwner(userId) || isTrainer() || isAdmin();
+        allow get, list, create: if (isOwner(userId) || isTrainer() || isAdmin()) && isNotBlocked();
         allow delete: if isOwner(userId) || isAdmin();
       }
     }
 
     match /exercises/{exerciseId} {
-      allow read: if true;
+      allow read: if isNotBlocked();
       allow write: if isAdmin();
     }
 
     match /nutritionTips/{nutritionTipId} {
-      allow read: if true;
+      allow read: if isNotBlocked();
       allow write: if isAdmin();
     }
   }

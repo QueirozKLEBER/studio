@@ -1,15 +1,21 @@
+
 'use client';
 
 import React, { useEffect } from 'react';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { BottomNav } from '@/components/layout/bottom-nav';
-import { useUser } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { ShieldBan } from 'lucide-react';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, isUserLoading } = useUser();
+  const { user, profile, isUserLoading } = useUser();
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -17,10 +23,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user) {
+  // Logout imediato se o usuário estiver bloqueado
+  useEffect(() => {
+    if (!isUserLoading && profile?.status === 'blocked') {
+      toast({
+        variant: 'destructive',
+        title: "Acesso Suspenso",
+        description: "Sua conta foi bloqueada pelo administrador. Entre em contato com o suporte.",
+      });
+      signOut(auth).then(() => router.push('/login'));
+    }
+  }, [profile, isUserLoading, auth, router, toast]);
+
+  if (isUserLoading || !user || profile?.status === 'blocked') {
     return (
-      <div className="flex min-h-screen w-full bg-background overflow-x-hidden">
-        <main className="flex-1 p-4 md:p-8">
+      <div className="flex min-h-screen w-full bg-background overflow-x-hidden items-center justify-center p-8">
+        {profile?.status === 'blocked' ? (
+          <div className="text-center space-y-6">
+            <div className="h-20 w-20 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mx-auto">
+              <ShieldBan className="h-10 w-10" />
+            </div>
+            <h2 className="text-2xl font-black uppercase text-white">ACESSO BLOQUEADO</h2>
+            <p className="text-white/40 font-bold uppercase text-[10px] tracking-widest max-w-xs">Consulte o administrador do sistema para mais informações.</p>
+          </div>
+        ) : (
+          <div className="flex-1 max-w-4xl w-full">
             <div className="mb-8">
                 <Skeleton className="h-10 w-48 mb-2 bg-white/5" />
                 <Skeleton className="h-5 w-72 bg-white/5" />
@@ -30,7 +57,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Skeleton className="h-32 w-full rounded-2xl bg-white/5" />
                 <Skeleton className="h-32 w-full rounded-2xl bg-white/5" />
             </div>
-        </main>
+          </div>
+        )}
       </div>
     );
   }

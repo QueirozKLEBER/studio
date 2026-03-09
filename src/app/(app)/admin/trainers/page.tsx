@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -5,13 +6,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { GraduationCap, Mail, Calendar, MoreVertical, Edit2 } from 'lucide-react';
+import { GraduationCap, Mail, Calendar, ShieldBan, ShieldCheck, Loader2, MoreVertical, Edit2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminTrainersPage() {
   const db = useFirestore();
+  const { toast } = useToast();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  
   const trainersQuery = useMemoFirebase(() => query(collection(db, 'users'), where('userType', '==', 'trainer')), [db]);
   const { data: trainers, isLoading } = useCollection(trainersQuery);
   const [isMounted, setIsMounted] = useState(false);
@@ -19,6 +24,28 @@ export default function AdminTrainersPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const toggleUserStatus = async (userId: string, currentStatus: string) => {
+    setUpdatingId(userId);
+    try {
+      const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
+      await updateDoc(doc(db, 'users', userId), {
+        status: newStatus
+      });
+      toast({
+        title: newStatus === 'blocked' ? "Acesso Bloqueado" : "Acesso Liberado",
+        description: `O status do professor foi atualizado.`,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: "Erro ao atualizar",
+        description: "Falha na comunicação com o sistema.",
+      });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-none pb-20">
@@ -37,9 +64,17 @@ export default function AdminTrainersPage() {
                 <div className="h-14 w-14 rounded-2xl bg-primary text-white flex items-center justify-center text-2xl font-black shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
                   {trainer.firstName?.[0] || 'P'}
                 </div>
-                <Badge className="bg-primary/10 text-primary border-none font-black uppercase text-[8px] tracking-[0.2em] px-3 py-1">
-                  PROFESSOR
-                </Badge>
+                <div className="flex flex-col items-end gap-2">
+                  <Badge className="bg-primary/10 text-primary border-none font-black uppercase text-[8px] tracking-[0.2em] px-3 py-1">
+                    PROFESSOR
+                  </Badge>
+                  <Badge variant="outline" className={trainer.status === 'blocked'
+                    ? "bg-red-500/10 border-red-500 text-red-500 font-black text-[7px] uppercase px-2"
+                    : "border-green-500/30 text-green-500 font-black text-[7px] uppercase px-2"
+                  }>
+                    {trainer.status === 'blocked' ? 'BLOQUEADO' : 'ATIVO'}
+                  </Badge>
+                </div>
               </div>
               
               <div className="flex-1">
@@ -57,14 +92,29 @@ export default function AdminTrainersPage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-2">
-                <Button variant="outline" className="flex-1 rounded-xl h-11 font-black text-[9px] uppercase tracking-[0.15em] border-white/10 bg-white/5 hover:bg-primary hover:text-white hover:border-primary transition-all shadow-xl">
-                  <Edit2 className="h-3 w-3 mr-2" />
-                  Editar Perfil
+              <div className="mt-6 flex flex-col gap-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full rounded-xl h-11 font-black text-[9px] uppercase tracking-[0.15em] border-white/10 bg-white/5 hover:bg-primary hover:text-white transition-all shadow-xl"
+                  onClick={() => toggleUserStatus(trainer.id, trainer.status || 'active')}
+                  disabled={updatingId === trainer.id}
+                >
+                  {updatingId === trainer.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : trainer.status === 'blocked' ? (
+                    <><ShieldCheck className="h-4 w-4 mr-2" /> DESBLOQUEAR ACESSO</>
+                  ) : (
+                    <><ShieldBan className="h-4 w-4 mr-2" /> BLOQUEAR ACESSO</>
+                  )}
                 </Button>
-                <Button variant="outline" className="rounded-xl h-11 w-11 border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center shrink-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 rounded-xl h-11 font-black text-[9px] uppercase tracking-[0.15em] border-white/10 bg-white/5">
+                    <Edit2 className="h-3 w-3 mr-2" /> EDITAR
+                  </Button>
+                  <Button variant="outline" className="rounded-xl h-11 w-11 border-white/10 bg-white/5">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

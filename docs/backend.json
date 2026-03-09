@@ -13,7 +13,8 @@
         "dateJoined": { "type": "string", "format": "date-time" },
         "userType": { "type": "string", "enum": ["student", "trainer", "admin"] },
         "height": { "type": "string" },
-        "weight": { "type": "string" }
+        "weight": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" }
       },
       "required": ["id", "email", "firstName", "lastName", "dateJoined", "userType"]
     },

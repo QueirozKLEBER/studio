@@ -1,48 +1,47 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * Função para obter o cargo do usuário.
-     * Importante: Firestore faz cache de get() dentro da mesma requisição.
+     * Funções auxiliares para verificar cargos.
+     * O get() é cacheado pelo Firestore durante a execução das regras.
      */
-    function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType;
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+    }
+    
+    function isTrainer() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer';
     }
 
     /**
-     * Regras para a coleção de usuários.
-     * O wildcard {userId} captura o ID do documento.
+     * Regras para a coleção de usuários e suas subcoleções.
      */
     match /users/{userId} {
       
-      // REGRA 1: O DONO tem acesso total e imediato.
-      // Usamos {allPaths=**} para que esta regra se aplique a TODAS as subcoleções 
-      // (appointments, trainingPlans, workoutHistory, etc.) sem precisar de matches extras.
+      // REGRA 1: O DONO tem acesso total e imediato a todos os seus dados.
+      // O uso de {allPaths=**} permite acesso recursivo a subcoleções (appointments, workouts, etc).
       match /{allPaths=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
-      // REGRA 2: STAFF (Trainer/Admin) pode gerenciar alunos.
-      // Esta regra só precisa ser avaliada se o usuário logado NÃO for o dono do perfil.
-      allow list, get, update: if request.auth != null 
-        && request.auth.uid != userId 
-        && getUserRole() in ['trainer', 'admin'];
+      // REGRA 2: STAFF (Trainer/Admin) pode listar a coleção de usuários e ler perfis.
+      // Removida a restrição 'uid != userId' que causava erro na operação 'list' global.
+      allow list, get: if request.auth != null && (isTrainer() || isAdmin());
       
-      allow delete: if request.auth != null 
-        && request.auth.uid != userId 
-        && getUserRole() == 'admin';
+      // Apenas Admin pode deletar usuários.
+      allow delete: if request.auth != null && isAdmin();
 
-      // STAFF também precisa acessar subcoleções dos alunos para montar treinos/dietas.
+      // REGRA 3: STAFF pode gerenciar subcoleções dos alunos.
+      // Permite que o professor monte treinos, dietas e veja histórico.
       match /{subCollection}/{document=**} {
-        allow read, write: if request.auth != null 
-          && request.auth.uid != userId 
-          && getUserRole() in ['trainer', 'admin'];
+        allow read, write: if request.auth != null && (isTrainer() || isAdmin());
       }
     }
 
-    // Coleções de referência globais
+    /**
+     * Coleções de referência globais.
+     */
     match /exercises/{exerciseId} {
       allow read: if request.auth != null;
     }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -8,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCollection } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore, useMemoFirebase } from '@/firebase';
-import { GraduationCap, Mail, Calendar, ShieldCheck, MoreVertical } from 'lucide-react';
+import { GraduationCap, Mail, Calendar, MoreVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function AdminTrainersPage() {
@@ -22,42 +21,42 @@ export default function AdminTrainersPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 w-full max-w-none pb-20">
       <PageHeader 
         title="Gestão de Professores" 
-        subtitle="Administre a equipe técnica do MFIT Personal." 
+        subtitle="Administre a equipe técnica de elite da plataforma." 
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-          [1, 2, 3].map(i => <Card key={i} className="h-48 rounded-[2rem] animate-pulse bg-muted" />)
+          [1, 2, 3].map(i => <Card key={i} className="h-64 rounded-[2.5rem] animate-pulse bg-card border-white/5" />)
         ) : trainers?.map((trainer) => (
-          <Card key={trainer.id} className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden hover:shadow-md transition-all">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="h-16 w-16 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl font-black">
+          <Card key={trainer.id} className="rounded-[2.5rem] border border-white/5 shadow-2xl bg-card overflow-hidden hover:border-primary/20 transition-all">
+            <CardContent className="p-8">
+              <div className="flex justify-between items-start mb-6">
+                <div className="h-16 w-16 rounded-[1.5rem] bg-primary text-white flex items-center justify-center text-3xl font-black shadow-lg shadow-primary/20">
                   {trainer.firstName?.[0] || 'P'}
                 </div>
-                <Badge className="bg-purple-100 text-purple-600 border-none font-bold uppercase text-[10px]">PROFESSOR</Badge>
+                <Badge className="bg-primary/10 text-primary border-none font-black uppercase text-[9px] tracking-widest px-3 py-1">PROFESSOR</Badge>
               </div>
               
-              <h3 className="text-xl font-bold">{trainer.firstName} {trainer.lastName}</h3>
+              <h3 className="text-xl font-black text-white uppercase tracking-tight">{trainer.firstName} {trainer.lastName}</h3>
               
-              <div className="mt-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4" />
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                  <Mail className="h-4 w-4 text-primary" />
                   {trainer.email}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  Desde {isMounted ? new Date(trainer.dateJoined).toLocaleDateString() : '...'}
+                <div className="flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Desde {isMounted && trainer.dateJoined ? new Date(trainer.dateJoined).toLocaleDateString('pt-BR') : '...'}
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-2">
-                <Button variant="outline" className="flex-1 rounded-xl font-bold border-2">Editar</Button>
-                <Button variant="outline" className="rounded-xl border-2 px-3">
-                  <MoreVertical className="h-4 w-4" />
+              <div className="mt-8 flex gap-3">
+                <Button variant="outline" className="flex-1 rounded-2xl h-12 font-black text-[10px] uppercase tracking-widest border-white/10 bg-white/5 hover:bg-white/10 text-white">Editar Perfil</Button>
+                <Button variant="outline" className="rounded-2xl h-12 w-12 border-white/10 bg-white/5 hover:bg-white/10 text-white flex items-center justify-center">
+                  <MoreVertical className="h-5 w-5" />
                 </Button>
               </div>
             </CardContent>

@@ -7,84 +7,69 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getUserData(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data;
+    // Helper para verificar tipo de usuário sem funções aninhadas complexas
+    function isUserType(type) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', 'student') == type;
     }
 
-    // Verifica se o usuário autenticado não está bloqueado
     function isNotBlocked() {
-      let data = getUserData(request.auth.uid);
-      return data == null || data.get('status', 'active') != 'blocked';
-    }
-
-    // Verificação básica de propriedade
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-    
-    // Verifica se o usuário autenticado é um professor
-    function isTrainer() {
-      return isSignedIn() && getUserData(request.auth.uid).get('userType', 'student') == 'trainer';
-    }
-
-    // Verifica se o usuário autenticado é um administrador
-    function isAdmin() {
-      return isSignedIn() && getUserData(request.auth.uid).get('userType', 'student') == 'admin';
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') != 'blocked';
     }
 
     match /users/{userId} {
-      // QUEBRA DE RECURSÃO: 
-      // 1. Um usuário sempre pode dar GET no seu próprio perfil (necessário para o app carregar status e tipo)
-      // 2. Professores e Admins podem dar GET em qualquer perfil
-      allow get: if isSignedIn() && (request.auth.uid == userId || isTrainer() || isAdmin());
+      // Regra fundamental: Usuário logado sempre pode ler seu próprio perfil básico
+      // Isso evita recursão ao carregar o estado inicial do app
+      allow get: if isSignedIn() && request.auth.uid == userId;
       
-      // Professores e Admins podem listar a coleção de usuários
-      allow list: if isSignedIn() && (isTrainer() || isAdmin());
+      // Professores e Admins podem listar e ler perfis
+      allow get, list: if isSignedIn() && (isUserType('trainer') || isUserType('admin'));
       
-      // Usuários podem criar seu perfil no cadastro
       allow create: if isSignedIn() && request.auth.uid == userId;
       
-      // Update: Dono (se não estiver bloqueado), ou Professor/Admin
-      allow update: if (isOwner(userId) && isNotBlocked()) || isTrainer() || isAdmin();
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && isNotBlocked()) ||
+        isUserType('trainer') || 
+        isUserType('admin')
+      );
       
-      // Delete: Apenas Admins
-      allow delete: if isAdmin();
+      allow delete: if isUserType('admin');
 
       match /trainingPlans/{trainingPlanId} {
-        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
-        allow create, update, delete: if isTrainer() || isAdmin();
+        allow read: if isSignedIn() && (request.auth.uid == userId || isUserType('trainer') || isUserType('admin'));
+        allow write: if isUserType('trainer') || isUserType('admin');
       }
 
       match /dietSuggestions/{suggestionId} {
-        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
-        allow create, update, delete: if isTrainer() || isAdmin();
+        allow read: if isSignedIn() && (request.auth.uid == userId || isUserType('trainer') || isUserType('admin'));
+        allow write: if isUserType('trainer') || isUserType('admin');
       }
 
       match /workoutHistory/{historyId} {
-        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
-        allow create: if isOwner(userId) && isNotBlocked();
+        allow read: if isSignedIn() && (request.auth.uid == userId || isUserType('trainer') || isUserType('admin'));
+        allow create: if isSignedIn() && request.auth.uid == userId && isNotBlocked();
       }
 
       match /bodyMeasurements/{measurementId} {
-        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
-        allow create: if (isOwner(userId) && isNotBlocked()) || isTrainer() || isAdmin();
-        allow delete: if isOwner(userId) || isAdmin();
+        allow read: if isSignedIn() && (request.auth.uid == userId || isUserType('trainer') || isUserType('admin'));
+        allow create: if (isSignedIn() && request.auth.uid == userId && isNotBlocked()) || isUserType('trainer') || isUserType('admin');
+        allow delete: if isSignedIn() && (request.auth.uid == userId || isUserType('admin'));
       }
 
       match /appointments/{appointmentId} {
-        // O dono (professor) pode gerenciar seus agendamentos
-        allow get, list, write: if isOwner(userId) && isNotBlocked();
+        // Professores gerenciam agendamentos no seu path. 
+        // Verificamos se o userId do path é o ID do professor logado.
+        allow read, write: if isSignedIn() && request.auth.uid == userId && isNotBlocked();
       }
     }
 
     match /exercises/{exerciseId} {
       allow read: if isSignedIn() && isNotBlocked();
-      allow write: if isAdmin();
+      allow write: if isUserType('admin');
     }
 
     match /nutritionTips/{nutritionTipId} {
       allow read: if isSignedIn() && isNotBlocked();
-      allow write: if isAdmin();
+      allow write: if isUserType('admin');
     }
   }
 }

@@ -21,7 +21,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import {
   LineChart,
@@ -32,6 +32,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { cn } from '@/lib/utils';
 
 export default function AssessmentPage() {
   const { user, profile } = useUser();
@@ -118,11 +119,19 @@ export default function AssessmentPage() {
   }, [history, mounted]);
 
   if (!mounted) {
-    return <div className="p-8 animate-pulse bg-muted h-screen" />;
+    return (
+      <div className="p-8 space-y-8 animate-pulse">
+        <div className="h-12 w-64 bg-white/5 rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="h-64 bg-white/5 rounded-[2.5rem]" />
+          <div className="h-64 bg-white/5 rounded-[2.5rem]" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-8 pb-20">
+    <div className="flex flex-col gap-8 pb-24 max-w-full overflow-x-hidden">
       <PageHeader 
         title="Avaliação Física" 
         subtitle="Monitore sua evolução corporal e histórico de medidas." 
@@ -131,59 +140,62 @@ export default function AssessmentPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Calculadora e Registro */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden">
+          <Card className="rounded-[2.5rem] border border-white/5 shadow-2xl bg-card overflow-hidden">
             <CardHeader>
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CardTitle className="text-xl font-black uppercase tracking-tight text-white flex items-center gap-2">
                 <Calculator className="h-6 w-6 text-primary" />
                 Nova Medição
               </CardTitle>
-              <CardDescription>Calcule seu IMC e salve para ver no gráfico.</CardDescription>
+              <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Calcule seu IMC e salve seu progresso.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="height" className="font-bold text-xs uppercase opacity-70">Altura (cm)</Label>
+                  <Label htmlFor="height" className="font-black text-[10px] uppercase text-white/40 tracking-widest">Altura (cm)</Label>
                   <div className="relative">
-                    <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                     <Input 
                       id="height" 
                       type="number" 
                       placeholder="175" 
                       value={height}
                       onChange={(e) => setHeight(e.target.value)}
-                      className="rounded-xl h-12 pl-10 border-none bg-muted/30"
+                      className="rounded-xl h-12 pl-10 border-none bg-white/5 text-white font-bold"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="weight" className="font-bold text-xs uppercase opacity-70">Peso (kg)</Label>
+                  <Label htmlFor="weight" className="font-black text-[10px] uppercase text-white/40 tracking-widest">Peso (kg)</Label>
                   <div className="relative">
-                    <Scale className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Scale className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                     <Input 
                       id="weight" 
                       type="number" 
                       placeholder="75" 
                       value={weight}
                       onChange={(e) => setWeight(e.target.value)}
-                      className="rounded-xl h-12 pl-10 border-none bg-muted/30"
+                      className="rounded-xl h-12 pl-10 border-none bg-white/5 text-white font-bold"
                     />
                   </div>
                 </div>
               </div>
               
-              <div className="flex gap-2">
-                <Button onClick={calculateBMI} className="flex-1 rounded-2xl h-12 font-bold bg-primary text-white shadow-lg shadow-primary/20">
-                  Calcular IMC
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button 
+                  onClick={calculateBMI} 
+                  className="flex-1 rounded-2xl h-14 font-black text-lg bg-primary text-white shadow-xl shadow-primary/20 transition-all active:scale-95 uppercase tracking-tighter"
+                >
+                  CALCULAR IMC
                 </Button>
                 {bmi && (
                   <Button 
                     onClick={handleRegister} 
                     disabled={isSaving}
-                    variant="secondary" 
-                    className="flex-1 rounded-2xl h-12 font-bold shadow-lg shadow-secondary/20"
+                    variant="outline" 
+                    className="flex-1 rounded-2xl h-14 font-black text-lg border-2 border-white/10 hover:bg-white/5 transition-all text-white uppercase tracking-tighter"
                   >
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-                    Registrar
+                    {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5 mr-2 text-primary" />}
+                    REGISTRAR
                   </Button>
                 )}
               </div>
@@ -191,35 +203,35 @@ export default function AssessmentPage() {
           </Card>
 
           {bmi && (
-            <Card className="rounded-[2.5rem] border-none shadow-xl bg-primary text-primary-foreground p-2 animate-in fade-in slide-in-from-bottom-4">
+            <Card className="rounded-[2.5rem] border-none shadow-2xl bg-primary text-white p-2 animate-in fade-in slide-in-from-bottom-4">
               <CardHeader>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <CardTitle className="text-lg font-black uppercase tracking-tight flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
                   Resultado Atual
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-8">
                 <div className="text-center">
-                  <span className="text-6xl font-black">{bmi.toFixed(1)}</span>
-                  <p className="text-sm text-primary-foreground/70 mt-2 uppercase tracking-[0.2em] font-black">
-                    IMC
+                  <span className="text-7xl font-black tracking-tighter">{bmi.toFixed(1)}</span>
+                  <p className="text-[10px] text-white/60 mt-2 uppercase tracking-[0.3em] font-black italic">
+                    Índice de Massa Corporal
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center bg-white/10 p-4 rounded-2xl">
-                    <span className="text-sm font-bold uppercase tracking-tight">Status</span>
-                    <Badge className={`${getBmiStatus(bmi).color} text-white border-none font-black uppercase text-[10px] px-3`}>
+                    <span className="text-xs font-black uppercase tracking-widest">Seu Status</span>
+                    <Badge className={cn(getBmiStatus(bmi).color, "text-white border-none font-black uppercase text-[10px] px-4 py-1.5 shadow-lg")}>
                       {getBmiStatus(bmi).label}
                     </Badge>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-black uppercase opacity-70">
-                      <span>Abaixo</span>
+                  <div className="space-y-2 px-1">
+                    <div className="flex justify-between text-[9px] font-black uppercase tracking-widest opacity-60">
+                      <span>Magreza</span>
                       <span>Ideal</span>
-                      <span>Acima</span>
+                      <span>Obesidade</span>
                     </div>
-                    <Progress value={(Math.min(bmi, 40) / 40) * 100} className="h-4 bg-white/20" />
+                    <Progress value={(Math.min(bmi, 40) / 40) * 100} className="h-3 bg-white/20" />
                   </div>
                 </div>
               </CardContent>
@@ -229,66 +241,67 @@ export default function AssessmentPage() {
 
         {/* Gráfico de Evolução */}
         <div className="lg:col-span-7 flex flex-col gap-6">
-          <Card className="rounded-[2.5rem] border-none shadow-sm bg-white overflow-hidden h-full">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="rounded-[2.5rem] border border-white/5 shadow-2xl bg-card overflow-hidden h-full">
+            <CardHeader className="flex flex-row items-center justify-between bg-white/5 p-8 pb-4">
               <div>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Activity className="h-6 w-6 text-secondary" />
+                <CardTitle className="text-xl font-black uppercase tracking-tight text-white flex items-center gap-2">
+                  <Activity className="h-6 w-6 text-primary" />
                   Evolução do Peso
                 </CardTitle>
-                <CardDescription>Sua trajetória nos últimos registros.</CardDescription>
+                <CardDescription className="text-white/40 font-bold uppercase text-[10px]">Histórico de performance corporal.</CardDescription>
               </div>
-              <Badge variant="outline" className="rounded-xl border-primary/20 text-primary font-bold">HISTÓRICO</Badge>
+              <Badge variant="outline" className="rounded-xl border-primary/30 text-primary font-black uppercase tracking-widest text-[10px]">ANALÍTICO</Badge>
             </CardHeader>
-            <CardContent className="h-[350px] pt-4">
+            <CardContent className="h-[350px] p-8">
               {isHistoryLoading ? (
-                <div className="h-full w-full flex items-center justify-center bg-muted/20 rounded-3xl">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
+                <div className="h-full w-full flex items-center justify-center bg-black/20 rounded-3xl">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : chartData.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
                     <XAxis 
                       dataKey="date" 
                       axisLine={false} 
                       tickLine={false} 
                       fontSize={10} 
                       dy={10} 
-                      fontFamily="Poppins" 
-                      fontWeight="bold"
+                      stroke="#ffffff40"
+                      fontWeight="900"
                     />
                     <YAxis 
                       axisLine={false} 
                       tickLine={false} 
                       fontSize={10} 
-                      fontFamily="Poppins" 
-                      fontWeight="bold"
-                      domain={['dataMin - 5', 'dataMax + 5']}
+                      stroke="#ffffff40"
+                      fontWeight="900"
+                      domain={['dataMin - 2', 'dataMax + 2']}
                     />
                     <Tooltip 
-                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                      labelStyle={{ fontWeight: 'black', marginBottom: '4px' }}
+                      contentStyle={{ backgroundColor: '#1a1a1a', borderRadius: '24px', border: '1px solid rgba(255,0,0,0.2)', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5)' }}
+                      itemStyle={{ color: '#fff', fontWeight: '900', textTransform: 'uppercase', fontSize: '10px' }}
+                      labelStyle={{ color: 'hsl(var(--primary))', fontWeight: '900', marginBottom: '4px' }}
                     />
                     <Line 
                       type="monotone" 
                       dataKey="weight" 
                       stroke="hsl(var(--primary))" 
-                      strokeWidth={4} 
-                      dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "#fff" }}
-                      activeDot={{ r: 8 }}
+                      strokeWidth={5} 
+                      dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 3, stroke: "#1a1a1a" }}
+                      activeDot={{ r: 10, shadow: '0 0 20px rgba(255,0,0,0.5)' }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full w-full flex flex-col items-center justify-center text-center p-8 bg-muted/20 rounded-[2rem] gap-4">
-                  <div className="p-4 bg-white rounded-full shadow-sm">
-                    <Scale className="h-10 w-10 text-muted-foreground opacity-30" />
+                <div className="h-full w-full flex flex-col items-center justify-center text-center p-8 bg-black/20 rounded-[2.5rem] border border-dashed border-white/5 gap-6">
+                  <div className="p-6 bg-card rounded-full shadow-inner">
+                    <Scale className="h-16 w-16 text-white/10" />
                   </div>
-                  <div>
-                    <p className="font-bold text-muted-foreground uppercase tracking-tight text-sm">Nenhum dado histórico</p>
-                    <p className="text-xs text-muted-foreground max-w-xs mt-2">
-                      Comece a registrar suas medições para visualizar sua evolução no gráfico.
+                  <div className="space-y-2">
+                    <p className="font-black text-white/20 uppercase tracking-widest text-sm">Sem dados suficientes</p>
+                    <p className="text-[10px] font-bold text-white/10 max-w-xs mx-auto uppercase tracking-tighter">
+                      Registre pelo menos duas medições para visualizar o gráfico de evolução.
                     </p>
                   </div>
                 </div>
@@ -299,35 +312,37 @@ export default function AssessmentPage() {
       </div>
 
       {/* Histórico Recente */}
-      <div className="flex flex-col gap-4 mt-4">
-        <h3 className="text-xl font-bold px-2 flex items-center gap-2">
-          <History className="h-5 w-5 text-muted-foreground" />
+      <div className="flex flex-col gap-6 mt-4">
+        <h3 className="text-xl font-black px-2 flex items-center gap-2 uppercase tracking-tight text-white">
+          <History className="h-6 w-6 text-primary" />
           Medições Recentes
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {history?.slice().reverse().slice(0, 4).map((m) => (
-            <Card key={m.id} className="rounded-3xl border-none shadow-sm bg-white hover:shadow-md transition-shadow">
-              <CardContent className="p-5 flex flex-col gap-3">
+            <Card key={m.id} className="rounded-[2rem] border border-white/5 shadow-xl bg-card hover:border-primary/20 transition-all group">
+              <CardContent className="p-6 flex flex-col gap-4">
                 <div className="flex justify-between items-start">
-                  <div className="p-2 bg-blue-50 rounded-xl">
-                    <Calendar className="h-4 w-4 text-primary" />
+                  <div className="p-3 bg-primary/10 text-primary rounded-2xl shadow-sm">
+                    <Calendar className="h-5 w-5" />
                   </div>
-                  <Badge variant="secondary" className="bg-green-50 text-green-600 border-none font-bold text-[10px]">
+                  <Badge variant="outline" className="border-none bg-white/5 text-primary font-black text-[10px] uppercase tracking-widest">
                     IMC {m.bmi}
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
                     {m.createdAt?.toDate ? m.createdAt.toDate().toLocaleDateString('pt-BR') : '...'}
                   </p>
-                  <p className="text-2xl font-black text-primary">{m.weight} <span className="text-sm font-bold text-muted-foreground">kg</span></p>
+                  <p className="text-3xl font-black text-white mt-1">
+                    {m.weight} <span className="text-xs font-bold text-primary italic uppercase tracking-tighter">kg</span>
+                  </p>
                 </div>
               </CardContent>
             </Card>
           ))}
           {(!history || history.length === 0) && (
-            <div className="col-span-full py-10 text-center opacity-50 italic text-sm">
-              Nenhum registro anterior disponível.
+            <div className="col-span-full py-16 text-center border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.02]">
+              <p className="font-black uppercase tracking-[0.2em] text-white/10 text-xs italic">Nenhum registro anterior disponível no sistema.</p>
             </div>
           )}
         </div>

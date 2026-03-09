@@ -7,8 +7,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Função auxiliar para obter os dados do usuário logado com segurança
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Verifica se o usuário não está bloqueado, tratando documentos sem o campo status
     function isNotBlocked() {
-      return !isSignedIn() || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status != 'blocked';
+      return !isSignedIn() || getUserData().get('status', 'active') != 'blocked';
     }
 
     function isOwner(userId) {
@@ -16,36 +22,41 @@ service cloud.firestore {
     }
     
     function isTrainer() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer' && isNotBlocked();
+      return isSignedIn() && getUserData().get('userType', 'student') == 'trainer' && isNotBlocked();
     }
 
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      return isSignedIn() && getUserData().get('userType', 'student') == 'admin';
     }
 
     match /users/{userId} {
+      // Permite leitura do perfil se estiver logado e não bloqueado (ou se for Admin)
       allow get, list: if isSignedIn() && (isNotBlocked() || isAdmin());
+      // Apenas o próprio usuário cria seu perfil no signup
       allow create: if isSignedIn() && request.auth.uid == userId;
+      // Dono ou Admin podem atualizar
       allow update: if isOwner(userId) || isAdmin();
+      // Apenas Admin deleta
       allow delete: if isAdmin();
 
       match /trainingPlans/{trainingPlanId} {
-        allow get, list: if isSignedIn() && isNotBlocked();
-        allow create, update, delete: if isOwner(userId) || isTrainer() || isAdmin();
+        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
+        allow create, update, delete: if isTrainer() || isAdmin();
       }
 
       match /dietSuggestions/{suggestionId} {
-        allow get, list: if (isOwner(userId) || isTrainer() || isAdmin()) && isNotBlocked();
+        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
         allow create, update, delete: if isTrainer() || isAdmin();
       }
 
       match /workoutHistory/{historyId} {
-        allow get, list: if (isOwner(userId) || isTrainer() || isAdmin()) && isNotBlocked();
+        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
         allow create: if isOwner(userId);
       }
 
       match /bodyMeasurements/{measurementId} {
-        allow get, list, create: if (isOwner(userId) || isTrainer() || isAdmin()) && isNotBlocked();
+        allow get, list: if isSignedIn() && (isOwner(userId) || isTrainer() || isAdmin());
+        allow create: if isOwner(userId) || isTrainer() || isAdmin();
         allow delete: if isOwner(userId) || isAdmin();
       }
     }

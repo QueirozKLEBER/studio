@@ -18,6 +18,7 @@ import {
   Zap,
   PlayCircle,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -34,8 +35,13 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   const { toast } = useToast();
   
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState<number | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStartTime(Date.now());
+  }, []);
 
   const planRef = useMemoFirebase(() => {
     if (!user || !id) return null;
@@ -44,37 +50,13 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
 
   const { data: plan, isLoading } = useDoc(planRef);
 
-  // Flatten catalog for easy searching
   const flatCatalog = useMemo(() => Object.values(catalogExercises).flat(), []);
 
-  /**
-   * getEnrichedExercise
-   * Resilient merge logic with multi-field fallback and normalization.
-   */
   const getEnrichedExercise = (planEx: any) => {
     if (!planEx) return null;
-
-    // Normalizing identifiers
     const planId = (planEx.id || '').toString().trim().toLowerCase();
-    const planExerciseId = (planEx.exerciseId || '').toString().trim().toLowerCase();
-    const planSlug = (planEx.slug || '').toString().trim().toLowerCase();
-
-    // Finding match in catalog
-    const catalogMatch = flatCatalog.find(ex => {
-      const catId = ex.id.toString().trim().toLowerCase();
-      return catId === planId || catId === planExerciseId || catId === planSlug;
-    });
-
-    if (!catalogMatch) {
-      return planEx;
-    }
-
-    return {
-      ...catalogMatch,       // Catalog master data (Media Priority)
-      ...planEx,             // Plan specific data (Sets/Reps/Notes)
-      gifPrincipalUrl: catalogMatch.gifPrincipalUrl || planEx.gifPrincipalUrl,
-      name: catalogMatch.name || planEx.name,
-    };
+    const catalogMatch = flatCatalog.find(ex => ex.id.toString().trim().toLowerCase() === planId);
+    return catalogMatch ? { ...catalogMatch, ...planEx } : planEx;
   };
 
   const toggleComplete = (exerciseId: string, e: React.MouseEvent) => {
@@ -87,8 +69,10 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleFinishWorkout = async () => {
-    if (!user || !plan) return;
+    if (!user || !plan || !startTime) return;
     
+    const duration = Math.round((Date.now() - startTime) / 60000); // Diferença em minutos
+
     setIsFinishing(true);
     try {
       await addDoc(collection(db, 'users', user.uid, 'workoutHistory'), {
@@ -96,12 +80,13 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
         planName: plan.name,
         completedAt: serverTimestamp(),
         exerciseCount: plan.exercises?.length || 0,
-        completedExercisesCount: completedExercises.length
+        completedExercisesCount: completedExercises.length,
+        duration: duration
       });
 
       toast({
         title: "Treino Concluído! 🏆",
-        description: "Excelente trabalho hoje. Seu progresso foi registrado.",
+        description: `Trabalho finalizado em ${duration} minutos.`,
       });
 
       router.push('/dashboard');
@@ -117,25 +102,32 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
   };
 
   if (isLoading || !profile) return <div className="p-8 animate-pulse bg-muted h-screen" />;
-  if (!plan) return <div className="p-8 text-center py-20">Treino não encontrado ou você não tem permissão.</div>;
+  if (!plan) return <div className="p-8 text-center py-20">Treino não encontrado.</div>;
 
   const progress = Math.round((completedExercises.length / (plan.exercises?.length || 1)) * 100);
   const videoPlaceholder = placeHolderImages.find(img => img.id === 'exercise-video-placeholder');
 
   const selectedExercise = selectedExerciseId 
-    ? getEnrichedExercise(plan.exercises.find((ex: any) => (ex.id === selectedExerciseId || ex.exerciseId === selectedExerciseId)))
+    ? getEnrichedExercise(plan.exercises.find((ex: any) => ex.id === selectedExerciseId))
     : null;
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-none">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => router.back()}>
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <PageHeader 
-          title={plan.name} 
-          subtitle="Clique no exercício para ver a execução correta e orientações." 
-        />
+    <div className="flex flex-col gap-6 w-full max-w-none pb-20">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" className="rounded-2xl" onClick={() => router.back()}>
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+          <PageHeader 
+            title={plan.name} 
+            subtitle={`${plan.workoutType || 'Geral'} • ${plan.difficulty?.toUpperCase() || 'INTERMEDIÁRIO'}`} 
+          />
+        </div>
+        {plan.allowPdfDownload && (
+          <Button variant="outline" className="rounded-xl h-12 border-primary/20 text-primary font-black text-[10px] uppercase tracking-widest hover:bg-primary/5">
+            <Download className="h-4 w-4 mr-2" /> PDF
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
@@ -148,35 +140,20 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
             return (
               <Card 
                 key={exId} 
-                onClick={() => setSelectedExerciseId(enrichedEx?.id)}
+                onClick={() => setSelectedExerciseId(exId)}
                 className={cn(
                   "rounded-[2rem] border-none shadow-sm transition-all overflow-hidden cursor-pointer hover:shadow-md group",
                   completedExercises.includes(exId) ? "bg-green-50 opacity-90" : "bg-white"
                 )}
               >
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                  {gifUrl ? (
-                    <Image
-                      src={gifUrl}
-                      alt={enrichedEx?.name || "Exercício"}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={videoPlaceholder?.imageUrl || ''}
-                        alt={enrichedEx?.name || "Exercício"}
-                        fill
-                        className="object-cover opacity-60"
-                        data-ai-hint="fitness workout"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                        <PlayCircle className="h-10 w-10 text-white opacity-50" />
-                      </div>
-                    </div>
-                  )}
+                  <Image
+                    src={gifUrl || videoPlaceholder?.imageUrl || ''}
+                    alt={enrichedEx?.name || "Exercício"}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
                 </div>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
@@ -191,11 +168,9 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                         <h3 className="text-xl font-black uppercase tracking-tight">
                           {enrichedEx?.name || "Exercício"}
                         </h3>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase">
-                            {enrichedEx?.equipmentType || "Livre"}
-                          </Badge>
-                        </div>
+                        <Badge variant="outline" className="text-[10px] font-bold border-primary/20 text-primary uppercase mt-1">
+                          {enrichedEx?.equipmentType || "Livre"}
+                        </Badge>
                       </div>
                     </div>
                     <Button 
@@ -214,26 +189,17 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                   <div className="grid grid-cols-3 gap-3 mt-6">
                     <div className="bg-muted/30 p-3 rounded-2xl text-center">
                       <p className="text-[10px] font-bold uppercase opacity-50">Séries</p>
-                      <p className="text-lg font-black">{enrichedEx?.targetSets || enrichedEx?.sets || '4'}</p>
+                      <p className="text-lg font-black">{enrichedEx?.targetSets || '4'}</p>
                     </div>
                     <div className="bg-muted/30 p-3 rounded-2xl text-center">
                       <p className="text-[10px] font-bold uppercase opacity-50">Reps</p>
-                      <p className="text-lg font-black">{enrichedEx?.targetReps || enrichedEx?.reps || '12'}</p>
+                      <p className="text-lg font-black">{enrichedEx?.targetReps || '12'}</p>
                     </div>
                     <div className="bg-muted/30 p-3 rounded-2xl text-center">
                       <p className="text-[10px] font-bold uppercase opacity-50">Descanso</p>
-                      <p className="text-lg font-black">{enrichedEx?.targetRest || enrichedEx?.rest || '60s'}</p>
+                      <p className="text-lg font-black">{enrichedEx?.targetRest || '60s'}</p>
                     </div>
                   </div>
-
-                  {enrichedEx?.notes && (
-                    <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 flex gap-3 items-start">
-                      <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <p className="text-sm text-blue-900 leading-relaxed italic">
-                        {enrichedEx.notes}
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             );
@@ -257,7 +223,7 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
               <div className="space-y-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <ShieldCheck className="h-5 w-5 text-green-300" />
-                  Técnica em primeiro lugar.
+                  Intensidade: {plan.difficulty?.toUpperCase()}
                 </div>
                 <div className="flex items-center gap-3 text-sm font-medium">
                   <Zap className="h-5 w-5 text-yellow-300" />
@@ -283,28 +249,18 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
             {selectedExercise && (
               <div className="p-6 md:p-10">
                 <DialogHeader className="mb-8">
-                  <div className="flex gap-2 mb-3">
-                     <Badge variant="outline" className="rounded-full border-primary text-primary font-bold uppercase px-4 py-1">
-                      {selectedExercise.equipmentType}
-                     </Badge>
-                     <Badge variant="outline" className="rounded-full border-secondary text-secondary font-bold uppercase px-4 py-1">
-                      {selectedExercise.difficulty}
-                     </Badge>
-                  </div>
+                  <Badge variant="outline" className="w-fit mb-3 rounded-full border-primary text-primary font-bold uppercase">
+                    {selectedExercise.equipmentType}
+                  </Badge>
                   <DialogTitle className="text-4xl font-black uppercase tracking-tighter">
                     {selectedExercise.name}
                   </DialogTitle>
-                  <div className="flex gap-6 mt-4 text-sm font-bold uppercase text-muted-foreground border-b pb-4">
-                      <span className="flex items-center gap-1"><Zap className="h-4 w-4 text-primary" /> {selectedExercise.targetSets || selectedExercise.sets} Séries</span>
-                      <span className="flex items-center gap-1"><PlayCircle className="h-4 w-4 text-primary" /> {selectedExercise.targetReps || selectedExercise.reps} Reps</span>
-                      <span className="flex items-center gap-1"><Info className="h-4 w-4 text-primary" /> {selectedExercise.targetRest || selectedExercise.rest} Descanso</span>
-                  </div>
                 </DialogHeader>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                   <div className="space-y-8">
-                    <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative group">
-                      {selectedExercise.gifPrincipalUrl ? (
+                    <div className="aspect-video bg-gray-100 rounded-[2.5rem] overflow-hidden shadow-inner relative">
+                      {selectedExercise.gifPrincipalUrl && (
                         <Image
                           src={selectedExercise.gifPrincipalUrl}
                           alt={selectedExercise.name}
@@ -312,57 +268,35 @@ export default function PlanDetailsPage({ params }: { params: Promise<{ id: stri
                           className="object-cover"
                           unoptimized
                         />
-                      ) : (
-                        <div className="relative w-full h-full">
-                          <Image
-                            src={videoPlaceholder?.imageUrl || ''}
-                            alt={selectedExercise.name || "Demonstração"}
-                            fill
-                            className="object-cover opacity-60"
-                            data-ai-hint="fitness workout"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="bg-primary/80 backdrop-blur-md p-5 rounded-full shadow-2xl">
-                                  <PlayCircle className="h-10 w-10 text-white" />
-                              </div>
-                          </div>
-                        </div>
                       )}
                     </div>
 
                     <div>
                       <h3 className="font-black text-xl mb-4 flex items-center gap-2 uppercase">
                         <Zap className="h-6 w-6 text-primary" />
-                        Instruções de Execução
+                        Instruções
                       </h3>
-                      <div className="text-sm leading-relaxed text-muted-foreground bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50 whitespace-pre-wrap font-medium">
-                        {selectedExercise.executionInstructions || "Siga as orientações de postura e controle de carga para este movimento."}
+                      <div className="text-sm leading-relaxed text-muted-foreground bg-blue-50/50 p-6 rounded-[2rem] border border-blue-100/50">
+                        {selectedExercise.executionInstructions || "Execute o movimento de forma controlada, mantendo a postura."}
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-8">
                     <div>
-                      <h4 className="font-black text-sm uppercase tracking-widest mb-4 opacity-50">Dicas Técnicas</h4>
-                      <ul className="space-y-3">
-                        {(selectedExercise.tips || ["Mantenha o abdômen contraído.", "Controle a fase excêntrica."]).map((tip: string, index: number) => (
-                          <li key={index} className="flex gap-3 text-sm font-bold bg-muted/30 p-3 rounded-2xl">
-                            <div className="h-5 w-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0">
-                              <CheckCircle2 className="h-3 w-3" />
-                            </div>
-                            {tip}
-                          </li>
-                        ))}
-                      </ul>
+                      <h4 className="font-black text-sm uppercase tracking-widest mb-4 opacity-50">Orientações do Professor</h4>
+                      <div className="bg-muted/30 p-6 rounded-3xl border border-muted italic text-sm font-bold">
+                        "{selectedExercise.notes || "Foco total na contração máxima."}"
+                      </div>
                     </div>
 
                     <div className="p-6 bg-red-50 rounded-[2rem] border border-red-100">
                       <h4 className="font-black text-sm text-red-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4" />
-                        Evite Erros Comuns
+                        Erros Comuns
                       </h4>
                       <ul className="space-y-2">
-                        {(selectedExercise.commonErrors || ["Movimentos balísticos.", "Amplitude reduzida."]).map((error: string, index: number) => (
+                        {(selectedExercise.commonErrors || ["Movimento rápido demais.", "Perda da postura."]).map((error: string, index: number) => (
                           <li key={index} className="text-xs text-red-700/70 font-bold flex items-center gap-2">
                             <div className="h-1.5 w-1.5 bg-red-400 rounded-full" />
                             {error}

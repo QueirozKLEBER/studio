@@ -31,6 +31,9 @@
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "workoutType": { "type": "string", "description": "Ex: Hipertrofia, Emagrecimento" },
+        "difficulty": { "type": "string", "enum": ["iniciante", "intermediario", "avancado"] },
+        "allowPdfDownload": { "type": "boolean", "default": false },
         "userId": { "type": "string" },
         "exercises": { "type": "array", "items": { "type": "object" } },
         "createdAt": { "type": "object" },
@@ -70,7 +73,8 @@
         "planName": { "type": "string" },
         "completedAt": { "type": "object" },
         "exerciseCount": { "type": "number" },
-        "completedExercisesCount": { "type": "number" }
+        "completedExercisesCount": { "type": "number" },
+        "duration": { "type": "number", "description": "Tempo em minutos" }
       }
     },
     "BodyMeasurement": {

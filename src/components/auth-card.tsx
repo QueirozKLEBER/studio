@@ -27,7 +27,7 @@ export function AuthCard({
             <Link href="/" className="flex items-center gap-2">
               <Logo className="w-12 h-12" />
               <span className="text-2xl font-headline font-bold text-primary">
-                TreinusFit
+                TreinusFit Personal
               </span>
             </Link>
           </div>

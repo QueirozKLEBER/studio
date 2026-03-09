@@ -70,7 +70,7 @@ export const AppSidebar = () => {
           <div className="bg-white p-1 rounded-xl shadow-lg shadow-primary/10">
             <Logo className="w-8 h-8" />
           </div>
-          <span className="text-xl font-headline font-bold tracking-tight">TreinusFit</span>
+          <span className="text-xl font-headline font-bold tracking-tight">TreinusFit Personal</span>
         </Link>
       </div>
 

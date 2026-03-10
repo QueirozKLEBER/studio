@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -25,7 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Lógica de verificação de vencimento automática
+  // Lógica de verificação de vencimento automática (Auto-Bloqueio)
   const isExpired = useMemo(() => {
     if (!mounted || !profile || profile.userType !== 'student' || !profile.paymentDueDate) return false;
     const dueDate = new Date(profile.paymentDueDate);
@@ -34,7 +33,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return today > dueDate;
   }, [profile, mounted]);
 
-  // Bloqueio automático se o pagamento vencer
+  // Executa o bloqueio no banco caso detecte vencimento
   useEffect(() => {
     if (isExpired && profile?.status !== 'blocked' && profile?.id) {
       const autoBlock = async () => {
@@ -43,7 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           toast({ 
             variant: 'destructive', 
             title: "Assinatura Suspensa", 
-            description: "Detectamos que sua mensalidade está vencida." 
+            description: "Regularize sua mensalidade para continuar treinando." 
           });
         } catch (e) {
           console.error("Erro no auto-block:", e);
@@ -70,7 +69,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   // Tela de Bloqueio para Alunos Inadimplentes
-  // Permite acesso apenas à página de billing para regularização
   if (profile?.status === 'blocked' && profile?.userType === 'student' && pathname !== '/billing') {
     return (
       <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 relative overflow-hidden text-center">
@@ -81,11 +79,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="space-y-4">
             <h2 className="text-4xl font-black uppercase text-white tracking-tighter leading-none">
-              PAGAMENTO <span className="text-primary">PENDENTE</span>
+              ACESSO <span className="text-primary">SUSPENSO</span>
             </h2>
             <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5">
               <p className="text-primary font-black uppercase text-[10px] tracking-[0.2em] leading-relaxed">
-                Seu acesso foi suspenso. Regularize sua mensalidade para continuar treinando com excelência.
+                Detectamos um atraso no pagamento da sua consultoria de elite. Regularize agora para voltar aos treinos.
               </p>
             </div>
           </div>

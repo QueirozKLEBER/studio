@@ -2,35 +2,55 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Verifica se o usuário é o dono do documento
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    // Helper: Verifica se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
-    // Helper: Verifica se o usuário autenticado é o professor do aluno
-    function isTrainerOf(studentData) {
-      return request.auth != null && studentData.get('trainerId', '') == request.auth.uid;
+    // Helper: Verifica se o usuário é o dono do documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper: Pega o cargo do usuário autenticado (admin, trainer, student)
+    function getAuthUserType() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', 'student');
     }
 
     match /users/{userId} {
-      // O usuário sempre pode ler e editar seu próprio perfil
-      // O Professor pode ler e editar o perfil dos seus alunos vinculados
-      allow read, write: if isOwner(userId) || isTrainerOf(resource.data);
+      // Regras de Leitura (Read):
+      // 1. O próprio usuário (Dono)
+      // 2. Administradores (Controle total)
+      // 3. O Professor vinculado ao aluno (trainerId)
+      // 4. Documentos de Professores são públicos para usuários autenticados (necessário para vínculos e billing)
+      allow read: if isOwner(userId) 
+        || (isAuthenticated() && getAuthUserType() == 'admin')
+        || (isAuthenticated() && resource.data.get('trainerId', '') == request.auth.uid)
+        || (isAuthenticated() && resource.data.get('userType', '') == 'trainer');
+
+      // Regras de Escrita (Write):
+      // 1. O próprio usuário (para updates de perfil e auto-block)
+      // 2. Administradores
+      // 3. O Professor vinculado (para editar treinos e renovar mensalidade)
+      allow write: if isOwner(userId)
+        || (isAuthenticated() && getAuthUserType() == 'admin')
+        || (isAuthenticated() && resource.data.get('trainerId', '') == request.auth.uid);
       
-      // Permitir criação de perfil inicial
-      allow create: if request.auth != null;
+      // Permitir criação de perfil inicial no signup
+      allow create: if isAuthenticated();
 
       // Subcoleções (Treinos, Medidas, Histórico, Dieta)
       match /{allPaths=**} {
-        allow read, write: if isOwner(userId) || 
-          isTrainerOf(get(/databases/$(database)/documents/users/$(userId)).data);
+        allow read, write: if isOwner(userId)
+          || (isAuthenticated() && getAuthUserType() == 'admin')
+          || (isAuthenticated() && get(/databases/$(database)/documents/users/$(userId)).data.get('trainerId', '') == request.auth.uid);
       }
     }
 
-    // Permite que professores listem a coleção users
-    // O Firestore aplicará as regras de 'read' de cada documento para filtrar o resultado
+    // Permite que usuários autenticados listem a coleção users
+    // O Firestore aplicará automaticamente as regras de 'read' acima para filtrar os resultados
     match /users {
-      allow list: if request.auth != null;
+      allow list: if isAuthenticated();
     }
   }
 }

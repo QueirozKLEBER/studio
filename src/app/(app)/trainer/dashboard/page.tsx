@@ -12,7 +12,8 @@ import {
   Loader2,
   Trash2,
   Clock,
-  Users
+  Users,
+  Video
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,7 +37,7 @@ export default function TrainerDashboard() {
   
   /**
    * CONSULTA DA AGENDA
-   * Aponta exatamente para /users/{uid}/appointments conforme solicitado.
+   * Aponta exatamente para a subcoleção do usuário logado conforme autorizado nas rules.
    */
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -100,7 +101,7 @@ export default function TrainerDashboard() {
             <CardHeader className="bg-white/5 p-6 border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-black uppercase text-white flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-primary" />
-                Compromissos para {new Date().toLocaleDateString('pt-BR')}
+                Compromissos de Hoje ({new Date().toLocaleDateString('pt-BR')})
               </CardTitle>
               <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
                 <DialogTrigger asChild>
@@ -137,7 +138,7 @@ export default function TrainerDashboard() {
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {isAgendaLoading ? (
-                  [1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 animate-pulse rounded-2xl" />)
+                  [1, 2, 3].map(i => <div key={i} className="h-24 bg-white/5 animate-pulse rounded-2xl" />)
                 ) : appointments && appointments.length > 0 ? (
                   appointments.map((apt) => (
                     <div key={apt.id} className="flex items-center justify-between p-5 bg-white/5 rounded-2xl border-l-4 border-primary group">
@@ -147,7 +148,9 @@ export default function TrainerDashboard() {
                         </div>
                         <div>
                           <p className="text-sm font-black text-white uppercase">{apt.title}</p>
-                          <p className="text-[10px] text-white/40 font-bold uppercase">{apt.studentName} ({apt.type})</p>
+                          <p className="text-[10px] text-white/40 font-bold uppercase flex items-center gap-1">
+                            {apt.studentName} {apt.type === 'online' ? <Video className="h-2 w-2" /> : <Users className="h-2 w-2" />}
+                          </p>
                         </div>
                       </div>
                       <Button variant="ghost" size="icon" onClick={() => handleDeleteAppointment(apt.id)} className="opacity-0 group-hover:opacity-100 h-8 w-8 text-red-500">
@@ -156,7 +159,7 @@ export default function TrainerDashboard() {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-full py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
+                  <div className="col-span-full py-16 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
                     <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhum compromisso agendado para hoje.</p>
                   </div>
                 )}

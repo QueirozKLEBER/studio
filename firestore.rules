@@ -2,32 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * REGRA DE PROPRIETÁRIO (SIMPLIFICADA)
-     * Permite que o usuário autenticado acesse seu próprio documento e subcoleções.
-     */
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
       match /appointments/{appointmentId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // Garante acesso recursivo a qualquer outra subcoleção do dono (treinos, histórico, etc)
-      match /{allPaths=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
 
-    /**
-     * COLEÇÕES GLOBAIS
-     */
-    match /exercises/{exerciseId} {
-      allow read: if request.auth != null;
-    }
-
-    match /nutritionTips/{nutritionTipId} {
-      allow read: if request.auth != null;
-    }
   }
 }

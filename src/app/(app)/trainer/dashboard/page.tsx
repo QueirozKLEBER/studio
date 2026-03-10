@@ -32,12 +32,12 @@ export default function TrainerDashboard() {
     setMounted(true);
   }, []);
 
-  /**
-   * CONSULTA DA AGENDA
-   * Aponta exatamente para /users/{uid}/appointments
-   */
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   
+  /**
+   * CONSULTA DA AGENDA
+   * Aponta exatamente para /users/{uid}/appointments conforme solicitado.
+   */
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -48,12 +48,6 @@ export default function TrainerDashboard() {
   }, [db, user, todayStr]);
 
   const { data: appointments, isLoading: isAgendaLoading } = useCollection(appointmentsQuery);
-
-  /**
-   * CONSULTA DE ALUNOS (SUSPENSA)
-   * Desativada temporariamente para focar na correção da agenda.
-   */
-  const students: any[] = [];
 
   const handleAddAppointment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

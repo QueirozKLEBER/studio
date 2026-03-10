@@ -29,7 +29,8 @@ import {
   Clock,
   Activity,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  DollarSign
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 

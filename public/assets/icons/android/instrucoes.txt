@@ -1,0 +1,10 @@
+COLOQUE OS ÍCONES NESTA PASTA COM OS SEGUINTES NOMES EXATOS:
+
+1. launchericon-48x48.png   (Tamanho: 48x48 pixels)
+2. launchericon-72x72.png   (Tamanho: 72x72 pixels)
+3. launchericon-96x96.png   (Tamanho: 96x96 pixels)
+4. launchericon-144x144.png (Tamanho: 144x144 pixels)
+5. launchericon-192x192.png (Tamanho: 192x192 pixels)
+6. launchericon-512x512.png (Tamanho: 512x512 pixels)
+
+Esses ícones serão usados automaticamente pelo sistema quando você fizer o upload dos arquivos para esta pasta.

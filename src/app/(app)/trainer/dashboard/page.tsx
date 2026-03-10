@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { useToast } from '@/hooks/use-toast';
 
 export default function TrainerDashboard() {
-  const { profile, user } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -35,10 +35,7 @@ export default function TrainerDashboard() {
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   
-  /**
-   * CONSULTA DA AGENDA
-   * Aponta exatamente para a subcoleção do usuário logado conforme autorizado nas rules.
-   */
+  // QUERY DA AGENDA - CAMINHO EXATO AUTORIZADO PELAS RULES
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -91,8 +88,8 @@ export default function TrainerDashboard() {
   return (
     <div className="flex flex-col gap-8 w-full max-w-none pb-24 px-1">
       <PageHeader 
-        title={`Olá, ${profile?.firstName || '...'}`} 
-        subtitle="Sua agenda do dia e compromissos técnicos." 
+        title="Agenda de Treinos" 
+        subtitle="Confira seus compromissos técnicos para hoje." 
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

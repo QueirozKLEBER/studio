@@ -3,20 +3,24 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * REGRA DE TESTE: APENAS O DONO ACESSA SEUS DADOS
-     * Permite ler/escrever o próprio perfil e QUALQUER subcoleção (como appointments)
+     * REGRA DE PROPRIETÁRIO (SIMPLIFICADA)
+     * Permite que o usuário autenticado acesse seu próprio documento e subcoleções.
      */
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /appointments/{appointmentId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
       
-      // Match recursivo para garantir acesso a todas as subcoleções (appointments, treinos, etc)
+      // Garante acesso recursivo a qualquer outra subcoleção do dono (treinos, histórico, etc)
       match /{allPaths=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
 
     /**
-     * COLEÇÕES GLOBAIS (LEITURA APENAS)
+     * COLEÇÕES GLOBAIS
      */
     match /exercises/{exerciseId} {
       allow read: if request.auth != null;

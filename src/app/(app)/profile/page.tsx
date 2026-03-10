@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -137,6 +138,27 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024 * 2) { // 1MB limit for base64 storage
+        toast({ 
+          variant: 'destructive', 
+          title: 'Arquivo muito grande', 
+          description: 'Por favor, escolha uma imagem de até 2MB.' 
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        handleUpdateAvatar(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -170,14 +192,44 @@ export default function ProfilePage() {
                 </DialogTrigger>
                 <DialogContent className="rounded-[2.5rem] max-w-md bg-card border-white/10 text-white">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-black uppercase">Novo Avatar</DialogTitle>
+                    <DialogTitle className="text-xl font-black uppercase">Alterar Foto de Perfil</DialogTitle>
                   </DialogHeader>
-                  <div className="grid grid-cols-3 gap-4 py-4">
-                    {PRESET_AVATARS.map((avatar) => (
-                      <button key={avatar.id} onClick={() => handleUpdateAvatar(avatar.url)} className="aspect-square rounded-2xl overflow-hidden hover:ring-4 ring-primary transition-all">
-                        <img src={avatar.url} alt="Avatar" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
+                  
+                  <div className="flex flex-col gap-6 py-6">
+                    <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase text-white/40 tracking-widest text-center">Opção 1: Upload Personalizado</p>
+                      <Button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full h-16 rounded-2xl bg-primary text-white font-black uppercase shadow-xl shadow-primary/20"
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? <Loader2 className="animate-spin" /> : <><Upload className="mr-2 h-5 w-5" /> Enviar do Aparelho</>}
+                      </Button>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        accept="image/*" 
+                        className="hidden" 
+                      />
+                    </div>
+
+                    <div className="relative flex items-center justify-center">
+                      <Separator className="bg-white/5" />
+                      <span className="absolute bg-card px-4 text-[9px] font-black text-white/20 uppercase">Ou use um preset</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      {PRESET_AVATARS.map((avatar) => (
+                        <button 
+                          key={avatar.id} 
+                          onClick={() => handleUpdateAvatar(avatar.url)} 
+                          className="aspect-square rounded-2xl overflow-hidden hover:ring-4 ring-primary transition-all border-2 border-white/5"
+                        >
+                          <img src={avatar.url} alt="Avatar" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>

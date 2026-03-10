@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { muscleGroups, exercises as allExercises, Exercise } from '@/lib/placeholder-data';
-import { Search, Plus, Trash2, GripVertical, Save, Send, Dumbbell, Loader2, FileText, Zap } from 'lucide-react';
+import { Search, Plus, Trash2, Save, Send, Dumbbell, Loader2, FileText, Zap, Clock, Target } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, useDoc } from '@/firebase';
@@ -48,10 +48,12 @@ function BuilderContent() {
   const [workoutName, setWorkoutName] = useState('');
   const [workoutType, setWorkoutType] = useState('Hipertrofia');
   const [difficulty, setDifficulty] = useState('intermediario');
-  const [allowPdf, setAllowPdf] = useState(false);
+  const [estimatedDuration, setEstimatedDuration] = useState('60');
+  const [allowPdf, setAllowPdf] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
   const db = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -71,7 +73,8 @@ function BuilderContent() {
       setWorkoutName(existingPlan.name || '');
       setWorkoutType(existingPlan.workoutType || 'Hipertrofia');
       setDifficulty(existingPlan.difficulty || 'intermediario');
-      setAllowPdf(existingPlan.allowPdfDownload || false);
+      setEstimatedDuration(existingPlan.estimatedDuration || '60');
+      setAllowPdf(existingPlan.allowPdfDownload !== false);
       setCurrentWorkout(existingPlan.exercises || []);
     }
   }, [existingPlan]);
@@ -86,14 +89,14 @@ function BuilderContent() {
 
   const addExercise = (ex: Exercise) => {
     if (currentWorkout.some(w => w.id === ex.id)) {
-      toast({ title: "Aviso", description: "Este exercício já foi adicionado." });
+      toast({ title: "Aviso", description: "Este exercício já está na lista." });
       return;
     }
     setCurrentWorkout([...currentWorkout, { 
       ...ex, 
       targetSets: '4', 
       targetReps: '12', 
-      targetRest: '60s',
+      targetRest: '60',
       notes: '' 
     }]);
   };
@@ -109,12 +112,12 @@ function BuilderContent() {
   };
 
   const handleSaveWorkout = async () => {
-    if (!studentId) {
-      toast({ variant: 'destructive', title: "Erro", description: "Aluno não identificado." });
+    if (!studentId || !user) {
+      toast({ variant: 'destructive', title: "Erro", description: "Dados incompletos para salvar." });
       return;
     }
     if (!workoutName || currentWorkout.length === 0) {
-      toast({ variant: 'destructive', title: "Erro", description: "Dê um nome ao treino e adicione exercícios." });
+      toast({ variant: 'destructive', title: "Campos obrigatórios", description: "Dê um nome ao treino e adicione exercícios." });
       return;
     }
 
@@ -129,7 +132,9 @@ function BuilderContent() {
         name: workoutName,
         workoutType,
         difficulty,
+        estimatedDuration,
         allowPdfDownload: allowPdf,
+        trainerId: user.uid,
         userId: studentId,
         exercises: currentWorkout,
         updatedAt: serverTimestamp(),
@@ -145,20 +150,17 @@ function BuilderContent() {
         });
       }
 
-      toast({ 
-        title: planId ? "Treino Atualizado" : "Treino Liberado", 
-        description: `O treino de ${workoutType} foi enviado.` 
-      });
+      toast({ title: "Treino Liberado! 🚀", description: "O aluno já pode iniciar a sessão." });
       router.push(`/trainer/student-details?id=${studentId}`);
     } catch (error) {
-      toast({ variant: 'destructive', title: "Erro", description: "Falha ao salvar o treino." });
+      toast({ variant: 'destructive', title: "Erro ao salvar", description: "Não foi possível enviar o treino." });
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-20 w-full max-w-none">
+    <div className="flex flex-col gap-6 pb-20 w-full max-w-none px-1">
       {isPlanLoading ? (
         <div className="flex-1 flex items-center justify-center py-20">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -167,54 +169,74 @@ function BuilderContent() {
         <>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <PageHeader 
-              title={planId ? "Editar Treino" : "Montador de Treino"} 
-              subtitle="Configure o nível técnico e restrições da planilha." 
+              title={planId ? "Editar Planilha" : "Construtor de Treino"} 
+              subtitle="Personalize cada detalhe da rotina técnica do seu atleta." 
             />
             <div className="flex gap-2">
               <Button onClick={handleSaveWorkout} className="rounded-2xl h-14 px-8 font-black bg-primary text-white shadow-xl shadow-primary/20 uppercase tracking-widest transition-all active:scale-95" disabled={isSaving}>
-                <Send className="h-5 w-5 mr-2" />
+                {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5 mr-2" />}
                 {planId ? "SALVAR ALTERAÇÕES" : "LIBERAR TREINO"}
               </Button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+            {/* Coluna de Configurações */}
             <div className="lg:col-span-4 space-y-6">
               <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden">
                 <CardHeader className="bg-white/5 pb-4">
                   <CardTitle className="text-xs font-black uppercase text-white/40 tracking-widest flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-primary" /> Configurações do Treino
+                    <Target className="h-4 w-4 text-primary" /> Parâmetros do Programa
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 space-y-6">
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Tipo de Treino</Label>
-                    <Input 
-                      placeholder="Ex: Hipertrofia, Full Body" 
-                      value={workoutType} 
-                      onChange={(e) => setWorkoutType(e.target.value)}
-                      className="rounded-xl h-12 bg-white/5 border-none font-bold text-white"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Dificuldade</Label>
-                    <Select value={difficulty} onValueChange={setDifficulty}>
-                      <SelectTrigger className="rounded-xl h-12 bg-white/5 border-none font-bold text-white">
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Objetivo do Treino</Label>
+                    <Select value={workoutType} onValueChange={setWorkoutType}>
+                      <SelectTrigger className="rounded-xl h-12 bg-white/5 border-none font-bold text-white uppercase text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl bg-card border-white/10 text-white">
-                        <SelectItem value="iniciante">INICIANTE</SelectItem>
-                        <SelectItem value="intermediario">INTERMEDIÁRIO</SelectItem>
-                        <SelectItem value="avancado">AVANÇADO</SelectItem>
+                        <SelectItem value="Hipertrofia">HIPERTROFIA</SelectItem>
+                        <SelectItem value="Emagrecimento">EMAGRECIMENTO</SelectItem>
+                        <SelectItem value="Resistência">RESISTÊNCIA</SelectItem>
+                        <SelectItem value="Bulking">BULKING (GANHO DE MASSA)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Dificuldade</Label>
+                      <Select value={difficulty} onValueChange={setDifficulty}>
+                        <SelectTrigger className="rounded-xl h-12 bg-white/5 border-none font-bold text-white text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl bg-card border-white/10 text-white">
+                          <SelectItem value="iniciante">INICIANTE</SelectItem>
+                          <SelectItem value="intermediario">INTERMEDIÁRIO</SelectItem>
+                          <SelectItem value="avancado">AVANÇADO</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Duração (min)</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <Input 
+                          type="number" 
+                          value={estimatedDuration} 
+                          onChange={(e) => setEstimatedDuration(e.target.value)}
+                          className="rounded-xl h-12 bg-white/5 border-none font-bold text-white pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
                     <div className="space-y-1">
-                      <Label className="text-xs font-black uppercase text-white tracking-widest">Liberar PDF</Label>
-                      <p className="text-[9px] font-bold text-white/40 uppercase">Permitir que o aluno baixe o treino.</p>
+                      <Label className="text-xs font-black uppercase text-white tracking-widest">Download em PDF</Label>
+                      <p className="text-[9px] font-bold text-white/40 uppercase">Permitir que o aluno salve offline.</p>
                     </div>
                     <Switch checked={allowPdf} onCheckedChange={setAllowPdf} className="data-[state=checked]:bg-primary" />
                   </div>
@@ -223,7 +245,7 @@ function BuilderContent() {
 
               <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden h-[500px] flex flex-col">
                 <CardHeader className="bg-white/5 pb-4">
-                  <CardTitle className="text-xs font-black uppercase text-white/40 tracking-widest">Biblioteca de Exercícios</CardTitle>
+                  <CardTitle className="text-xs font-black uppercase text-white/40 tracking-widest">Biblioteca Técnica</CardTitle>
                   <div className="space-y-3 pt-4">
                     <Select value={selectedMuscle} onValueChange={setSelectedMuscle}>
                       <SelectTrigger className="rounded-xl border-none bg-white/5 h-10 text-[10px] font-black uppercase">
@@ -238,7 +260,7 @@ function BuilderContent() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
                       <Input 
-                        placeholder="BUSCAR..." 
+                        placeholder="BUSCAR EXERCÍCIO..." 
                         className="pl-9 rounded-xl border-none bg-white/5 h-10 text-[10px] font-bold text-white"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -266,13 +288,14 @@ function BuilderContent() {
               </Card>
             </div>
 
+            {/* Coluna de Montagem */}
             <div className="lg:col-span-8 space-y-6">
               <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden">
                 <CardHeader className="bg-white/5 pb-4">
                   <div className="space-y-2">
                     <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Nome da Planilha</Label>
                     <Input 
-                      placeholder="Ex: Treino A - Superiores" 
+                      placeholder="Ex: Treino A - Peito e Tríceps" 
                       className="rounded-2xl text-2xl font-black uppercase tracking-tight border-none bg-white/5 h-16 text-white"
                       value={workoutName}
                       onChange={(e) => setWorkoutName(e.target.value)}
@@ -282,9 +305,9 @@ function BuilderContent() {
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {currentWorkout.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-24 text-white/10 gap-4">
+                      <div className="flex flex-col items-center justify-center py-24 text-white/10 gap-4 border-2 border-dashed border-white/5 rounded-[2rem]">
                         <Dumbbell className="h-20 w-20" />
-                        <p className="font-black uppercase tracking-[0.2em] text-sm italic">Nenhum exercício na planilha</p>
+                        <p className="font-black uppercase tracking-[0.2em] text-sm italic">Adicione exercícios da biblioteca</p>
                       </div>
                     ) : (
                       currentWorkout.map((ex, index) => (
@@ -325,7 +348,7 @@ function BuilderContent() {
                               />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-[9px] font-black uppercase text-white/40">Descanso</Label>
+                              <Label className="text-[9px] font-black uppercase text-white/40">Descanso (s)</Label>
                               <Input 
                                 value={ex.targetRest} 
                                 onChange={(e) => updateExercise(ex.id, 'targetRest', e.target.value)}
@@ -335,10 +358,10 @@ function BuilderContent() {
                           </div>
 
                           <div className="space-y-1">
-                            <Label className="text-[9px] font-black uppercase text-white/40">Instruções Adicionais</Label>
+                            <Label className="text-[9px] font-black uppercase text-white/40">Instruções Técnicas</Label>
                             <Input 
                               value={ex.notes} 
-                              placeholder="Foque na cadência 4020..."
+                              placeholder="Ex: Foco na cadência 4020, sem descanso no topo..."
                               onChange={(e) => updateExercise(ex.id, 'notes', e.target.value)}
                               className="rounded-xl h-11 bg-black/20 border-none font-bold text-white italic"
                             />

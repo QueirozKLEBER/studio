@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCollection, useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
-import { Search, Filter, ChevronRight, UserPlus, Mail, Calendar, Phone } from 'lucide-react';
+import { Search, Filter, ChevronRight, UserPlus, Mail, Calendar, Phone, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
@@ -41,24 +41,26 @@ export default function TrainerStudentsPage() {
     });
   }, [students, searchTerm, statusFilter]);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active': return <Badge className="bg-green-500/10 text-green-500 border-none font-black text-[8px] uppercase">ATIVO</Badge>;
-      case 'blocked': return <Badge className="bg-primary/10 text-primary border-none font-black text-[8px] uppercase">BLOQUEADO</Badge>;
-      case 'pending': return <Badge className="bg-yellow-500/10 text-yellow-500 border-none font-black text-[8px] uppercase">PENDENTE</Badge>;
-      default: return <Badge className="bg-white/5 text-white/40 border-none font-black text-[8px] uppercase">INATIVO</Badge>;
+  const getStatusBadge = (student: any) => {
+    const today = new Date();
+    const isLate = student.paymentDueDate && new Date(student.paymentDueDate) < today;
+
+    if (student.status === 'blocked' || isLate) {
+      return <Badge className="bg-primary/10 text-primary border-none font-black text-[8px] uppercase">INADIMPLENTE</Badge>;
     }
+    
+    return <Badge className="bg-green-500/10 text-green-500 border-none font-black text-[8px] uppercase">ATIVO</Badge>;
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-none pb-20 px-1">
+    <div className="flex flex-col gap-8 w-full max-w-none pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
           title="Meus Alunos" 
-          subtitle="Gestão completa da sua base de atletas." 
+          subtitle="Lista completa de atletas vinculados à sua consultoria." 
         />
         <Button variant="outline" className="rounded-2xl h-14 px-8 font-black border-white/10 text-white uppercase tracking-widest hover:bg-white/5">
-          <UserPlus className="mr-2 h-5 w-5 text-primary" /> ADICIONAR ALUNO
+          <UserPlus className="mr-2 h-5 w-5 text-primary" /> CADASTRAR ALUNO
         </Button>
       </div>
 
@@ -80,8 +82,7 @@ export default function TrainerStudentsPage() {
           <SelectContent className="rounded-2xl bg-card border-white/10 text-white">
             <SelectItem value="all">TODOS OS STATUS</SelectItem>
             <SelectItem value="active">ATIVOS</SelectItem>
-            <SelectItem value="pending">PENDENTES</SelectItem>
-            <SelectItem value="blocked">BLOQUEADOS</SelectItem>
+            <SelectItem value="blocked">BLOQUEADOS / ATRASADOS</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -99,24 +100,22 @@ export default function TrainerStudentsPage() {
                       {student.firstName?.[0]}
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      {getStatusBadge(student.status)}
-                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Desde {new Date(student.dateJoined).toLocaleDateString('pt-BR')}</p>
+                      {getStatusBadge(student)}
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Início {new Date(student.dateJoined).toLocaleDateString('pt-BR')}</p>
                     </div>
                   </div>
                   
                   <div className="flex-1">
                     <h3 className="text-xl font-black text-white uppercase tracking-tight line-clamp-1">{student.fullName}</h3>
                     <div className="mt-4 space-y-2">
-                      <div className="flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                      <div className="flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest truncate">
                         <Mail className="h-3.5 w-3.5 text-primary shrink-0" />
                         {student.email}
                       </div>
-                      {student.phone && (
-                        <div className="flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                          <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
-                          {student.phone}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                        <CreditCard className="h-3.5 w-3.5 text-primary shrink-0" />
+                        R$ {Number(student.monthlyFee || 0).toFixed(2)} / mês
+                      </div>
                     </div>
                   </div>
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -14,7 +15,7 @@ import { useUser, useFirestore, useAuth } from '@/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { updateProfile, signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, LogOut, Phone, CreditCard, ShieldCheck, FileText } from 'lucide-react';
+import { Camera, User, Settings, Ruler, Weight, Save, Loader2, Image as ImageIcon, Upload, LogOut, Phone, CreditCard, ShieldCheck, FileText, Smartphone, Wallet } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
@@ -33,7 +34,6 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -87,9 +87,7 @@ export default function ProfilePage() {
         updateData.cref = formData.cref;
         updateData.pixKey = formData.pixKey;
         updateData.bio = formData.bio;
-      }
-
-      if (profile.userType === 'student') {
+      } else {
         updateData.height = formData.height;
         updateData.weight = formData.weight;
       }
@@ -170,9 +168,9 @@ export default function ProfilePage() {
                     <Camera className="h-5 w-5" />
                   </button>
                 </DialogTrigger>
-                <DialogContent className="rounded-[2.5rem] max-w-md bg-card border-white/10">
+                <DialogContent className="rounded-[2.5rem] max-w-md bg-card border-white/10 text-white">
                   <DialogHeader>
-                    <DialogTitle className="text-xl font-black uppercase text-white">Novo Avatar</DialogTitle>
+                    <DialogTitle className="text-xl font-black uppercase">Novo Avatar</DialogTitle>
                   </DialogHeader>
                   <div className="grid grid-cols-3 gap-4 py-4">
                     {PRESET_AVATARS.map((avatar) => (
@@ -201,16 +199,15 @@ export default function ProfilePage() {
       <Tabs defaultValue="account" className="w-full">
         <TabsList className="bg-card border border-white/5 p-1 rounded-2xl h-12 gap-1 mb-6">
           <TabsTrigger value="account" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-            <User className="h-4 w-4" /> Dados
+            <User className="h-4 w-4" /> Dados Gerais
           </TabsTrigger>
-          {profile?.userType === 'trainer' && (
+          {profile?.userType === 'trainer' ? (
             <TabsTrigger value="pro" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <ShieldCheck className="h-4 w-4" /> Profissional
+              <ShieldCheck className="h-4 w-4" /> Perfil Profissional
             </TabsTrigger>
-          )}
-          {profile?.userType === 'student' && (
+          ) : (
             <TabsTrigger value="fitness" className="rounded-xl font-black text-[10px] uppercase px-6 flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Settings className="h-4 w-4" /> Biometria
+              <Settings className="h-4 w-4" /> Medidas Corporais
             </TabsTrigger>
           )}
         </TabsList>
@@ -225,8 +222,11 @@ export default function ProfilePage() {
                     <Input name="fullName" value={formData.fullName} onChange={handleInputChange} className="rounded-xl h-12 bg-white/5 border-none text-white font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Celular (WhatsApp)</Label>
-                    <Input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold" />
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">WhatsApp (Com DDD)</Label>
+                    <div className="relative">
+                      <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                      <Input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="11999999999" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold pl-10" />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -238,17 +238,23 @@ export default function ProfilePage() {
               <CardContent className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Registro CREF</Label>
-                    <Input name="cref" value={formData.cref} onChange={handleInputChange} placeholder="Ex: 000000-G/SP" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold uppercase" />
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Número do CREF</Label>
+                    <div className="relative">
+                      <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                      <Input name="cref" value={formData.cref} onChange={handleInputChange} placeholder="Ex: 000000-G/SP" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold uppercase pl-10" />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Chave PIX (Para alunos)</Label>
-                    <Input name="pixKey" value={formData.pixKey} onChange={handleInputChange} placeholder="CPF, E-mail ou Celular" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold" />
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Chave PIX para Pagamentos</Label>
+                    <div className="relative">
+                      <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                      <Input name="pixKey" value={formData.pixKey} onChange={handleInputChange} placeholder="E-mail, CPF ou Telefone" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold pl-10" />
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Biografia Profissional</Label>
-                  <Textarea name="bio" value={formData.bio} onChange={handleInputChange} placeholder="Conte sua experiência e metodologia..." className="rounded-2xl bg-white/5 border-none min-h-[120px] text-white font-medium" />
+                  <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Bio Profissional / Metodologia</Label>
+                  <Textarea name="bio" value={formData.bio} onChange={handleInputChange} placeholder="Descreva sua experiência e como você ajuda seus alunos..." className="rounded-2xl bg-white/5 border-none min-h-[120px] text-white font-medium" />
                 </div>
               </CardContent>
             </Card>
@@ -256,7 +262,7 @@ export default function ProfilePage() {
 
           <TabsContent value="fitness" className="space-y-6">
             <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden">
-              <CardContent className="p-8 grid grid-cols-2 gap-8">
+              <CardContent className="p-8 grid grid-cols-2 gap-8 text-center">
                 <div className="space-y-3">
                   <Label className="font-black text-[10px] uppercase text-white/40">Altura (cm)</Label>
                   <Input name="height" type="number" value={formData.height} onChange={handleInputChange} className="rounded-2xl h-16 text-2xl font-black bg-white/5 border-none text-center text-white" />
@@ -270,8 +276,8 @@ export default function ProfilePage() {
           </TabsContent>
 
           <div className="mt-8 flex flex-col gap-4">
-            <Button type="submit" className="rounded-2xl h-14 w-full font-black text-lg bg-primary text-white shadow-xl hover:bg-primary/90 transition-all active:scale-95 uppercase tracking-tight" disabled={isUpdating}>
-              {isUpdating ? <Loader2 className="h-6 w-6 animate-spin" /> : 'SALVAR ALTERAÇÕES'}
+            <Button type="submit" className="rounded-2xl h-16 w-full font-black text-lg bg-primary text-white shadow-xl hover:bg-primary/90 transition-all active:scale-95 uppercase tracking-tight" disabled={isUpdating}>
+              {isUpdating ? <Loader2 className="h-6 w-6 animate-spin" /> : <Save className="mr-2 h-5 w-5" />} SALVAR ALTERAÇÕES
             </Button>
             <Button type="button" variant="outline" onClick={handleLogout} className="md:hidden rounded-2xl h-14 w-full font-black text-lg border-2 border-destructive/20 text-destructive hover:bg-destructive/5 uppercase tracking-tight">
               <LogOut className="mr-2 h-5 w-5" /> SAIR DA CONTA

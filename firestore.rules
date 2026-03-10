@@ -3,23 +3,33 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Regras Simplificadas para Teste e Estabilidade
+    // Helper: Verifica se o usuário logado é o dono do documento
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Helper: Verifica se o usuário logado é o professor do aluno alvo
+    function isTrainerOf(studentId) {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(studentId)).data.trainerId == request.auth.uid;
+    }
+
     match /users/{userId} {
-      // 1. O dono da conta tem acesso total ao seu perfil
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Aluno acessa seu próprio perfil. Professor acessa perfis de seus alunos.
+      allow read, write: if isOwner(userId) || isTrainerOf(userId);
 
-      // 2. O professor pode listar e ler perfis de alunos que tenham seu trainerId
-      // Usamos resource.data para evitar o uso de get() na listagem
-      allow get, list: if request.auth != null && resource.data.trainerId == request.auth.uid;
-
-      // 3. Subcoleções (Agendamentos, Treinos, Medidas)
+      // Subcoleções (Agendamentos, Treinos, Medidas, Histórico)
       match /{allPaths=**} {
-        // Dono acessa suas subcoleções
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-        
-        // Professor acessa subcoleções dos seus alunos (usa get() no documento pai para validar)
-        allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(userId)).data.trainerId == request.auth.uid;
+        allow read, write: if isOwner(userId) || isTrainerOf(userId);
       }
+    }
+
+    // Permitir que professores busquem seus próprios alunos na coleção users
+    match /users {
+      allow list: if request.auth != null && (
+        resource == null || 
+        resource.data.trainerId == request.auth.uid || 
+        request.auth.uid == resource.id
+      );
     }
   }
 }

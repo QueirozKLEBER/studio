@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy, updateDoc, limit } from 'firebase/firestore';
+import { doc, collection, query, orderBy, updateDoc, limit, Timestamp } from 'firebase/firestore';
 import { 
   ArrowLeft, 
   Dumbbell, 
@@ -26,7 +26,10 @@ import {
   Loader2,
   AlertTriangle,
   Mail,
-  Phone
+  Phone,
+  Clock,
+  Activity,
+  Zap
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -55,7 +58,7 @@ function StudentDetailsContent() {
 
   const studentRef = useMemoFirebase(() => id ? doc(db, 'users', id) : null, [db, id]);
   const measurementsQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'bodyMeasurements'), orderBy('createdAt', 'asc')) : null, [db, id]);
-  const workoutHistoryQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'workoutHistory'), orderBy('completedAt', 'desc'), limit(20)) : null, [db, id]);
+  const workoutHistoryQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'workoutHistory'), orderBy('completedAt', 'desc'), limit(50)) : null, [db, id]);
 
   const { data: student, isLoading } = useDoc(studentRef);
   const { data: measurements } = useCollection(measurementsQuery);
@@ -74,24 +77,37 @@ function StudentDetailsContent() {
     }
   };
 
-  const handleUpdateFinancial = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!studentRef) return;
-    const formData = new FormData(e.currentTarget);
+  const handleConfirmPayment = async () => {
+    if (!studentRef || !student) return;
     setIsUpdating(true);
     try {
+      // Renova o vencimento para 30 dias a partir de hoje
+      const nextDue = new Date();
+      nextDue.setDate(nextDue.getDate() + 30);
+      
       await updateDoc(studentRef, {
-        paymentDueDate: formData.get('paymentDueDate'),
-        monthlyFee: Number(formData.get('monthlyFee')),
+        paymentDueDate: nextDue.toISOString().split('T')[0],
         status: 'active'
       });
-      toast({ title: "Financeiro Atualizado!", description: "O acesso foi liberado automaticamente." });
+      
+      toast({ title: "Pagamento Confirmado!", description: "Acesso renovado por 30 dias." });
     } catch (e) {
-      toast({ variant: 'destructive', title: "Erro ao salvar financeiro" });
+      toast({ variant: 'destructive', title: "Erro ao confirmar pagamento" });
     } finally {
       setIsUpdating(false);
     }
   };
+
+  const reportStats = useMemo(() => {
+    if (!history) return { totalTime: 0, sessionsWeek: 0, completionRate: 0 };
+    
+    const totalTime = history.reduce((acc, h) => acc + (Number(h.duration) || 0), 0);
+    const now = new Date();
+    const weekAgo = new Date(now.setDate(now.getDate() - 7));
+    const sessionsWeek = history.filter(h => h.completedAt?.toDate() >= weekAgo).length;
+    
+    return { totalTime, sessionsWeek };
+  }, [history]);
 
   const chartData = useMemo(() => {
     if (!measurements) return [];
@@ -107,16 +123,16 @@ function StudentDetailsContent() {
   const isExpired = student.paymentDueDate && new Date(student.paymentDueDate) < new Date();
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-20 max-w-6xl mx-auto px-1">
+    <div className="flex flex-col gap-8 w-full pb-20 max-w-6xl mx-auto">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-12 w-12" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <PageHeader title={student.fullName || 'Detalhes do Aluno'} subtitle="Gestão técnica, financeira e evolução." />
+        <PageHeader title={student.fullName || 'Atleta'} subtitle="Gestão técnica, financeira e análise de performance." />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Coluna Lateral: Resumo e Ações */}
+        {/* Coluna Lateral: Resumo */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl overflow-hidden">
             <CardContent className="p-8 flex flex-col items-center text-center">
@@ -154,42 +170,93 @@ function StudentDetailsContent() {
           </Card>
 
           <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl p-6 space-y-4">
-            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest px-2">Controle de Acesso</h4>
+            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest px-2">Ações Rápidas</h4>
             <div className="flex flex-col gap-3">
-              {student.status === 'blocked' ? (
-                <Button onClick={() => handleUpdateStatus('active')} className="w-full h-14 rounded-2xl bg-green-600 font-black uppercase shadow-lg shadow-green-900/20" disabled={isUpdating}>
+              <Button asChild className="w-full h-14 rounded-2xl bg-primary font-black uppercase shadow-lg shadow-primary/20">
+                <Link href={`/trainer/workouts/builder?studentId=${id}`}>
+                  <Dumbbell className="mr-2 h-5 w-5" /> MONTAR TREINO
+                </Link>
+              </Button>
+              {student.status === 'blocked' || isExpired ? (
+                <Button onClick={() => handleUpdateStatus('active')} variant="outline" className="w-full h-14 rounded-2xl border-green-500/30 text-green-500 font-black uppercase hover:bg-green-500/10">
                   <ShieldCheck className="mr-2 h-5 w-5" /> LIBERAR ACESSO
                 </Button>
               ) : (
-                <Button onClick={() => handleUpdateStatus('blocked')} variant="destructive" className="w-full h-14 rounded-2xl font-black uppercase shadow-lg shadow-red-900/20" disabled={isUpdating}>
-                  <ShieldBan className="mr-2 h-5 w-5" /> BLOQUEAR ACESSO
+                <Button onClick={() => handleUpdateStatus('blocked')} variant="outline" className="w-full h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase hover:bg-primary/10 hover:text-primary">
+                  <ShieldBan className="mr-2 h-5 w-5" /> BLOQUEAR ALUNO
                 </Button>
               )}
-              <Button asChild variant="outline" className="w-full h-14 rounded-2xl border-white/10 font-black uppercase tracking-widest hover:bg-primary hover:border-primary transition-all">
-                <Link href={`/trainer/workouts/builder?studentId=${id}`}>
-                  <Dumbbell className="mr-2 h-5 w-5" /> MONTAR NOVO TREINO
-                </Link>
-              </Button>
             </div>
           </Card>
         </div>
 
-        {/* Coluna Principal: Abas de Gestão */}
+        {/* Coluna Principal: Abas */}
         <div className="lg:col-span-8">
-          <Tabs defaultValue="evolution" className="w-full">
+          <Tabs defaultValue="report" className="w-full">
             <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full border border-white/5 gap-1 mb-8">
+              <TabsTrigger value="report" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Activity className="mr-2 h-4 w-4" /> Relatório
+              </TabsTrigger>
               <TabsTrigger value="evolution" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
                 <TrendingUp className="mr-2 h-4 w-4" /> Evolução
               </TabsTrigger>
               <TabsTrigger value="financial" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
                 <CreditCard className="mr-2 h-4 w-4" /> Financeiro
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
-                <History className="mr-2 h-4 w-4" /> Histórico
-              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="evolution" className="space-y-6">
+            <TabsContent value="report" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="rounded-[2rem] bg-card border border-white/5 p-6 flex items-center gap-4">
+                  <div className="p-4 rounded-2xl bg-primary/10 text-primary">
+                    <Clock className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Tempo Total de Treino</p>
+                    <p className="text-2xl font-black text-white">{reportStats.totalTime} <span className="text-xs">min</span></p>
+                  </div>
+                </Card>
+                <Card className="rounded-[2rem] bg-card border border-white/5 p-6 flex items-center gap-4">
+                  <div className="p-4 rounded-2xl bg-green-500/10 text-green-500">
+                    <Calendar className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Frequência Semanal</p>
+                    <p className="text-2xl font-black text-white">{reportStats.sessionsWeek} <span className="text-xs">sessões</span></p>
+                  </div>
+                </Card>
+              </div>
+
+              <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden">
+                <CardHeader className="bg-white/5 p-8 border-b border-white/5">
+                  <CardTitle className="text-sm font-black uppercase text-white">Últimas Atividades</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {history && history.length > 0 ? (
+                    history.map(log => (
+                      <div key={log.id} className="p-6 flex items-center justify-between border-b border-white/5 last:border-0">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-primary">
+                            <Zap className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <p className="font-black text-white uppercase text-sm">{log.planName || 'Treino'}</p>
+                            <p className="text-[10px] font-bold text-white/20 uppercase">{log.completedAt?.toDate().toLocaleString('pt-BR')}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[8px]">
+                          {log.duration} MIN
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-12 text-center text-white/20 uppercase font-black text-[10px] tracking-widest italic">Nenhum treino realizado ainda.</div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="evolution">
               <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8 pb-4">
                   <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
@@ -208,9 +275,9 @@ function StudentDetailsContent() {
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center opacity-20">
-                      <TrendingUp className="h-12 w-12 mb-2" />
-                      <p className="text-[10px] font-black uppercase tracking-widest">Sem registros suficientes para gráfico</p>
+                    <div className="h-full flex flex-col items-center justify-center opacity-20 text-center gap-4">
+                      <TrendingUp className="h-12 w-12" />
+                      <p className="text-[10px] font-black uppercase tracking-widest max-w-[200px]">Sem registros de medidas suficientes para gerar o gráfico.</p>
                     </div>
                   )}
                 </CardContent>
@@ -220,70 +287,41 @@ function StudentDetailsContent() {
             <TabsContent value="financial">
               <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8">
-                  <CardTitle className="text-xl font-black uppercase text-white">Controle de Assinatura</CardTitle>
-                  <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Ajuste valores e datas de vencimento.</CardDescription>
+                  <CardTitle className="text-xl font-black uppercase text-white">Configurações de Faturamento</CardTitle>
+                  <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Ajuste valores e valide pagamentos.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-8">
-                  <form onSubmit={handleUpdateFinancial} className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                        <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Próximo Vencimento</Label>
-                        <Input name="paymentDueDate" type="date" defaultValue={student.paymentDueDate || ''} className="rounded-xl h-14 bg-white/5 border-none font-black text-white" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Valor Mensal (R$)</Label>
-                        <Input name="monthlyFee" type="number" step="0.01" defaultValue={student.monthlyFee || 0} className="rounded-xl h-14 bg-white/5 border-none font-black text-white" />
+                <CardContent className="p-8 space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Próximo Vencimento</Label>
+                      <div className="h-14 bg-white/5 rounded-xl border border-white/5 flex items-center px-4 font-black text-white">
+                        {student.paymentDueDate ? new Date(student.paymentDueDate).toLocaleDateString('pt-BR') : 'NÃO DEFINIDO'}
                       </div>
                     </div>
-
-                    <div className={cn(
-                      "p-6 rounded-3xl flex items-center justify-between",
-                      isExpired ? "bg-primary/10 border border-primary/20" : "bg-green-500/10 border border-green-500/20"
-                    )}>
-                      <div className="flex items-center gap-4">
-                        {isExpired ? <AlertTriangle className="h-8 w-8 text-primary" /> : <ShieldCheck className="h-8 w-8 text-green-500" />}
-                        <div>
-                          <p className="font-black text-white uppercase tracking-tight">Status de Pagamento</p>
-                          <p className={cn("text-sm font-bold uppercase", isExpired ? "text-primary" : "text-green-500")}>
-                            {isExpired ? 'PAGAMENTO ATRASADO' : 'MENSALIDADE EM DIA'}
-                          </p>
-                        </div>
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Valor Mensal (R$)</Label>
+                      <div className="h-14 bg-white/5 rounded-xl border border-white/5 flex items-center px-4 font-black text-white">
+                        R$ {Number(student.monthlyFee || 0).toFixed(2)}
                       </div>
-                      <Button type="submit" className="rounded-2xl h-14 px-8 font-black bg-white text-black hover:bg-white/90 shadow-xl" disabled={isUpdating}>
-                        {isUpdating ? <Loader2 className="animate-spin" /> : <Save className="mr-2 h-5 w-5" />} SALVAR
-                      </Button>
                     </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  </div>
 
-            <TabsContent value="history">
-              <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden shadow-2xl">
-                <CardContent className="p-0">
-                  <div className="divide-y divide-white/5">
-                    {history && history.length > 0 ? (
-                      history.map((log) => (
-                        <div key={log.id} className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                              <History className="h-6 w-6" />
-                            </div>
-                            <div>
-                              <p className="font-black text-white uppercase tracking-tight">{log.planName || 'Treino Realizado'}</p>
-                              <p className="text-[10px] font-bold text-white/40 uppercase">
-                                {log.completedAt?.toDate().toLocaleString('pt-BR')}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="border-green-500/30 text-green-500 font-black text-[8px] uppercase">
-                            {log.duration || '--'} MIN
-                          </Badge>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-20 text-center opacity-20 italic font-black uppercase text-xs tracking-widest">Nenhuma atividade registrada ainda.</div>
-                    )}
+                  <div className={cn(
+                    "p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6",
+                    isExpired ? "bg-primary/10 border border-primary/20" : "bg-green-500/10 border border-green-500/20"
+                  )}>
+                    <div className="flex items-center gap-4 text-center md:text-left">
+                      {isExpired ? <AlertTriangle className="h-8 w-8 text-primary" /> : <ShieldCheck className="h-8 w-8 text-green-500" />}
+                      <div>
+                        <p className="font-black text-white uppercase tracking-tight">Status da Assinatura</p>
+                        <p className={cn("text-xs font-bold uppercase", isExpired ? "text-primary" : "text-green-500")}>
+                          {isExpired ? 'PAGAMENTO EM ATRASO' : 'MENSALIDADE EM DIA'}
+                        </p>
+                      </div>
+                    </div>
+                    <Button onClick={handleConfirmPayment} className="w-full md:w-auto h-14 px-8 font-black bg-white text-black hover:bg-white/90 shadow-xl rounded-2xl" disabled={isUpdating}>
+                      {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <CreditCard className="mr-2 h-5 w-5" />} CONFIRMAR RECEBIMENTO
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

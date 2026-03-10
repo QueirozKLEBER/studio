@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { CreditCard, Calendar, Copy, CheckCircle2, AlertTriangle, MessageCircle, Wallet, Zap, Loader2 } from 'lucide-react';
+import { CreditCard, Calendar, Copy, CheckCircle2, AlertTriangle, MessageCircle, Wallet, Zap, Loader2, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +61,7 @@ export default function BillingPage() {
   return (
     <div className="flex flex-col gap-8 pb-20 max-w-4xl mx-auto w-full px-1">
       <PageHeader 
-        title="Minha Assinatura" 
+        title="Faturamento" 
         subtitle="Mantenha seus treinos de elite ativos e em dia." 
       />
 
@@ -77,12 +78,12 @@ export default function BillingPage() {
                   <CreditCard className="h-6 w-6" />
                 </div>
                 <Badge className={cn("font-black text-[9px] uppercase px-4 py-1.5 rounded-full border-none", isExpired ? "bg-white text-primary" : "bg-green-500 text-white")}>
-                  {isExpired ? 'VENCIDO' : 'ATIVO'}
+                  {isExpired ? 'PAGAMENTO ATRASADO' : 'ASSINATURA ATIVA'}
                 </Badge>
               </div>
               <CardTitle className="text-2xl font-black uppercase tracking-tight mt-6">Mensalidade</CardTitle>
               <CardDescription className={cn("font-bold uppercase text-[10px]", isExpired ? "text-white/60" : "text-white/40")}>
-                {isExpired ? 'Acesso suspenso. Regularize agora.' : 'Sua conta está em dia.'}
+                {isExpired ? 'Acesso suspenso. Regularize para voltar aos treinos.' : 'Sua consultoria está em dia.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8 pb-8">
@@ -95,12 +96,10 @@ export default function BillingPage() {
                   </span>
                 </div>
               </div>
-              {profile?.monthlyFee && (
-                <div>
-                  <p className={cn("text-[9px] font-black uppercase", isExpired ? "text-white/40" : "text-white/20")}>Valor do Plano</p>
-                  <p className="text-xl font-black">R$ {Number(profile.monthlyFee).toFixed(2)}</p>
-                </div>
-              )}
+              <div>
+                <p className={cn("text-[9px] font-black uppercase", isExpired ? "text-white/40" : "text-white/20")}>Valor do Investimento</p>
+                <p className="text-3xl font-black">R$ {Number(profile?.monthlyFee || 0).toFixed(2)}</p>
+              </div>
             </CardContent>
           </Card>
 
@@ -110,11 +109,11 @@ export default function BillingPage() {
             ) : (
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-primary" />
+                  <User className="h-6 w-6 text-primary" />
                 </div>
                 <div>
                   <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Professor Responsável</p>
-                  <p className="text-sm font-black text-white uppercase">{trainer?.firstName ? `Prof. ${trainer.firstName}` : 'Aguardando Atribuição'}</p>
+                  <p className="text-sm font-black text-white uppercase">{trainer?.fullName || 'Aguardando Professor'}</p>
                 </div>
               </div>
             )}
@@ -135,7 +134,7 @@ export default function BillingPage() {
                   <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Chave PIX do Professor</p>
                   <div className="flex gap-2">
                     <div className="flex-1 bg-black/20 p-5 rounded-2xl border border-white/5 font-black text-white text-lg tracking-tight truncate">
-                      {trainer?.pixKey || 'CHAVE NÃO DISPONÍVEL'}
+                      {trainer?.pixKey || 'CHAVE NÃO CONFIGURADA'}
                     </div>
                     {trainer?.pixKey && (
                       <Button onClick={handleCopyPix} className="h-auto px-6 rounded-2xl bg-primary text-white shadow-xl">
@@ -146,13 +145,13 @@ export default function BillingPage() {
                 </div>
 
                 <div className="bg-primary/5 p-6 rounded-3xl border border-primary/20">
-                  <h4 className="font-black text-primary flex items-center gap-2 mb-2 uppercase text-xs">
-                    <CheckCircle2 className="h-4 w-4" /> Como pagar?
+                  <h4 className="font-black text-primary flex items-center gap-2 mb-2 uppercase text-xs tracking-widest">
+                    <CheckCircle2 className="h-4 w-4" /> Passo a Passo
                   </h4>
                   <p className="text-xs text-white/60 leading-relaxed font-bold">
-                    1. Copie a chave PIX.<br />
-                    2. Envie o valor no seu banco.<br />
-                    3. Clique abaixo para avisar no WhatsApp.
+                    1. Copie a chave PIX acima.<br />
+                    2. Faça a transferência no app do seu banco.<br />
+                    3. Clique no botão abaixo para enviar o comprovante.
                   </p>
                 </div>
               </div>

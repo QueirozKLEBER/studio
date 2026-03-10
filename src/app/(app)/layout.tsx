@@ -5,15 +5,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { useUser, useAuth, useFirestore } from '@/firebase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldBan, LogOut, Loader2 } from 'lucide-react';
+import { ShieldBan, LogOut, Loader2, CreditCard } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
+import Link from 'next/link';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, profile, isUserLoading } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
@@ -23,7 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Lógica de verificação de vencimento automática (Client-side)
+  // Lógica de verificação de vencimento automática
   const isExpired = useMemo(() => {
     if (!mounted || !profile || profile.userType !== 'student' || !profile.paymentDueDate) return false;
     const dueDate = new Date(profile.paymentDueDate);
@@ -34,13 +36,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   // Bloqueio automático se o pagamento vencer
   useEffect(() => {
-    if (isExpired && profile?.status === 'active' && profile?.id) {
+    if (isExpired && profile?.status !== 'blocked' && profile?.id) {
       const autoBlock = async () => {
         try {
           await updateDoc(doc(db, 'users', profile.id), { status: 'blocked' });
-          toast({ variant: 'destructive', title: "Acesso Suspenso", description: "Mensalidade vencida no sistema." });
+          toast({ 
+            variant: 'destructive', 
+            title: "Assinatura Suspensa", 
+            description: "Detectamos que sua mensalidade está vencida." 
+          });
         } catch (e) {
-          // Silencioso para não interromper a navegação
+          console.error("Erro no auto-block:", e);
         }
       };
       autoBlock();
@@ -64,27 +70,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null;
 
   // Tela de Bloqueio para Alunos Inadimplentes
-  if (profile?.status === 'blocked') {
+  // Permite acesso apenas à página de billing para regularização
+  if (profile?.status === 'blocked' && profile?.userType === 'student' && pathname !== '/billing') {
     return (
-      <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 relative overflow-hidden">
+      <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 relative overflow-hidden text-center">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full -z-10" />
-        <div className="text-center space-y-10 flex flex-col items-center max-w-sm animate-in fade-in zoom-in duration-500">
+        <div className="space-y-10 flex flex-col items-center max-w-sm">
           <div className="h-32 w-32 bg-primary/10 text-primary rounded-[3rem] flex items-center justify-center shadow-2xl border border-primary/20">
             <ShieldBan className="h-16 w-16" />
           </div>
           <div className="space-y-4">
             <h2 className="text-4xl font-black uppercase text-white tracking-tighter leading-none">
-              ACESSO <span className="text-primary">RESTRITO</span>
+              PAGAMENTO <span className="text-primary">PENDENTE</span>
             </h2>
-            <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 backdrop-blur-sm">
+            <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5">
               <p className="text-primary font-black uppercase text-[10px] tracking-[0.2em] leading-relaxed">
-                Mensalidade pendente ou vencida.<br />Entre em contato com seu personal para liberar o acesso.
+                Seu acesso foi suspenso. Regularize sua mensalidade para continuar treinando com excelência.
               </p>
             </div>
           </div>
-          <button onClick={() => signOut(auth).then(() => router.push('/login'))} className="flex items-center gap-3 px-8 h-14 rounded-2xl border border-white/10 text-white/40 hover:text-white uppercase font-black text-xs">
-            <LogOut className="h-5 w-5" /> Sair da Conta
-          </button>
+          <div className="flex flex-col gap-3 w-full">
+            <Link href="/billing" className="w-full h-16 rounded-2xl bg-primary text-white font-black flex items-center justify-center shadow-xl hover:bg-primary/90 uppercase tracking-widest text-sm">
+              <CreditCard className="mr-2 h-5 w-5" /> VER MINHA FATURA
+            </Link>
+            <button onClick={() => signOut(auth).then(() => router.push('/login'))} className="flex items-center justify-center gap-3 px-8 h-14 rounded-2xl border border-white/10 text-white/40 hover:text-white uppercase font-black text-xs">
+              <LogOut className="h-5 w-5" /> Sair da Conta
+            </button>
+          </div>
         </div>
       </div>
     );

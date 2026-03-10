@@ -15,7 +15,8 @@ import {
   TrendingUp,
   CreditCard,
   Loader2,
-  Dumbbell
+  Dumbbell,
+  ShieldBan
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -37,9 +38,9 @@ export default function TrainerDashboard() {
 
   const { data: students, isLoading: isStudentsLoading } = useCollection(studentsQuery);
 
-  // Cálculos de métricas reais baseadas no Firestore
+  // Cálculos de métricas reais
   const stats = useMemo(() => {
-    if (!students) return { active: 0, late: 0, revenue: 0, newThisMonth: 0 };
+    if (!students) return { active: 0, late: 0, blocked: 0, revenue: 0, newThisMonth: 0 };
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -49,21 +50,19 @@ export default function TrainerDashboard() {
       const isLate = s.paymentDueDate && new Date(s.paymentDueDate) < today;
       const isNew = s.dateJoined && new Date(s.dateJoined) >= firstDayMonth;
 
-      if (s.status === 'active' && !isLate) acc.active++;
-      if (isLate || s.status === 'blocked') acc.late++;
+      if (s.status === 'blocked') {
+        acc.blocked++;
+      } else if (isLate) {
+        acc.late++;
+      } else if (s.status === 'active') {
+        acc.active++;
+      }
       
       if (s.monthlyFee) acc.revenue += Number(s.monthlyFee);
       if (isNew) acc.newThisMonth++;
       
       return acc;
-    }, { active: 0, late: 0, revenue: 0, newThisMonth: 0 });
-  }, [students]);
-
-  // Lista de alunos com problemas financeiros para o alerta
-  const lateStudentsList = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return students?.filter(s => s.paymentDueDate && new Date(s.paymentDueDate) < today).slice(0, 5) || [];
+    }, { active: 0, late: 0, blocked: 0, revenue: 0, newThisMonth: 0 });
   }, [students]);
 
   if (!mounted) return null;
@@ -79,12 +78,47 @@ export default function TrainerDashboard() {
     );
   }
 
+  const statCards = [
+    { 
+      label: 'Alunos Ativos', 
+      value: stats.active, 
+      icon: Users, 
+      color: 'text-white', 
+      bg: 'bg-white/5',
+      href: '/trainer/students?status=active'
+    },
+    { 
+      label: 'Inadimplentes', 
+      value: stats.late, 
+      icon: AlertTriangle, 
+      color: 'text-primary', 
+      bg: 'bg-primary/10',
+      href: '/trainer/students?status=late'
+    },
+    { 
+      label: 'Bloqueados', 
+      value: stats.blocked, 
+      icon: ShieldBan, 
+      color: 'text-white/40', 
+      bg: 'bg-black/20',
+      href: '/trainer/students?status=blocked'
+    },
+    { 
+      label: 'Faturamento', 
+      value: `R$ ${stats.revenue.toLocaleString('pt-BR')}`, 
+      icon: DollarSign, 
+      color: 'text-white', 
+      bg: 'bg-primary shadow-lg shadow-primary/20',
+      href: '/trainer/students'
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-none pb-24">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
-          title="Gestão de Atletas" 
-          subtitle="Controle de performance, faturamento e acessos em tempo real." 
+          title="Painel de Controle" 
+          subtitle={`Bem-vindo, Prof. ${profile?.firstName}. Gerencie seus atletas de elite.`} 
         />
         <Button asChild className="rounded-2xl h-16 px-10 font-black bg-primary text-white shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 uppercase tracking-widest">
           <Link href="/trainer/workouts/builder">
@@ -93,58 +127,20 @@ export default function TrainerDashboard() {
         </Button>
       </div>
 
-      {/* Grid de Métricas Reais */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-xl">
-          <CardContent className="p-8 flex flex-col items-center text-center gap-4">
-            <div className="p-5 rounded-2xl bg-primary/10 text-primary">
-              <Users className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em]">Alunos Ativos</p>
-              <p className="text-3xl font-black text-white mt-1">{isStudentsLoading ? '...' : stats.active}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-xl">
-          <CardContent className="p-8 flex flex-col items-center text-center gap-4">
-            <div className="p-5 rounded-2xl bg-yellow-500/10 text-yellow-500">
-              <AlertTriangle className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em]">Pendentes</p>
-              <p className="text-3xl font-black text-white mt-1">{isStudentsLoading ? '...' : stats.late}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-xl">
-          <CardContent className="p-8 flex flex-col items-center text-center gap-4">
-            <div className="p-5 rounded-2xl bg-white/5 text-white">
-              <TrendingUp className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em]">Novos no Mês</p>
-              <p className="text-3xl font-black text-white mt-1">{isStudentsLoading ? '...' : stats.newThisMonth}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-[2.5rem] border-none bg-primary text-white overflow-hidden shadow-2xl relative">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <DollarSign className="h-24 w-24" />
-          </div>
-          <CardContent className="p-8 flex flex-col items-center text-center gap-4 relative z-10">
-            <div className="p-5 rounded-2xl bg-white/20 text-white">
-              <CreditCard className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-white/60 uppercase tracking-[0.25em]">Receita Estimada</p>
-              <p className="text-3xl font-black mt-1">R$ {isStudentsLoading ? '...' : stats.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {statCards.map((stat, i) => (
+          <Link key={i} href={stat.href}>
+            <Card className={cn("rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all hover:border-primary/30 active:scale-95", stat.bg)}>
+              <CardContent className="p-8 flex flex-col items-center text-center gap-4">
+                <stat.icon className={cn("h-8 w-8", stat.color)} />
+                <div>
+                  <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.25em]">{stat.label}</p>
+                  <p className="text-2xl font-black text-white mt-1">{isStudentsLoading ? '...' : stat.value}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -153,9 +149,9 @@ export default function TrainerDashboard() {
             <CardHeader className="bg-white/5 p-8 flex flex-row items-center justify-between border-b border-white/5">
               <div>
                 <CardTitle className="text-sm font-black uppercase text-white tracking-widest flex items-center gap-2">
-                  <CreditCard className="h-4 w-4 text-primary" /> Faturas Vencidas
+                  <CreditCard className="h-4 w-4 text-primary" /> Alertas de Vencimento
                 </CardTitle>
-                <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Regularize o acesso destes alunos.</CardDescription>
+                <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Alunos com pendência financeira.</CardDescription>
               </div>
               <Button variant="ghost" asChild className="text-primary hover:text-primary hover:bg-primary/10 font-black text-[10px] uppercase">
                 <Link href="/trainer/students">Ver Todos</Link>
@@ -168,8 +164,8 @@ export default function TrainerDashboard() {
                     <Loader2 className="animate-spin h-8 w-8 text-primary" />
                     <span className="text-[10px] font-black text-white/20 uppercase">Sincronizando faturas...</span>
                   </div>
-                ) : lateStudentsList.length > 0 ? (
-                  lateStudentsList.map(student => (
+                ) : (students?.filter(s => s.paymentDueDate && new Date(s.paymentDueDate) < new Date()).length || 0) > 0 ? (
+                  students?.filter(s => s.paymentDueDate && new Date(s.paymentDueDate) < new Date()).map(student => (
                     <Link key={student.id} href={`/trainer/student-details?id=${student.id}`}>
                       <div className="flex items-center justify-between p-8 hover:bg-white/[0.02] transition-colors group">
                         <div className="flex items-center gap-5">
@@ -177,8 +173,8 @@ export default function TrainerDashboard() {
                             {student.firstName?.[0]}
                           </div>
                           <div>
-                            <p className="font-black text-white uppercase tracking-tight text-lg">{student.fullName}</p>
-                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">Vencido em {new Date(student.paymentDueDate).toLocaleDateString('pt-BR')}</p>
+                            <p className="font-black text-white uppercase tracking-tight text-lg">{student.fullName || student.firstName}</p>
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">Atraso desde {new Date(student.paymentDueDate).toLocaleDateString('pt-BR')}</p>
                           </div>
                         </div>
                         <ChevronRight className="h-6 w-6 text-white/10 group-hover:text-primary transition-all group-hover:translate-x-1" />
@@ -203,17 +199,17 @@ export default function TrainerDashboard() {
         <div className="lg:col-span-5 flex flex-col gap-6">
           <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl">
             <CardHeader className="bg-white/5 p-8 border-b border-white/5">
-              <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Atalhos de Gestão</CardTitle>
+              <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Acesso Rápido</CardTitle>
             </CardHeader>
             <CardContent className="p-8 space-y-4">
               <Button asChild variant="outline" className="w-full h-20 rounded-[1.8rem] border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all justify-between px-8 group bg-white/[0.02]">
-                <Link href="/trainer/workouts/builder" className="flex items-center gap-5 w-full">
-                  <div className="p-3 bg-primary/10 rounded-2xl group-hover:bg-primary/20 transition-colors">
-                    <Dumbbell className="h-6 w-6 text-primary" />
+                <Link href="/trainer/students" className="flex items-center gap-5 w-full">
+                  <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-primary/10 transition-colors">
+                    <Users className="h-6 w-6 text-primary" />
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-black uppercase text-white tracking-widest">Montar Treino</p>
-                    <p className="text-[9px] font-bold text-white/30 uppercase mt-1">Criar nova planilha técnica</p>
+                    <p className="text-xs font-black uppercase text-white tracking-widest">Meus Atletas</p>
+                    <p className="text-[9px] font-bold text-white/30 uppercase mt-1">Gerenciar lista completa</p>
                   </div>
                   <ChevronRight className="h-5 w-5 ml-auto opacity-20 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -221,12 +217,12 @@ export default function TrainerDashboard() {
 
               <Button asChild variant="outline" className="w-full h-20 rounded-[1.8rem] border-white/5 hover:border-primary/50 hover:bg-primary/5 transition-all justify-between px-8 group bg-white/[0.02]">
                 <Link href="/profile" className="flex items-center gap-5 w-full">
-                  <div className="p-3 bg-primary/10 rounded-2xl group-hover:bg-primary/20 transition-colors">
-                    <CreditCard className="h-6 w-6 text-primary" />
+                  <div className="p-3 bg-white/5 rounded-2xl group-hover:bg-primary/10 transition-colors">
+                    <DollarSign className="h-6 w-6 text-primary" />
                   </div>
                   <div className="text-left">
-                    <p className="text-xs font-black uppercase text-white tracking-widest">Dados de PIX</p>
-                    <p className="text-[9px] font-bold text-white/30 uppercase mt-1">Configurar chave profissional</p>
+                    <p className="text-xs font-black uppercase text-white tracking-widest">Configurar PIX</p>
+                    <p className="text-[9px] font-bold text-white/30 uppercase mt-1">Receber mensalidades</p>
                   </div>
                   <ChevronRight className="h-5 w-5 ml-auto opacity-20 group-hover:opacity-100 transition-opacity" />
                 </Link>

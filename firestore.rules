@@ -7,33 +7,30 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
+    // Helper: Verifica se o usuário autenticado é o professor do aluno
+    function isTrainerOf(studentData) {
+      return request.auth != null && studentData.get('trainerId', '') == request.auth.uid;
+    }
+
     match /users/{userId} {
       // O usuário sempre pode ler e editar seu próprio perfil
-      allow read, write: if isOwner(userId);
-
       // O Professor pode ler e editar o perfil dos seus alunos vinculados
-      // Usamos resource.data para permitir queries filtradas
-      allow read, write: if request.auth != null && 
-        (resource != null && resource.data.trainerId == request.auth.uid);
+      allow read, write: if isOwner(userId) || isTrainerOf(resource.data);
+      
+      // Permitir criação de perfil inicial
+      allow create: if request.auth != null;
 
-      // Subcoleções (Treinos, Medidas, Histórico)
+      // Subcoleções (Treinos, Medidas, Histórico, Dieta)
       match /{allPaths=**} {
-        // Acesso para o dono da subcoleção
-        allow read, write: if isOwner(userId);
-        
-        // Acesso para o professor do aluno dono da subcoleção
-        // Verificamos o trainerId no documento pai (user)
-        allow read, write: if request.auth != null && 
-          get(/databases/$(database)/documents/users/$(userId)).data.trainerId == request.auth.uid;
+        allow read, write: if isOwner(userId) || 
+          isTrainerOf(get(/databases/$(database)/documents/users/$(userId)).data);
       }
     }
 
-    // Permite que professores listem a coleção users usando o filtro trainerId
+    // Permite que professores listem a coleção users
+    // O Firestore aplicará as regras de 'read' de cada documento para filtrar o resultado
     match /users {
-      allow list: if request.auth != null && (
-        resource.data.trainerId == request.auth.uid || 
-        resource.id == request.auth.uid
-      );
+      allow list: if request.auth != null;
     }
   }
 }

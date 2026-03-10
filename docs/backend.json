@@ -1,138 +1,911 @@
-
 {
   "entities": {
-    "User": {
-      "title": "User",
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user of the platform.",
+      "description": "Represents a user of the platform, either a student or a personal trainer.",
       "properties": {
-        "id": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "firstName": { "type": "string" },
-        "lastName": { "type": "string" },
-        "fullName": { "type": "string" },
-        "phone": { "type": "string" },
-        "cref": { "type": "string" },
-        "pixKey": { "type": "string" },
-        "dateJoined": { "type": "string", "format": "date-time" },
-        "userType": { "type": "string", "enum": ["student", "trainer", "admin"] },
-        "height": { "type": "string" },
-        "weight": { "type": "string" },
-        "status": { "type": "string", "enum": ["active", "blocked"], "default": "active" },
-        "paymentDueDate": { "type": "string", "format": "date" },
-        "trainerId": { "type": "string" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "userType": {
+          "type": "string",
+          "description": "The role of the user within the platform (student or trainer).",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The user's phone number."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL to the user's profile picture.",
+          "format": "uri"
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "The date and time when the user registered on the platform.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current operational status of the student's account. Trainers are usually 'active'.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "trainerId": {
+          "type": "string",
+          "description": "Reference to the Personal Trainer associated with this student. (Relationship: UserProfile (Trainer) 1:N UserProfile (Student))"
+        },
+        "currentPlanId": {
+          "type": "string",
+          "description": "Reference to the currently active Training Plan for the student. (Relationship: TrainingPlan 1:N UserProfile (Student))"
+        },
+        "planStartDate": {
+          "type": "string",
+          "description": "The date when the student's current training plan started.",
+          "format": "date-time"
+        },
+        "paymentDueDate": {
+          "type": "string",
+          "description": "The date when the student's next monthly payment is due. Used for access control and status.",
+          "format": "date-time"
+        },
+        "monthlyFee": {
+          "type": "number",
+          "description": "The monthly fee charged to the student for their current plan."
+        },
+        "age": {
+          "type": "number",
+          "description": "The student's age."
+        },
+        "heightCm": {
+          "type": "number",
+          "description": "The student's height in centimeters."
+        },
+        "weightKg": {
+          "type": "number",
+          "description": "The student's current weight in kilograms."
+        },
+        "cref": {
+          "type": "string",
+          "description": "Professional registration number for the Personal Trainer (CREF). Only for trainers."
+        },
+        "pixKey": {
+          "type": "string",
+          "description": "PIX key for the Personal Trainer to receive payments. Only for trainers."
+        },
+        "bio": {
+          "type": "string",
+          "description": "Professional biography or description for the Personal Trainer. Only for trainers."
+        }
       },
-      "required": ["id", "email", "firstName", "lastName", "dateJoined", "userType"]
+      "required": [
+        "id",
+        "userType",
+        "email",
+        "fullName",
+        "registrationDate"
+      ]
     },
     "TrainingPlan": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "TrainingPlan",
       "type": "object",
-      "description": "Represents a workout plan assigned to a user.",
+      "description": "Defines the subscription plans offered on the platform, e.g., Basic or Premium plans.",
       "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "workoutType": { "type": "string", "description": "Ex: Hipertrofia, Emagrecimento" },
-        "difficulty": { "type": "string", "enum": ["iniciante", "intermediario", "avancado"] },
-        "allowPdfDownload": { "type": "boolean", "default": false },
-        "userId": { "type": "string" },
-        "exercises": { "type": "array", "items": { "type": "object" } },
-        "createdAt": { "type": "object" },
-        "status": { "type": "string" }
-      },
-      "required": ["id", "name", "userId", "exercises"]
-    },
-    "DietSuggestion": {
-      "title": "DietSuggestion",
-      "type": "object",
-      "description": "Nutritional guidance provided by a trainer.",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "meals": { 
-          "type": "array", 
-          "items": { 
-            "type": "object",
-            "properties": {
-              "time": { "type": "string" },
-              "name": { "type": "string" },
-              "description": { "type": "string" }
-            }
-          } 
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TrainingPlan entity."
         },
-        "createdAt": { "type": "object" }
+        "name": {
+          "type": "string",
+          "description": "Name of the training plan (e.g., 'Plano Básico', 'Plano Premium')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the plan's offerings."
+        },
+        "price": {
+          "type": "number",
+          "description": "The monthly price of the plan."
+        },
+        "features": {
+          "type": "array",
+          "description": "List of features included in this plan (e.g., 'Treinos personalizados', 'Suporte via chat').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "isCustomizable": {
+          "type": "boolean",
+          "description": "Indicates if this plan allows for personalized workout adjustments."
+        },
+        "allowsChatSupport": {
+          "type": "boolean",
+          "description": "Indicates if this plan includes chat support with a trainer."
+        }
       },
-      "required": ["id", "title", "description"]
+      "required": [
+        "id",
+        "name",
+        "description",
+        "price",
+        "features",
+        "isCustomizable",
+        "allowsChatSupport"
+      ]
     },
-    "WorkoutHistory": {
-      "title": "WorkoutHistory",
+    "Workout": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Workout",
       "type": "object",
-      "description": "Records of completed workouts.",
+      "description": "Represents a specific workout routine, either a general template created by a trainer or a personalized one assigned to a student.",
       "properties": {
-        "planId": { "type": "string" },
-        "planName": { "type": "string" },
-        "completedAt": { "type": "object" },
-        "exerciseCount": { "type": "number" },
-        "completedExercisesCount": { "type": "number" },
-        "duration": { "type": "number", "description": "Tempo em minutos" }
-      }
-    },
-    "BodyMeasurement": {
-      "title": "BodyMeasurement",
-      "type": "object",
-      "description": "Historical record of student physical measurements.",
-      "properties": {
-        "id": { "type": "string" },
-        "weight": { "type": "number" },
-        "height": { "type": "number" },
-        "bmi": { "type": "number" },
-        "createdAt": { "type": "object" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Workout entity."
+        },
+        "trainerId": {
+          "type": "string",
+          "description": "Reference to the Personal Trainer who created this workout. (Relationship: UserProfile (Trainer) 1:N Workout)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the workout routine."
+        },
+        "objective": {
+          "type": "string",
+          "description": "The primary fitness objective of this workout.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "The difficulty level of the workout.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedDurationMinutes": {
+          "type": "number",
+          "description": "The estimated duration of the workout in minutes."
+        },
+        "assignedStudentId": {
+          "type": "string",
+          "description": "Optional reference to the student this workout is specifically assigned to. If null, it's a general template. (Relationship: UserProfile (Student) 0:1 Workout)"
+        },
+        "assignedDate": {
+          "type": "string",
+          "description": "The date and time when this workout was assigned to a student, if applicable.",
+          "format": "date-time"
+        },
+        "allowPdfDownload": {
+          "type": "boolean",
+          "description": "Indicates if the student is allowed to download this workout as a PDF."
+        },
+        "workoutExerciseDetailIds": {
+          "type": "array",
+          "description": "References to WorkoutExerciseDetail entities included in this workout. (Relationship: Workout 1:N WorkoutExerciseDetail)",
+          "items": {
+            "type": "string"
+          }
+        }
       },
-      "required": ["weight", "height", "bmi", "createdAt"]
+      "required": [
+        "id",
+        "trainerId",
+        "name",
+        "objective",
+        "difficulty",
+        "estimatedDurationMinutes",
+        "workoutExerciseDetailIds",
+        "allowPdfDownload"
+      ]
+    },
+    "Exercise": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Exercise",
+      "type": "object",
+      "description": "Details for a single exercise, including instructional video and tips.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Exercise entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the exercise (e.g., 'Supino Reto')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A simple and didactic description of the exercise."
+        },
+        "videoUrl": {
+          "type": "string",
+          "description": "URL to the demonstrative video of the exercise.",
+          "format": "uri"
+        },
+        "executionTips": {
+          "type": "string",
+          "description": "Tips for proper execution and posture for the exercise."
+        },
+        "muscleGroupIds": {
+          "type": "array",
+          "description": "References to the primary MuscleGroup entities targeted by this exercise. (Relationship: MuscleGroup N:N Exercise)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "difficultyLevel": {
+          "type": "string",
+          "description": "The general difficulty level of the exercise.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an illustrative image of the exercise.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "videoUrl",
+        "executionTips",
+        "muscleGroupIds"
+      ]
+    },
+    "MuscleGroup": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MuscleGroup",
+      "type": "object",
+      "description": "Represents a category of muscles (e.g., Peito, Costas) used for organizing exercises and workouts.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MuscleGroup entity (e.g., 'chest', 'back')."
+        },
+        "name": {
+          "type": "string",
+          "description": "The display name of the muscle group (e.g., 'Peito', 'Costas')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the muscle group."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an illustrative image of the muscle group (e.g., body illustration).",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "NutritionalTipCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NutritionalTipCategory",
+      "type": "object",
+      "description": "Categories for organizing nutritional tips (e.g., Emagrecimento, Hipertrofia).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the NutritionalTipCategory entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the nutritional tip category."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of what this category covers."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "NutritionalTip": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NutritionalTip",
+      "type": "object",
+      "description": "Individual pieces of educational content providing nutritional guidance.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the NutritionalTip entity."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the NutritionalTipCategory this tip belongs to. (Relationship: NutritionalTipCategory 1:N NutritionalTip)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the nutritional tip."
+        },
+        "content": {
+          "type": "string",
+          "description": "The main body text of the nutritional tip."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional URL to an illustrative image for the tip.",
+          "format": "uri"
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to the UserProfile (Trainer or Admin) who created this tip. (Relationship: UserProfile 1:N NutritionalTip)"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the nutritional tip was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "categoryId",
+        "title",
+        "content",
+        "authorId",
+        "createdAt"
+      ]
+    },
+    "StudentWorkoutLog": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudentWorkoutLog",
+      "type": "object",
+      "description": "Records a student's completion and performance for a specific workout on a given date.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StudentWorkoutLog entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to the UserProfile (student) who performed the workout. (Relationship: UserProfile (Student) 1:N StudentWorkoutLog)"
+        },
+        "workoutId": {
+          "type": "string",
+          "description": "Reference to the Workout entity that was performed. (Relationship: Workout 1:N StudentWorkoutLog)"
+        },
+        "completionDate": {
+          "type": "string",
+          "description": "The date and time when the workout was completed or attempted.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The completion status of the workout.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "totalDurationMinutes": {
+          "type": "number",
+          "description": "The actual time taken by the student to complete the workout in minutes."
+        },
+        "studentWorkoutExercisePerformanceIds": {
+          "type": "array",
+          "description": "References to StudentWorkoutExercisePerformance entities detailing performance for each exercise. (Relationship: StudentWorkoutLog 1:N StudentWorkoutExercisePerformance)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "workoutId",
+        "completionDate",
+        "status"
+      ]
+    },
+    "StudentProgressMetric": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudentProgressMetric",
+      "type": "object",
+      "description": "Records a student's physical metrics over time for progress tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StudentProgressMetric entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to the UserProfile (student) whose metrics are being recorded. (Relationship: UserProfile (Student) 1:N StudentProgressMetric)"
+        },
+        "measurementDate": {
+          "type": "string",
+          "description": "The date and time when the measurements were taken.",
+          "format": "date-time"
+        },
+        "weightKg": {
+          "type": "number",
+          "description": "Student's weight in kilograms at the time of measurement."
+        },
+        "bodyFatPercentage": {
+          "type": "number",
+          "description": "Student's estimated body fat percentage."
+        },
+        "measurementsCm": {
+          "type": "array",
+          "description": "Key-value pairs for various body measurements in centimeters (e.g., 'armCircumference', 'waistCircumference').",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "measurementDate",
+        "weightKg"
+      ]
     },
     "Appointment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Appointment",
       "type": "object",
-      "description": "A scheduled event between trainer and student.",
+      "description": "Represents a scheduled appointment for a personal trainer, either with a student or for other professional activities.",
       "properties": {
-        "id": { "type": "string" },
-        "studentName": { "type": "string" },
-        "title": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "time": { "type": "string" },
-        "type": { "type": "string", "enum": ["presencial", "online"] },
-        "createdAt": { "type": "object" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Appointment entity."
+        },
+        "trainerId": {
+          "type": "string",
+          "description": "Reference to the Personal Trainer associated with this appointment. (Relationship: UserProfile (Trainer) 1:N Appointment)"
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Optional reference to the UserProfile (student) involved in the appointment, if applicable. (Relationship: UserProfile (Student) 0:1 Appointment)"
+        },
+        "dateTime": {
+          "type": "string",
+          "description": "The scheduled date and time of the appointment.",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of appointment.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes or description for the appointment."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the appointment.",
+          "format": "string",
+          "items": {
+            "type": "string"
+          }
+        }
       },
-      "required": ["studentName", "title", "date", "time", "type"]
+      "required": [
+        "id",
+        "trainerId",
+        "dateTime",
+        "type",
+        "status"
+      ]
+    },
+    "WorkoutExerciseDetail": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WorkoutExerciseDetail",
+      "type": "object",
+      "description": "Details for a specific exercise within a workout routine.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WorkoutExerciseDetail entity."
+        },
+        "workoutId": {
+          "type": "string",
+          "description": "Reference to the Workout entity this detail belongs to. (Relationship: Workout 1:N WorkoutExerciseDetail)"
+        },
+        "exerciseId": {
+          "type": "string",
+          "description": "Reference to the Exercise entity. (Relationship: Exercise 1:N WorkoutExerciseDetail)"
+        },
+        "sets": {
+          "type": "number",
+          "description": "Number of sets for this exercise in the workout."
+        },
+        "repetitions": {
+          "type": "string",
+          "description": "Number of repetitions for this exercise (e.g., '10-12', 'Até a falha')."
+        },
+        "restSeconds": {
+          "type": "number",
+          "description": "Rest time in seconds between sets for this exercise."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Specific notes for this exercise within the workout."
+        }
+      },
+      "required": [
+        "id",
+        "workoutId",
+        "exerciseId",
+        "sets",
+        "repetitions",
+        "restSeconds"
+      ]
+    },
+    "StudentWorkoutExercisePerformance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "StudentWorkoutExercisePerformance",
+      "type": "object",
+      "description": "Records a student's performance for a single exercise within a logged workout session.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the StudentWorkoutExercisePerformance entity."
+        },
+        "studentWorkoutLogId": {
+          "type": "string",
+          "description": "Reference to the StudentWorkoutLog entity this performance belongs to. (Relationship: StudentWorkoutLog 1:N StudentWorkoutExercisePerformance)"
+        },
+        "exerciseId": {
+          "type": "string",
+          "description": "Reference to the Exercise entity. (Relationship: Exercise 1:N StudentWorkoutExercisePerformance)"
+        },
+        "setsCompleted": {
+          "type": "number",
+          "description": "Number of sets actually completed by the student."
+        },
+        "repetitionsCompleted": {
+          "type": "string",
+          "description": "Repetitions actually completed (e.g., '10-12', '8')."
+        },
+        "weightUsedKg": {
+          "type": "number",
+          "description": "Weight used in kilograms for this exercise, if applicable."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Student's personal notes or feedback on this exercise."
+        }
+      },
+      "required": [
+        "id",
+        "studentWorkoutLogId",
+        "exerciseId",
+        "setsCompleted",
+        "repetitionsCompleted"
+      ]
     }
   },
   "auth": {
-    "providers": ["password", "anonymous"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": { "$ref": "#/entities/User" },
-      "description": "User profiles"
-    },
-    "/users/{userId}/trainingPlans/{planId}": {
-      "schema": { "$ref": "#/entities/TrainingPlan" },
-      "description": "Workouts assigned to users"
-    },
-    "/users/{userId}/dietSuggestions/{suggestionId}": {
-      "schema": { "$ref": "#/entities/DietSuggestion" },
-      "description": "Dietary guidance for students"
-    },
-    "/users/{userId}/workoutHistory/{historyId}": {
-      "schema": { "$ref": "#/entities/WorkoutHistory" },
-      "description": "Records of completed workouts"
-    },
-    "/users/{userId}/bodyMeasurements/{measurementId}": {
-      "schema": { "$ref": "#/entities/BodyMeasurement" },
-      "description": "Physical assessment history for evolution tracking"
-    },
-    "/users/{userId}/appointments/{appointmentId}": {
-      "schema": { "$ref": "#/entities/Appointment" },
-      "description": "Trainer scheduled appointments"
-    }
+    "structure": [
+      {
+        "path": "/adminRoles/{adminUid}",
+        "definition": {
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "A collection used for explicit role-based access control for administrators. Each document indicates a user with administrative privileges. This supports efficient existence checks in security rules to determine if a user is an admin. Documents typically contain minimal data, e.g., { exists: true }.",
+          "params": [
+            {
+              "name": "adminUid",
+              "description": "The unique user ID (UID) of an administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profiles for all user types (admin, trainer, student). For students, includes 'trainerId' (denormalized from their associated trainer) to facilitate direct trainer access and queries. Also includes 'status', 'paymentDueDate', 'monthlyFee', and 'planStartDate' for financial and access control.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique user ID (UID) of the user, corresponding to their Firebase Authentication UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/trainingPlans/{planId}",
+        "definition": {
+          "entityName": "TrainingPlan",
+          "schema": {
+            "$ref": "#/backend/entities/TrainingPlan"
+          },
+          "description": "A global collection of available training plans, accessible by all users to view, and editable by administrators or trainers.",
+          "params": [
+            {
+              "name": "planId",
+              "description": "The unique identifier for a specific training plan."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/exercises/{exerciseId}",
+        "definition": {
+          "entityName": "Exercise",
+          "schema": {
+            "$ref": "#/backend/entities/Exercise"
+          },
+          "description": "A global library of exercises with details and instructional content. Read-only for students and trainers, editable by trainers and administrators.",
+          "params": [
+            {
+              "name": "exerciseId",
+              "description": "The unique identifier for a specific exercise."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/muscleGroups/{muscleGroupId}",
+        "definition": {
+          "entityName": "MuscleGroup",
+          "schema": {
+            "$ref": "#/backend/entities/MuscleGroup"
+          },
+          "description": "A global collection of muscle groups for organizing exercises. Read-only for all users, editable by administrators.",
+          "params": [
+            {
+              "name": "muscleGroupId",
+              "description": "The unique identifier for a specific muscle group."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/nutritionalTipCategories/{categoryId}",
+        "definition": {
+          "entityName": "NutritionalTipCategory",
+          "schema": {
+            "$ref": "#/backend/entities/NutritionalTipCategory"
+          },
+          "description": "A global collection of categories for nutritional tips. Read-only for all users, editable by administrators.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for a nutritional tip category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/nutritionalTips/{tipId}",
+        "definition": {
+          "entityName": "NutritionalTip",
+          "schema": {
+            "$ref": "#/backend/entities/NutritionalTip"
+          },
+          "description": "A global collection of nutritional tips. Includes 'authorId' (the trainer or admin who created it) for ownership and security rules. Read-only for students and trainers, editable by trainers and administrators.",
+          "params": [
+            {
+              "name": "tipId",
+              "description": "The unique identifier for a specific nutritional tip."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{trainerId}/workoutTemplates/{workoutTemplateId}",
+        "definition": {
+          "entityName": "Workout",
+          "schema": {
+            "$ref": "#/backend/entities/Workout"
+          },
+          "description": "Workouts created by a trainer as general templates, not yet assigned to any student. The 'trainerId' is derived from the path and also explicitly stored in the document. The 'assignedStudentId' field should be null or undefined for these documents.",
+          "params": [
+            {
+              "name": "trainerId",
+              "description": "The unique user ID (UID) of the personal trainer who owns this workout template."
+            },
+            {
+              "name": "workoutTemplateId",
+              "description": "The unique identifier for a specific workout template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{trainerId}/workoutTemplates/{workoutTemplateId}/workoutExerciseDetails/{detailId}",
+        "definition": {
+          "entityName": "WorkoutExerciseDetail",
+          "schema": {
+            "$ref": "#/backend/entities/WorkoutExerciseDetail"
+          },
+          "description": "Details of exercises within a specific workout template. Each document includes 'trainerId' (denormalized from the parent workout template) for authorization independence.",
+          "params": [
+            {
+              "name": "trainerId",
+              "description": "The unique user ID (UID) of the personal trainer who owns the parent workout template."
+            },
+            {
+              "name": "workoutTemplateId",
+              "description": "The unique identifier for the parent workout template."
+            },
+            {
+              "name": "detailId",
+              "description": "The unique identifier for a specific workout exercise detail within the template."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{studentId}/assignedWorkouts/{assignedWorkoutId}",
+        "definition": {
+          "entityName": "Workout",
+          "schema": {
+            "$ref": "#/backend/entities/Workout"
+          },
+          "description": "Workouts specifically assigned to a student. Each document includes 'trainerId' (denormalized from the student's UserProfile) and 'assignedStudentId' (matching 'studentId' from the path) for authorization independence. Only the 'trainerId' can modify, and both the 'studentId' and 'trainerId' can read.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique user ID (UID) of the student to whom this workout is assigned."
+            },
+            {
+              "name": "assignedWorkoutId",
+              "description": "The unique identifier for this specific assigned workout instance."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{studentId}/assignedWorkouts/{assignedWorkoutId}/workoutExerciseDetails/{detailId}",
+        "definition": {
+          "entityName": "WorkoutExerciseDetail",
+          "schema": {
+            "$ref": "#/backend/entities/WorkoutExerciseDetail"
+          },
+          "description": "Details of exercises within an assigned workout. Each document includes 'trainerId' and 'studentId' (denormalized from the parent assigned workout) for authorization independence. Only the 'trainerId' can modify, and both the 'studentId' and 'trainerId' can read.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique user ID (UID) of the student to whom the parent assigned workout belongs."
+            },
+            {
+              "name": "assignedWorkoutId",
+              "description": "The unique identifier for the parent assigned workout."
+            },
+            {
+              "name": "detailId",
+              "description": "The unique identifier for a specific workout exercise detail within the assigned workout."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{trainerId}/appointments/{appointmentId}",
+        "definition": {
+          "entityName": "Appointment",
+          "schema": {
+            "$ref": "#/backend/entities/Appointment"
+          },
+          "description": "Appointments scheduled by a specific trainer. The 'trainerId' is derived from the path. If applicable, 'studentId' is included in the document. Only the 'trainerId' can manage, and the 'studentId' (if involved) can read.",
+          "params": [
+            {
+              "name": "trainerId",
+              "description": "The unique user ID (UID) of the personal trainer who scheduled this appointment."
+            },
+            {
+              "name": "appointmentId",
+              "description": "The unique identifier for a specific appointment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{studentId}/studentProgressMetrics/{metricId}",
+        "definition": {
+          "entityName": "StudentProgressMetric",
+          "schema": {
+            "$ref": "#/backend/entities/StudentProgressMetric"
+          },
+          "description": "Records a student's physical progress metrics over time. Each document includes 'trainerId' (denormalized from the student's UserProfile) for authorization independence. The student can read, and their 'trainerId' can read and write.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique user ID (UID) of the student whose progress is being tracked."
+            },
+            {
+              "name": "metricId",
+              "description": "The unique identifier for a specific progress metric entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{studentId}/studentWorkoutLogs/{logId}",
+        "definition": {
+          "entityName": "StudentWorkoutLog",
+          "schema": {
+            "$ref": "#/backend/entities/StudentWorkoutLog"
+          },
+          "description": "Records a student's completion and performance for workouts. Each document includes 'trainerId' (denormalized from the student's UserProfile) for authorization independence. The student can read and write, and their 'trainerId' can read.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique user ID (UID) of the student who performed the workout."
+            },
+            {
+              "name": "logId",
+              "description": "The unique identifier for a specific student workout log entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{studentId}/studentWorkoutLogs/{logId}/studentWorkoutExercisePerformances/{performanceId}",
+        "definition": {
+          "entityName": "StudentWorkoutExercisePerformance",
+          "schema": {
+            "$ref": "#/backend/entities/StudentWorkoutExercisePerformance"
+          },
+          "description": "Records a student's performance for individual exercises within a logged workout session. Each document includes 'trainerId' and 'studentId' (denormalized from the parent student workout log) for authorization independence. The student can read and write, and their 'trainerId' can read.",
+          "params": [
+            {
+              "name": "studentId",
+              "description": "The unique user ID (UID) of the student who performed the exercise."
+            },
+            {
+              "name": "logId",
+              "description": "The unique identifier for the parent student workout log."
+            },
+            {
+              "name": "performanceId",
+              "description": "The unique identifier for a specific exercise performance within the log."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to be secure, scalable, and highly debuggable, strictly adhering to the core design principles. The primary strategy employed is **Authorization Independence via Denormalization** (Strategy A) and **Structural Segregation** (Strategy B) to simplify Firestore security rules and enable efficient queries (QAPs).\n\n**Authorization Independence:**\n*   **Trainer-Student Relationship:** For data specific to a student but managed by a trainer (e.g., assigned workouts, student progress, workout logs), the `trainerId` is explicitly denormalized into each relevant document. This means a student's `UserProfile` will store their `trainerId`. Subsequently, collections under `/users/{studentId}/...` (like `assignedWorkouts`, `studentProgressMetrics`, `studentWorkoutLogs`) will have the student's `trainerId` copied directly into their documents. This eliminates the need for `get()` calls to a parent document (e.g., `get(/users/$(studentId))`) within security rules to determine the student's trainer, making rules atomic, faster, and easier to debug.\n*   **Nested Data:** For subcollections like `workoutExerciseDetails` or `studentWorkoutExercisePerformances`, the authorization context (`trainerId` and `studentId` from their respective parent documents) is also denormalized into each individual detail document. This ensures that every document is self-authorizing and can be validated without querying its parent.\n\n**Structural Segregation for QAPs (Queries, Aggregations, Permissions):**\n*   **User Profiles (`/users/{userId}`):** All user profiles (admin, trainer, student) are in a single collection. Access is controlled by `userId == request.auth.uid` for personal data, and `userType` checks or `trainerId` lookups for broader access. Trainers can `list` their students by querying `userType == 'student'` and `trainerId == request.auth.uid`, satisfying the need for the '/trainer/students' page without filtering in rules.\n*   **Trainer Templates vs. Assigned Workouts:** Workouts are logically split into `workoutTemplates` (trainer-owned, not assigned to a specific student) and `assignedWorkouts` (student-owned, a personalized instance for a specific student). This segregation allows trainers to `list` their templates easily, and students to `list` only their assigned workouts, while trainers can also `list` all assigned workouts for their students. The denormalized `trainerId` within `assignedWorkouts` documents facilitates the trainer's QAPs.\n*   **Student-Specific Data:** All historical and performance-related student data (`studentProgressMetrics`, `studentWorkoutLogs`) is organized under `/users/{studentId}/...`. This path-based ownership, combined with denormalized `trainerId` in each document, makes it simple to write rules that allow either the `studentId` or their `trainerId` to read this data, and enables efficient queries by either ID.\n*   **Global Reference Data:** Entities like `TrainingPlans`, `Exercises`, `MuscleGroups`, and `NutritionalTips` are stored in root-level collections, signifying their global accessibility (read-only for most users, write for admin/trainer). This clear separation prevents mixing different security postures within a single collection.\n\nThis architecture minimizes rule complexity by moving authorization logic into the data structure itself through strategic denormalization and segregation. It ensures that common queries for dashboards and lists can be performed efficiently using standard Firestore queries (e.g., `where('trainerId', '==', request.auth.uid)`), without relying on client-side filtering or slow, insecure `get()` operations in security rules."
   }
 }

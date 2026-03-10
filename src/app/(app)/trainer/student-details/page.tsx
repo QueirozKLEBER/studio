@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
@@ -30,7 +31,8 @@ import {
   Activity,
   Zap,
   CheckCircle2,
-  DollarSign
+  DollarSign,
+  Edit2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -44,6 +46,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 
 function StudentDetailsContent() {
   const searchParams = useSearchParams();
@@ -51,8 +54,14 @@ function StudentDetailsContent() {
   const db = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  
   const [isUpdating, setIsUpdating] = useState(false);
   const [mounted, setMounted] = useState(false);
+  
+  // Estados para edição financeira
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [editFee, setEditFee] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -65,6 +74,14 @@ function StudentDetailsContent() {
   const { data: student, isLoading } = useDoc(studentRef);
   const { data: measurements } = useCollection(measurementsQuery);
   const { data: history } = useCollection(workoutHistoryQuery);
+
+  // Inicializa campos de edição quando o modal abre
+  useEffect(() => {
+    if (student) {
+      setEditFee(student.monthlyFee?.toString() || '0');
+      setEditDueDate(student.paymentDueDate || '');
+    }
+  }, [student, isBillingModalOpen]);
 
   const handleUpdateStatus = async (newStatus: string) => {
     if (!studentRef) return;
@@ -79,11 +96,27 @@ function StudentDetailsContent() {
     }
   };
 
+  const handleSaveBilling = async () => {
+    if (!studentRef) return;
+    setIsUpdating(true);
+    try {
+      await updateDoc(studentRef, {
+        monthlyFee: Number(editFee),
+        paymentDueDate: editDueDate
+      });
+      toast({ title: "Dados Financeiros Atualizados!" });
+      setIsBillingModalOpen(false);
+    } catch (e) {
+      toast({ variant: 'destructive', title: "Erro ao salvar dados financeiros" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleConfirmPayment = async () => {
     if (!studentRef || !student) return;
     setIsUpdating(true);
     try {
-      // Renova o vencimento para 30 dias a partir de hoje
       const nextDue = new Date();
       nextDue.setDate(nextDue.getDate() + 30);
       
@@ -320,22 +353,51 @@ function StudentDetailsContent() {
 
             <TabsContent value="financial">
               <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
-                <CardHeader className="bg-white/5 p-8 border-b border-white/5">
-                  <CardTitle className="text-xl font-black uppercase text-white tracking-widest">Controle de Faturamento</CardTitle>
-                  <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Ajuste valores mensais e valide recebimentos.</CardDescription>
+                <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-black uppercase text-white tracking-widest">Controle de Faturamento</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Ajuste valores mensais e valide recebimentos.</CardDescription>
+                  </div>
+                  <Dialog open={isBillingModalOpen} onOpenChange={setIsBillingModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="rounded-xl border-white/10 text-white hover:bg-primary uppercase font-black text-[10px]">
+                        <Edit2 className="h-3 w-3 mr-2" /> Ajustar Dados
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem]">
+                      <DialogHeader>
+                        <DialogTitle className="uppercase font-black">Ajustar Faturamento</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label className="uppercase text-[10px] font-black opacity-40">Valor da Mensalidade (R$)</Label>
+                          <Input type="number" value={editFee} onChange={(e) => setEditFee(e.target.value)} className="bg-white/5 border-none h-12 rounded-xl font-bold" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="uppercase text-[10px] font-black opacity-40">Próximo Vencimento</Label>
+                          <Input type="date" value={editDueDate} onChange={(e) => setEditDueDate(e.target.value)} className="bg-white/5 border-none h-12 rounded-xl font-bold" />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleSaveBilling} disabled={isUpdating} className="w-full bg-primary h-14 rounded-2xl font-black uppercase">
+                          {isUpdating ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </CardHeader>
-                <CardContent className="p-10 space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <CardContent className="p-8 space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest ml-1">Próximo Vencimento</Label>
-                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-xl tracking-tight">
+                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-lg tracking-tight">
                         <Calendar className="h-5 w-5 text-primary mr-3" />
                         {student.paymentDueDate ? new Date(student.paymentDueDate).toLocaleDateString('pt-BR') : 'NÃO DEFINIDO'}
                       </div>
                     </div>
                     <div className="space-y-3">
                       <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest ml-1">Valor da Mensalidade</Label>
-                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-xl tracking-tight">
+                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-lg tracking-tight">
                         <DollarSign className="h-5 w-5 text-primary mr-3" />
                         R$ {Number(student.monthlyFee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>
@@ -343,31 +405,31 @@ function StudentDetailsContent() {
                   </div>
 
                   <div className={cn(
-                    "p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-8 transition-colors",
+                    "p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 transition-colors",
                     isExpired || student.status === 'blocked' 
-                      ? "bg-primary/10 border border-primary/20 shadow-[0_0_50px_rgba(255,0,0,0.1)]" 
-                      : "bg-green-500/10 border border-green-500/20 shadow-[0_0_50px_rgba(34,197,94,0.1)]"
+                      ? "bg-primary/10 border border-primary/20" 
+                      : "bg-green-500/10 border border-green-500/20"
                   )}>
-                    <div className="flex items-center gap-6 text-center md:text-left">
+                    <div className="flex items-center gap-5 text-center md:text-left">
                       <div className={cn(
-                        "h-16 w-16 rounded-[1.5rem] flex items-center justify-center shadow-lg",
+                        "h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg shrink-0",
                         isExpired || student.status === 'blocked' ? "bg-primary text-white" : "bg-green-500 text-white"
                       )}>
-                        {isExpired || student.status === 'blocked' ? <AlertTriangle className="h-8 w-8 stroke-[2.5px]" /> : <ShieldCheck className="h-8 w-8 stroke-[2.5px]" />}
+                        {isExpired || student.status === 'blocked' ? <AlertTriangle className="h-7 w-7 stroke-[2.5px]" /> : <ShieldCheck className="h-7 w-7 stroke-[2.5px]" />}
                       </div>
                       <div>
-                        <p className="font-black text-white uppercase text-xl tracking-tighter">Status da Assinatura</p>
-                        <p className={cn("text-xs font-black uppercase tracking-widest mt-1", isExpired || student.status === 'blocked' ? "text-primary" : "text-green-500")}>
-                          {student.status === 'blocked' ? 'BLOQUEADO PELO PROFESSOR' : isExpired ? 'PAGAMENTO EM ATRASO' : 'MENSALIDADE EM DIA'}
+                        <p className="font-black text-white uppercase text-lg tracking-tighter">Status da Assinatura</p>
+                        <p className={cn("text-[10px] font-black uppercase tracking-widest mt-1", isExpired || student.status === 'blocked' ? "text-primary" : "text-green-500")}>
+                          {student.status === 'blocked' ? 'ACESSO SUSPENSO' : isExpired ? 'PAGAMENTO EM ATRASO' : 'MENSALIDADE EM DIA'}
                         </p>
                       </div>
                     </div>
                     <Button 
                       onClick={handleConfirmPayment} 
                       disabled={isUpdating}
-                      className="w-full md:w-auto h-16 px-10 font-black bg-white text-black hover:bg-white/90 shadow-2xl rounded-2xl text-base tracking-tight uppercase transition-all active:scale-95" 
+                      className="w-full md:w-auto h-14 px-8 font-black bg-white text-black hover:bg-white/90 shadow-xl rounded-xl text-xs tracking-tight uppercase transition-all active:scale-95" 
                     >
-                      {isUpdating ? <Loader2 className="animate-spin h-6 w-6" /> : <><CreditCard className="mr-3 h-6 w-6" /> CONFIRMAR PAGAMENTO</>}
+                      {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <><CreditCard className="mr-2 h-5 w-5" /> CONFIRMAR PAGAMENTO</>}
                     </Button>
                   </div>
                 </CardContent>

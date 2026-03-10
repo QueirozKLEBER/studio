@@ -829,7 +829,7 @@ function StudentDetailsContent() {
                     </div>
                     <div className="space-y-3">
                       <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest ml-1">Valor da Mensalidade</Label>
-                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-lg tracking-tight">
+                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-xl tracking-tight">
                         <DollarSign className="h-5 w-5 text-primary mr-3" />
                         R$ {Number(student.monthlyFee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>

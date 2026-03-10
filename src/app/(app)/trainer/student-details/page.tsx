@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
@@ -29,7 +28,8 @@ import {
   Phone,
   Clock,
   Activity,
-  Zap
+  Zap,
+  CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -42,6 +42,7 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 function StudentDetailsContent() {
   const searchParams = useSearchParams();
@@ -99,12 +100,17 @@ function StudentDetailsContent() {
   };
 
   const reportStats = useMemo(() => {
-    if (!history) return { totalTime: 0, sessionsWeek: 0, completionRate: 0 };
+    if (!history) return { totalTime: 0, sessionsWeek: 0 };
     
     const totalTime = history.reduce((acc, h) => acc + (Number(h.duration) || 0), 0);
     const now = new Date();
-    const weekAgo = new Date(now.setDate(now.getDate() - 7));
-    const sessionsWeek = history.filter(h => h.completedAt?.toDate() >= weekAgo).length;
+    const weekAgo = new Date();
+    weekAgo.setDate(now.getDate() - 7);
+    
+    const sessionsWeek = history.filter(h => {
+      const date = h.completedAt?.toDate ? h.completedAt.toDate() : null;
+      return date && date >= weekAgo;
+    }).length;
     
     return { totalTime, sessionsWeek };
   }, [history]);
@@ -134,7 +140,7 @@ function StudentDetailsContent() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Coluna Lateral: Resumo */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl overflow-hidden">
+          <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 shadow-2xl overflow-hidden">
             <CardContent className="p-8 flex flex-col items-center text-center">
               <div className="h-24 w-24 rounded-[2rem] bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-4xl font-black text-primary mb-6 shadow-2xl">
                 {student.firstName?.[0]}
@@ -142,11 +148,11 @@ function StudentDetailsContent() {
               <h3 className="text-2xl font-black text-white uppercase tracking-tight">{student.fullName}</h3>
               <div className="flex flex-col gap-1 mt-2 mb-6">
                 <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                  <Mail className="h-3 w-3" /> {student.email}
+                  <Mail className="h-3 w-3 text-primary" /> {student.email}
                 </p>
                 {student.phone && (
                   <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                    <Phone className="h-3 w-3" /> {student.phone}
+                    <Phone className="h-3 w-3 text-primary" /> {student.phone}
                   </p>
                 )}
               </div>
@@ -160,30 +166,41 @@ function StudentDetailsContent() {
                   <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
                   <Badge variant="outline" className={cn(
                     "text-[8px] font-black uppercase mt-1",
-                    isExpired ? "border-primary text-primary" : "border-green-500/30 text-green-500"
+                    isExpired || student.status === 'blocked' ? "border-primary text-primary" : "border-green-500/30 text-green-500"
                   )}>
-                    {isExpired ? 'INADIMPLENTE' : 'EM DIA'}
+                    {student.status === 'blocked' ? 'BLOQUEADO' : isExpired ? 'INADIMPLENTE' : 'EM DIA'}
                   </Badge>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl p-6 space-y-4">
-            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest px-2">Ações Rápidas</h4>
+          <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 shadow-2xl p-6 space-y-4">
+            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest px-2">Ações de Gestão</h4>
             <div className="flex flex-col gap-3">
-              <Button asChild className="w-full h-14 rounded-2xl bg-primary font-black uppercase shadow-lg shadow-primary/20">
+              <Button asChild className="w-full h-16 rounded-2xl bg-primary font-black uppercase shadow-xl shadow-primary/20 hover:bg-primary/90">
                 <Link href={`/trainer/workouts/builder?studentId=${id}`}>
-                  <Dumbbell className="mr-2 h-5 w-5" /> MONTAR TREINO
+                  <Dumbbell className="mr-2 h-5 w-5 stroke-[3px]" /> ATUALIZAR TREINO
                 </Link>
               </Button>
+              
               {student.status === 'blocked' || isExpired ? (
-                <Button onClick={() => handleUpdateStatus('active')} variant="outline" className="w-full h-14 rounded-2xl border-green-500/30 text-green-500 font-black uppercase hover:bg-green-500/10">
-                  <ShieldCheck className="mr-2 h-5 w-5" /> LIBERAR ACESSO
+                <Button 
+                  onClick={() => handleUpdateStatus('active')} 
+                  disabled={isUpdating}
+                  variant="outline" 
+                  className="w-full h-14 rounded-2xl border-green-500/30 text-green-500 font-black uppercase hover:bg-green-500/10"
+                >
+                  {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <ShieldCheck className="mr-2 h-5 w-5" />} LIBERAR ACESSO
                 </Button>
               ) : (
-                <Button onClick={() => handleUpdateStatus('blocked')} variant="outline" className="w-full h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase hover:bg-primary/10 hover:text-primary">
-                  <ShieldBan className="mr-2 h-5 w-5" /> BLOQUEAR ALUNO
+                <Button 
+                  onClick={() => handleUpdateStatus('blocked')} 
+                  disabled={isUpdating}
+                  variant="outline" 
+                  className="w-full h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase hover:bg-primary/10 hover:text-primary transition-all"
+                >
+                  {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <ShieldBan className="mr-2 h-5 w-5" />} BLOQUEAR ALUNO
                 </Button>
               )}
             </div>
@@ -207,77 +224,93 @@ function StudentDetailsContent() {
 
             <TabsContent value="report" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card className="rounded-[2rem] bg-card border border-white/5 p-6 flex items-center gap-4">
+                <Card className="rounded-[2rem] bg-[#1a1d24] border border-white/5 p-8 flex items-center gap-5 shadow-xl">
                   <div className="p-4 rounded-2xl bg-primary/10 text-primary">
-                    <Clock className="h-6 w-6" />
+                    <Clock className="h-7 w-7" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Tempo Total de Treino</p>
-                    <p className="text-2xl font-black text-white">{reportStats.totalTime} <span className="text-xs">min</span></p>
+                    <p className="text-3xl font-black text-white">{reportStats.totalTime} <span className="text-xs font-bold text-primary">min</span></p>
                   </div>
                 </Card>
-                <Card className="rounded-[2rem] bg-card border border-white/5 p-6 flex items-center gap-4">
+                <Card className="rounded-[2rem] bg-[#1a1d24] border border-white/5 p-8 flex items-center gap-5 shadow-xl">
                   <div className="p-4 rounded-2xl bg-green-500/10 text-green-500">
-                    <Calendar className="h-6 w-6" />
+                    <CheckCircle2 className="h-7 w-7" />
                   </div>
                   <div>
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Frequência Semanal</p>
-                    <p className="text-2xl font-black text-white">{reportStats.sessionsWeek} <span className="text-xs">sessões</span></p>
+                    <p className="text-3xl font-black text-white">{reportStats.sessionsWeek} <span className="text-xs font-bold text-green-500">sessões</span></p>
                   </div>
                 </Card>
               </div>
 
-              <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden">
+              <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8 border-b border-white/5">
-                  <CardTitle className="text-sm font-black uppercase text-white">Últimas Atividades</CardTitle>
+                  <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Últimas Atividades Registradas</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   {history && history.length > 0 ? (
                     history.map(log => (
-                      <div key={log.id} className="p-6 flex items-center justify-between border-b border-white/5 last:border-0">
-                        <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center text-primary">
-                            <Zap className="h-5 w-5" />
+                      <div key={log.id} className="p-8 flex items-center justify-between border-b border-white/5 last:border-0 hover:bg-white/[0.01] transition-colors">
+                        <div className="flex items-center gap-5">
+                          <div className="h-12 w-12 rounded-xl bg-white/5 flex items-center justify-center text-primary shadow-inner">
+                            <Zap className="h-6 w-6" />
                           </div>
                           <div>
-                            <p className="font-black text-white uppercase text-sm">{log.planName || 'Treino'}</p>
-                            <p className="text-[10px] font-bold text-white/20 uppercase">{log.completedAt?.toDate().toLocaleString('pt-BR')}</p>
+                            <p className="font-black text-white uppercase text-base tracking-tight">{log.planName || 'Treino'}</p>
+                            <p className="text-[10px] font-bold text-white/20 uppercase mt-1">Concluído em {log.completedAt?.toDate().toLocaleString('pt-BR')}</p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[8px]">
+                        <Badge variant="outline" className="border-primary/20 text-primary font-black uppercase text-[10px] px-4 py-1.5 bg-primary/5 rounded-full">
                           {log.duration} MIN
                         </Badge>
                       </div>
                     ))
                   ) : (
-                    <div className="p-12 text-center text-white/20 uppercase font-black text-[10px] tracking-widest italic">Nenhum treino realizado ainda.</div>
+                    <div className="p-24 text-center">
+                      <div className="h-16 w-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <History className="h-8 w-8 text-white/10" />
+                      </div>
+                      <div className="text-white/20 uppercase font-black text-[10px] tracking-widest italic">Nenhum treino realizado ainda.</div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="evolution">
-              <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden shadow-2xl">
+              <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8 pb-4">
-                  <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3">
-                    <Scale className="h-6 w-6 text-primary" /> Curva de Peso
+                  <CardTitle className="text-xl font-black uppercase text-white flex items-center gap-3 tracking-tighter">
+                    <Scale className="h-6 w-6 text-primary" /> Histórico de Peso
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 h-[350px]">
+                <CardContent className="p-8 h-[400px]">
                   {chartData.length > 1 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
-                        <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={10} stroke="#ffffff40" fontWeight="900" />
+                        <XAxis dataKey="date" axisLine={false} tickLine={false} fontSize={10} stroke="#ffffff40" fontWeight="900" dy={10} />
                         <YAxis axisLine={false} tickLine={false} fontSize={10} stroke="#ffffff40" fontWeight="900" domain={['dataMin - 5', 'dataMax + 5']} />
-                        <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', borderRadius: '16px', border: '1px solid #333' }} />
-                        <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 4, fill: "hsl(var(--primary))" }} />
+                        <Tooltip contentStyle={{ backgroundColor: '#1a1d24', borderRadius: '24px', border: '1px solid rgba(255,0,0,0.2)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="weight" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={5} 
+                          dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 3, stroke: "#1a1d24" }} 
+                          activeDot={{ r: 10, strokeWidth: 0 }}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center opacity-20 text-center gap-4">
-                      <TrendingUp className="h-12 w-12" />
-                      <p className="text-[10px] font-black uppercase tracking-widest max-w-[200px]">Sem registros de medidas suficientes para gerar o gráfico.</p>
+                    <div className="h-full flex flex-col items-center justify-center opacity-20 text-center gap-6">
+                      <div className="p-10 rounded-full bg-white/5">
+                        <TrendingUp className="h-16 w-16" />
+                      </div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] max-w-[250px] leading-relaxed">
+                        Sem registros de medidas suficientes para gerar a curva de performance.
+                      </p>
                     </div>
                   )}
                 </CardContent>
@@ -285,42 +318,55 @@ function StudentDetailsContent() {
             </TabsContent>
 
             <TabsContent value="financial">
-              <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden shadow-2xl">
-                <CardHeader className="bg-white/5 p-8">
-                  <CardTitle className="text-xl font-black uppercase text-white">Configurações de Faturamento</CardTitle>
-                  <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Ajuste valores e valide pagamentos.</CardDescription>
+              <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
+                <CardHeader className="bg-white/5 p-8 border-b border-white/5">
+                  <CardTitle className="text-xl font-black uppercase text-white tracking-widest">Controle de Faturamento</CardTitle>
+                  <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Ajuste valores mensais e valide recebimentos.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-8 space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Próximo Vencimento</Label>
-                      <div className="h-14 bg-white/5 rounded-xl border border-white/5 flex items-center px-4 font-black text-white">
+                <CardContent className="p-10 space-y-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-3">
+                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest ml-1">Próximo Vencimento</Label>
+                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-xl tracking-tight">
+                        <Calendar className="h-5 w-5 text-primary mr-3" />
                         {student.paymentDueDate ? new Date(student.paymentDueDate).toLocaleDateString('pt-BR') : 'NÃO DEFINIDO'}
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Valor Mensal (R$)</Label>
-                      <div className="h-14 bg-white/5 rounded-xl border border-white/5 flex items-center px-4 font-black text-white">
-                        R$ {Number(student.monthlyFee || 0).toFixed(2)}
+                    <div className="space-y-3">
+                      <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest ml-1">Valor da Mensalidade</Label>
+                      <div className="h-16 bg-white/5 rounded-2xl border border-white/5 flex items-center px-6 font-black text-white text-xl tracking-tight">
+                        <DollarSign className="h-5 w-5 text-primary mr-3" />
+                        R$ {Number(student.monthlyFee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>
                     </div>
                   </div>
 
                   <div className={cn(
-                    "p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6",
-                    isExpired ? "bg-primary/10 border border-primary/20" : "bg-green-500/10 border border-green-500/20"
+                    "p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-8 transition-colors",
+                    isExpired || student.status === 'blocked' 
+                      ? "bg-primary/10 border border-primary/20 shadow-[0_0_50px_rgba(255,0,0,0.1)]" 
+                      : "bg-green-500/10 border border-green-500/20 shadow-[0_0_50px_rgba(34,197,94,0.1)]"
                   )}>
-                    <div className="flex items-center gap-4 text-center md:text-left">
-                      {isExpired ? <AlertTriangle className="h-8 w-8 text-primary" /> : <ShieldCheck className="h-8 w-8 text-green-500" />}
+                    <div className="flex items-center gap-6 text-center md:text-left">
+                      <div className={cn(
+                        "h-16 w-16 rounded-[1.5rem] flex items-center justify-center shadow-lg",
+                        isExpired || student.status === 'blocked' ? "bg-primary text-white" : "bg-green-500 text-white"
+                      )}>
+                        {isExpired || student.status === 'blocked' ? <AlertTriangle className="h-8 w-8 stroke-[2.5px]" /> : <ShieldCheck className="h-8 w-8 stroke-[2.5px]" />}
+                      </div>
                       <div>
-                        <p className="font-black text-white uppercase tracking-tight">Status da Assinatura</p>
-                        <p className={cn("text-xs font-bold uppercase", isExpired ? "text-primary" : "text-green-500")}>
-                          {isExpired ? 'PAGAMENTO EM ATRASO' : 'MENSALIDADE EM DIA'}
+                        <p className="font-black text-white uppercase text-xl tracking-tighter">Status da Assinatura</p>
+                        <p className={cn("text-xs font-black uppercase tracking-widest mt-1", isExpired || student.status === 'blocked' ? "text-primary" : "text-green-500")}>
+                          {student.status === 'blocked' ? 'BLOQUEADO PELO PROFESSOR' : isExpired ? 'PAGAMENTO EM ATRASO' : 'MENSALIDADE EM DIA'}
                         </p>
                       </div>
                     </div>
-                    <Button onClick={handleConfirmPayment} className="w-full md:w-auto h-14 px-8 font-black bg-white text-black hover:bg-white/90 shadow-xl rounded-2xl" disabled={isUpdating}>
-                      {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <CreditCard className="mr-2 h-5 w-5" />} CONFIRMAR RECEBIMENTO
+                    <Button 
+                      onClick={handleConfirmPayment} 
+                      disabled={isUpdating}
+                      className="w-full md:w-auto h-16 px-10 font-black bg-white text-black hover:bg-white/90 shadow-2xl rounded-2xl text-base tracking-tight uppercase transition-all active:scale-95" 
+                    >
+                      {isUpdating ? <Loader2 className="animate-spin h-6 w-6" /> : <><CreditCard className="mr-3 h-6 w-6" /> CONFIRMAR PAGAMENTO</>}
                     </Button>
                   </div>
                 </CardContent>

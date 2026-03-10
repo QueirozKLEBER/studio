@@ -319,14 +319,15 @@ function StudentDetailsContent() {
                         <Plus className="h-4 w-4 mr-2" /> Nova Avaliação
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-4xl max-h-[90vh]">
-                      <DialogHeader>
+                    <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
+                      <DialogHeader className="p-8 border-b border-white/5">
                         <DialogTitle className="uppercase font-black flex items-center gap-2">
                           <Scale className="h-6 w-6 text-primary" /> Registrar Bioimpedância de Elite
                         </DialogTitle>
                       </DialogHeader>
-                      <ScrollArea className="pr-4 py-4">
-                        <div className="space-y-10 px-1">
+                      
+                      <ScrollArea className="flex-1">
+                        <div className="p-8 space-y-10">
                           {/* Seção 1: Básicos */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
@@ -506,7 +507,8 @@ function StudentDetailsContent() {
                           </div>
                         </div>
                       </ScrollArea>
-                      <DialogFooter className="pt-4">
+
+                      <DialogFooter className="p-8 border-t border-white/5">
                         <Button onClick={handleSaveBio} disabled={isUpdating} className="w-full bg-primary h-16 rounded-[1.8rem] font-black uppercase text-lg shadow-xl shadow-primary/20">
                           {isUpdating ? <Loader2 className="animate-spin h-6 w-6" /> : "FINALIZAR E SALVAR AVALIAÇÃO"}
                         </Button>

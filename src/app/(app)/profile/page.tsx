@@ -80,7 +80,7 @@ export default function ProfilePage() {
       const updateData: any = {
         firstName: formData.firstName,
         lastName: formData.lastName,
-        fullName: formData.fullName,
+        fullName: formData.fullName || `${formData.firstName} ${formData.lastName}`.trim(),
         phone: formData.phone,
       };
 
@@ -96,7 +96,7 @@ export default function ProfilePage() {
       await updateDoc(userRef, updateData);
 
       await updateProfile(user, {
-        displayName: formData.fullName || `${formData.firstName} ${formData.lastName}`.trim(),
+        displayName: updateData.fullName,
       });
 
       toast({
@@ -141,7 +141,7 @@ export default function ProfilePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024 * 2) { // 1MB limit for base64 storage
+      if (file.size > 1024 * 1024 * 2) {
         toast({ 
           variant: 'destructive', 
           title: 'Arquivo muito grande', 
@@ -274,10 +274,10 @@ export default function ProfilePage() {
                     <Input name="fullName" value={formData.fullName} onChange={handleInputChange} className="rounded-xl h-12 bg-white/5 border-none text-white font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">WhatsApp (Com DDD)</Label>
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">WhatsApp / Celular</Label>
                     <div className="relative">
                       <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
-                      <Input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="11999999999" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold pl-10" />
+                      <Input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Ex: 11999999999" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold pl-10" />
                     </div>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Chave PIX para Pagamentos</Label>
+                    <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Chave PIX para Recebimento</Label>
                     <div className="relative">
                       <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
                       <Input name="pixKey" value={formData.pixKey} onChange={handleInputChange} placeholder="E-mail, CPF ou Telefone" className="rounded-xl h-12 bg-white/5 border-none text-white font-bold pl-10" />
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Bio Profissional / Metodologia</Label>
-                  <Textarea name="bio" value={formData.bio} onChange={handleInputChange} placeholder="Descreva sua experiência e como você ajuda seus alunos..." className="rounded-2xl bg-white/5 border-none min-h-[120px] text-white font-medium" />
+                  <Textarea name="bio" value={formData.bio} onChange={handleInputChange} placeholder="Descreva sua experiência..." className="rounded-2xl bg-white/5 border-none min-h-[120px] text-white font-medium" />
                 </div>
               </CardContent>
             </Card>

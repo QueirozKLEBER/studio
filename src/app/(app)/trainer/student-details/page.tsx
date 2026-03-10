@@ -39,7 +39,9 @@ import {
   Droplets,
   Flame,
   Dna,
-  Layers
+  Layers,
+  Utensils,
+  Apple
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -71,6 +73,10 @@ function StudentDetailsContent() {
   const [editFee, setEditFee] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
 
+  // Estado para Dieta
+  const [isDietModalOpen, setIsDietModalOpen] = useState(false);
+  const [dietData, setDietData] = useState({ title: '', description: '' });
+
   // Estados para Bioimpedância Avançada
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   const [bioData, setBioData] = useState({
@@ -93,11 +99,9 @@ function StudentDetailsContent() {
     waistHipRatio: '',
     skinfolds: '',
     notes: '',
-    // Segmentar Gordura
     lArmFat: '', rArmFat: '',
     lLegFat: '', rLegFat: '',
     trunkFat: '',
-    // Segmentar Músculo
     lArmMuscle: '', rArmMuscle: '',
     lLegMuscle: '', rLegMuscle: '',
     trunkMuscle: ''
@@ -111,11 +115,13 @@ function StudentDetailsContent() {
   const measurementsQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'bodyMeasurements'), orderBy('createdAt', 'asc')) : null, [db, id]);
   const workoutHistoryQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'workoutHistory'), orderBy('completedAt', 'desc'), limit(50)) : null, [db, id]);
   const bioQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'bioimpedance'), orderBy('createdAt', 'desc')) : null, [db, id]);
+  const dietsQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'dietSuggestions'), orderBy('createdAt', 'desc')) : null, [db, id]);
 
   const { data: student, isLoading } = useDoc(studentRef);
   const { data: measurements } = useCollection(measurementsQuery);
   const { data: history } = useCollection(workoutHistoryQuery);
   const { data: bioReports } = useCollection(bioQuery);
+  const { data: diets } = useCollection(dietsQuery);
 
   useEffect(() => {
     if (student) {
@@ -172,11 +178,34 @@ function StudentDetailsContent() {
     }
   };
 
+  const handleSaveDiet = async () => {
+    if (!id) return;
+    if (!dietData.title || !dietData.description) {
+      toast({ variant: 'destructive', title: "Preencha todos os campos" });
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      await addDoc(collection(db, 'users', id, 'dietSuggestions'), {
+        ...dietData,
+        createdAt: serverTimestamp(),
+      });
+      toast({ title: "Dieta Enviada! 🥗" });
+      setIsDietModalOpen(false);
+      setDietData({ title: '', description: '' });
+    } catch (e) {
+      toast({ variant: 'destructive', title: "Erro ao salvar dieta" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleConfirmPayment = async () => {
     if (!studentRef || !student) return;
     setIsUpdating(true);
     try {
-      const nextDue = new Date();
+      const currentDue = student.paymentDueDate ? new Date(student.paymentDueDate) : new Date();
+      const nextDue = new Date(currentDue);
       nextDue.setDate(nextDue.getDate() + 30);
       
       await updateDoc(studentRef, {
@@ -232,8 +261,12 @@ function StudentDetailsContent() {
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 shadow-2xl overflow-hidden">
             <CardContent className="p-8 flex flex-col items-center text-center">
-              <div className="h-24 w-24 rounded-[2rem] bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-4xl font-black text-primary mb-6 shadow-2xl">
-                {student.firstName?.[0]}
+              <div className="h-24 w-24 rounded-[2rem] bg-primary/10 border-4 border-primary/20 flex items-center justify-center text-4xl font-black text-primary mb-6 shadow-2xl overflow-hidden">
+                {student.photoURL ? (
+                  <img src={student.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  student.firstName?.[0]
+                )}
               </div>
               <h3 className="text-2xl font-black text-white uppercase tracking-tight">{student.fullName}</h3>
               <div className="flex flex-col gap-1 mt-2 mb-6">
@@ -290,20 +323,98 @@ function StudentDetailsContent() {
         {/* Coluna Principal */}
         <div className="lg:col-span-8">
           <Tabs defaultValue="report" className="w-full">
-            <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full border border-white/5 gap-1 mb-8">
-              <TabsTrigger value="report" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
+            <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full border border-white/5 gap-1 mb-8 overflow-x-auto overflow-y-hidden no-scrollbar">
+              <TabsTrigger value="report" className="flex-1 min-w-[100px] font-black text-[9px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
                 <Activity className="mr-2 h-4 w-4" /> Relatório
               </TabsTrigger>
-              <TabsTrigger value="bio" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
-                <Scale className="mr-2 h-4 w-4" /> Bioimpedância
+              <TabsTrigger value="bio" className="flex-1 min-w-[100px] font-black text-[9px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
+                <Scale className="mr-2 h-4 w-4" /> Bioimp.
               </TabsTrigger>
-              <TabsTrigger value="evolution" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
+              <TabsTrigger value="diet" className="flex-1 min-w-[100px] font-black text-[9px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
+                <Utensils className="mr-2 h-4 w-4" /> Dieta
+              </TabsTrigger>
+              <TabsTrigger value="evolution" className="flex-1 min-w-[100px] font-black text-[9px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
                 <TrendingUp className="mr-2 h-4 w-4" /> Evolução
               </TabsTrigger>
-              <TabsTrigger value="financial" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
-                <CreditCard className="mr-2 h-4 w-4" /> Financeiro
+              <TabsTrigger value="financial" className="flex-1 min-w-[100px] font-black text-[9px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
+                <CreditCard className="mr-2 h-4 w-4" /> Finan.
               </TabsTrigger>
             </TabsList>
+
+            {/* Aba de Dieta */}
+            <TabsContent value="diet" className="space-y-6">
+              <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
+                <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Plano Alimentar</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Envie orientações nutricionais para este aluno.</CardDescription>
+                  </div>
+                  <Dialog open={isDietModalOpen} onOpenChange={setIsDietModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
+                        <Plus className="h-4 w-4 mr-2" /> Nova Sugestão
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="uppercase font-black flex items-center gap-2">
+                          <Apple className="h-6 w-6 text-primary" /> Prescrever Dieta Elite
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-6 py-6">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] uppercase font-black text-white/40 tracking-widest">Título da Orientação</Label>
+                          <Input 
+                            placeholder="Ex: Fase 1 - Hipertrofia Limpa" 
+                            value={dietData.title}
+                            onChange={(e) => setDietData({...dietData, title: e.target.value})}
+                            className="bg-white/5 border-none h-12 rounded-xl font-bold" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[10px] uppercase font-black text-white/40 tracking-widest">Descrição / Cardápio Detalhado</Label>
+                          <Textarea 
+                            placeholder="Descreva as refeições, horários e macros recomendados..." 
+                            value={dietData.description}
+                            onChange={(e) => setDietData({...dietData, description: e.target.value})}
+                            className="bg-white/5 border-none rounded-2xl min-h-[300px] font-medium" 
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={handleSaveDiet} disabled={isUpdating} className="w-full bg-primary h-14 rounded-2xl font-black uppercase shadow-xl">
+                          {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : "LIBERAR DIETA PARA O ALUNO"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {diets && diets.length > 0 ? (
+                    <div className="divide-y divide-white/5">
+                      {diets.map(diet => (
+                        <div key={diet.id} className="p-8 space-y-4 hover:bg-white/[0.01] transition-colors">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-black text-white uppercase text-lg">{diet.title}</h4>
+                            <Badge className="bg-white/5 text-white/40 border-none font-bold text-[10px]">
+                              {diet.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                            </Badge>
+                          </div>
+                          <div className="bg-black/20 p-6 rounded-2xl border border-white/5 text-sm text-white/60 leading-relaxed italic whitespace-pre-wrap">
+                            {diet.description}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-24 text-center opacity-20">
+                      <Utensils className="h-16 w-16 mx-auto mb-4" />
+                      <p className="font-black uppercase text-[10px] tracking-widest">Nenhuma dieta cadastrada para este atleta.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Aba de Bioimpedância Avançada */}
             <TabsContent value="bio" className="space-y-6">
@@ -441,69 +552,9 @@ function StudentDetailsContent() {
                             </div>
                           </div>
 
-                          {/* Seção 5: Distribuição Segmentar */}
-                          <div className="space-y-6">
-                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Distribuição Segmentar (Massa Muscular / Gordura %)</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              {/* Membros Superiores */}
-                              <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 space-y-4">
-                                <p className="text-[9px] font-black uppercase text-white/40">Membros Superiores</p>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <Label className="text-[8px] uppercase">Braço Esq. (G% | M%)</Label>
-                                    <div className="flex gap-1">
-                                      <Input placeholder="G%" type="number" value={bioData.lArmFat} onChange={(e) => setBioData({...bioData, lArmFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                      <Input placeholder="M%" type="number" value={bioData.lArmMuscle} onChange={(e) => setBioData({...bioData, lArmMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label className="text-[8px] uppercase">Braço Dir. (G% | M%)</Label>
-                                    <div className="flex gap-1">
-                                      <Input placeholder="G%" type="number" value={bioData.rArmFat} onChange={(e) => setBioData({...bioData, rArmFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                      <Input placeholder="M%" type="number" value={bioData.rArmMuscle} onChange={(e) => setBioData({...bioData, rArmMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Tronco */}
-                              <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 space-y-4">
-                                <p className="text-[9px] font-black uppercase text-white/40">Tronco</p>
-                                <div className="space-y-2">
-                                  <Label className="text-[8px] uppercase">Tronco (G% | M%)</Label>
-                                  <div className="flex gap-2">
-                                    <Input placeholder="Gordura %" type="number" value={bioData.trunkFat} onChange={(e) => setBioData({...bioData, trunkFat: e.target.value})} className="bg-white/5 border-none h-10 text-[10px]" />
-                                    <Input placeholder="Músculo %" type="number" value={bioData.trunkMuscle} onChange={(e) => setBioData({...bioData, trunkMuscle: e.target.value})} className="bg-white/5 border-none h-10 text-[10px]" />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Membros Inferiores */}
-                              <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 space-y-4 md:col-span-2">
-                                <p className="text-[9px] font-black uppercase text-white/40">Membros Inferiores</p>
-                                <div className="grid grid-cols-2 gap-8">
-                                  <div className="space-y-2">
-                                    <Label className="text-[8px] uppercase">Perna Esq. (G% | M%)</Label>
-                                    <div className="flex gap-1">
-                                      <Input placeholder="G%" type="number" value={bioData.lLegFat} onChange={(e) => setBioData({...bioData, lLegFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                      <Input placeholder="M%" type="number" value={bioData.lLegMuscle} onChange={(e) => setBioData({...bioData, lLegMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label className="text-[8px] uppercase">Perna Dir. (G% | M%)</Label>
-                                    <div className="flex gap-1">
-                                      <Input placeholder="G%" type="number" value={bioData.rLegFat} onChange={(e) => setBioData({...bioData, rLegFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                      <Input placeholder="M%" type="number" value={bioData.rLegMuscle} onChange={(e) => setBioData({...bioData, rLegMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
                           <div className="space-y-2">
                             <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">Observações da Avaliação</Label>
-                            <Textarea value={bioData.notes} onChange={(e) => setBioData({...bioData, notes: e.target.value})} placeholder="Anote percepções subjetivas, recomendações ou metas específicas..." className="bg-white/5 border-none rounded-2xl min-h-[100px]" />
+                            <Textarea value={bioData.notes} onChange={(e) => setBioData({...bioData, notes: e.target.value})} placeholder="Anote percepções subjetivas..." className="bg-white/5 border-none rounded-2xl min-h-[100px]" />
                           </div>
                         </div>
                       </ScrollArea>
@@ -642,7 +693,7 @@ function StudentDetailsContent() {
                         <TrendingUp className="h-16 w-16" />
                       </div>
                       <p className="text-[11px] font-black uppercase tracking-[0.2em] max-w-[250px] leading-relaxed">
-                        Sem registros de medidas suficientes para gerar a curva de performance.
+                        Sem registros de medidas suficientes.
                       </p>
                     </div>
                   )}

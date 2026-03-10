@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from '@/components/page-header';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { CreditCard, Calendar, User, ArrowRight, Search } from 'lucide-react';
+import { CreditCard, Calendar, ArrowRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';

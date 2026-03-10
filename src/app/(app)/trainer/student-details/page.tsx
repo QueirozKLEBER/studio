@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Suspense, useState, useMemo, useEffect } from 'react';
+import { Suspense, useState, useMemo, useEffect, use } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,7 +35,6 @@ import {
   DollarSign,
   Edit2,
   Plus,
-  User,
   Droplets,
   Flame,
   Dna,
@@ -55,7 +55,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const INITIAL_BIO_DATA = {
@@ -372,11 +372,9 @@ function StudentDetailsContent() {
                     <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Envie orientações nutricionais para este aluno.</CardDescription>
                   </div>
                   <Dialog open={isDietModalOpen} onOpenChange={setIsDietModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
-                        <Plus className="h-4 w-4 mr-2" /> Nova Sugestão
-                      </Button>
-                    </DialogTrigger>
+                    <Button onClick={() => setIsDietModalOpen(true)} className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
+                      <Plus className="h-4 w-4 mr-2" /> Nova Sugestão
+                    </Button>
                     <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-2xl">
                       <DialogHeader>
                         <DialogTitle className="uppercase font-black flex items-center gap-2">
@@ -791,11 +789,9 @@ function StudentDetailsContent() {
                     <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Ajuste valores mensais e valide recebimentos.</CardDescription>
                   </div>
                   <Dialog open={isBillingModalOpen} onOpenChange={setIsBillingModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="rounded-xl border-white/10 text-white hover:bg-primary uppercase font-black text-[10px]">
-                        <Edit2 className="h-3 w-3 mr-2" /> Ajustar Dados
-                      </Button>
-                    </DialogTrigger>
+                    <Button onClick={() => setIsBillingModalOpen(true)} variant="outline" size="sm" className="rounded-xl border-white/10 text-white hover:bg-primary uppercase font-black text-[10px]">
+                      <Edit2 className="h-3 w-3 mr-2" /> Ajustar Dados
+                    </Button>
                     <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem]">
                       <DialogHeader>
                         <DialogTitle className="uppercase font-black">Ajustar Faturamento</DialogTitle>

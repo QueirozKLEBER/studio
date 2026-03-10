@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy, updateDoc, limit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, orderBy, updateDoc, limit, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { 
   ArrowLeft, 
   Dumbbell, 
@@ -41,7 +41,8 @@ import {
   Dna,
   Layers,
   Utensils,
-  Apple
+  Apple,
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -57,6 +58,34 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+const INITIAL_BIO_DATA = {
+  date: new Date().toISOString().split('T')[0],
+  weight: '',
+  bmi: '',
+  fatTotal: '',
+  fatMass: '',
+  leanMass: '',
+  skeletalMuscle: '',
+  muscleTotal: '',
+  waterTotal: '',
+  waterPercentage: '',
+  visceralFat: '',
+  bmr: '',
+  metabolicAge: '',
+  boneMass: '',
+  protein: '',
+  abdominalCirc: '',
+  waistHipRatio: '',
+  skinfolds: '',
+  notes: '',
+  lArmFat: '', rArmFat: '',
+  lLegFat: '', rLegFat: '',
+  trunkFat: '',
+  lArmMuscle: '', rArmMuscle: '',
+  lLegMuscle: '', rLegMuscle: '',
+  trunkMuscle: ''
+};
 
 function StudentDetailsContent() {
   const searchParams = useSearchParams();
@@ -79,33 +108,8 @@ function StudentDetailsContent() {
 
   // Estados para Bioimpedância Avançada
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
-  const [bioData, setBioData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    weight: '',
-    bmi: '',
-    fatTotal: '',
-    fatMass: '',
-    leanMass: '',
-    skeletalMuscle: '',
-    muscleTotal: '',
-    waterTotal: '',
-    waterPercentage: '',
-    visceralFat: '',
-    bmr: '',
-    metabolicAge: '',
-    boneMass: '',
-    protein: '',
-    abdominalCirc: '',
-    waistHipRatio: '',
-    skinfolds: '',
-    notes: '',
-    lArmFat: '', rArmFat: '',
-    lLegFat: '', rLegFat: '',
-    trunkFat: '',
-    lArmMuscle: '', rArmMuscle: '',
-    lLegMuscle: '', rLegMuscle: '',
-    trunkMuscle: ''
-  });
+  const [selectedBioId, setSelectedBioId] = useState<string | null>(null);
+  const [bioData, setBioData] = useState(INITIAL_BIO_DATA);
 
   useEffect(() => {
     setMounted(true);
@@ -160,16 +164,39 @@ function StudentDetailsContent() {
     }
   };
 
+  const handleOpenBioModal = (report?: any) => {
+    if (report) {
+      setSelectedBioId(report.id);
+      setBioData({
+        ...INITIAL_BIO_DATA,
+        ...report
+      });
+    } else {
+      setSelectedBioId(null);
+      setBioData(INITIAL_BIO_DATA);
+    }
+    setIsBioModalOpen(true);
+  };
+
   const handleSaveBio = async () => {
     if (!id) return;
     setIsUpdating(true);
     try {
-      await addDoc(collection(db, 'users', id, 'bioimpedance'), {
-        ...bioData,
-        createdAt: serverTimestamp(),
-        trainerId: student?.trainerId
-      });
-      toast({ title: "Avaliação de Bioimpedância Salva! 📊" });
+      if (selectedBioId) {
+        const bioRef = doc(db, 'users', id, 'bioimpedance', selectedBioId);
+        await updateDoc(bioRef, {
+          ...bioData,
+          updatedAt: serverTimestamp()
+        });
+        toast({ title: "Avaliação Atualizada! 📊" });
+      } else {
+        await addDoc(collection(db, 'users', id, 'bioimpedance'), {
+          ...bioData,
+          createdAt: serverTimestamp(),
+          trainerId: student?.trainerId
+        });
+        toast({ title: "Nova Avaliação de Bioimpedância Salva! 📊" });
+      }
       setIsBioModalOpen(false);
     } catch (e) {
       toast({ variant: 'destructive', title: "Erro ao salvar bioimpedância" });
@@ -204,8 +231,12 @@ function StudentDetailsContent() {
     if (!studentRef || !student) return;
     setIsUpdating(true);
     try {
-      const currentDue = student.paymentDueDate ? new Date(student.paymentDueDate) : new Date();
-      const nextDue = new Date(currentDue);
+      const today = new Date();
+      const currentDue = student.paymentDueDate ? new Date(student.paymentDueDate) : today;
+      
+      // Se o vencimento já passou, renovamos a partir de hoje. Se não, somamos 30 dias ao vencimento atual.
+      const baseDate = currentDue < today ? today : currentDue;
+      const nextDue = new Date(baseDate);
       nextDue.setDate(nextDue.getDate() + 30);
       
       await updateDoc(studentRef, {
@@ -248,7 +279,7 @@ function StudentDetailsContent() {
   const isExpired = student.paymentDueDate && new Date(student.paymentDueDate) < new Date();
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-20 max-w-6xl mx-auto">
+    <div className="flex flex-col gap-8 w-full pb-20 max-w-6xl mx-auto px-4 md:px-0">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-12 w-12" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
@@ -424,16 +455,16 @@ function StudentDetailsContent() {
                     <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Avaliações Clínicas</CardTitle>
                     <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Registre dados detalhados de composição e metabolismo.</CardDescription>
                   </div>
+                  <Button onClick={() => handleOpenBioModal()} className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
+                    <Plus className="h-4 w-4 mr-2" /> Nova Avaliação
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-0">
                   <Dialog open={isBioModalOpen} onOpenChange={setIsBioModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
-                        <Plus className="h-4 w-4 mr-2" /> Nova Avaliação
-                      </Button>
-                    </DialogTrigger>
                     <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
                       <DialogHeader className="p-8 border-b border-white/5">
                         <DialogTitle className="uppercase font-black flex items-center gap-2">
-                          <Scale className="h-6 w-6 text-primary" /> Registrar Bioimpedância de Elite
+                          <Scale className="h-6 w-6 text-primary" /> {selectedBioId ? 'Editar' : 'Registrar'} Bioimpedância de Elite
                         </DialogTitle>
                       </DialogHeader>
                       
@@ -552,6 +583,66 @@ function StudentDetailsContent() {
                             </div>
                           </div>
 
+                          {/* Seção 5: Segmentação */}
+                          <div className="space-y-6">
+                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                              <Activity className="h-4 w-4" /> Distribuição Segmentada
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              <div className="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5">
+                                <p className="text-[9px] font-black uppercase text-primary/60">Gordura Segmentada (%)</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">B. Esq</Label>
+                                    <Input type="number" value={bioData.lArmFat} onChange={(e) => setBioData({...bioData, lArmFat: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">B. Dir</Label>
+                                    <Input type="number" value={bioData.rArmFat} onChange={(e) => setBioData({...bioData, rArmFat: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">P. Esq</Label>
+                                    <Input type="number" value={bioData.lLegFat} onChange={(e) => setBioData({...bioData, lLegFat: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">P. Dir</Label>
+                                    <Input type="number" value={bioData.rLegFat} onChange={(e) => setBioData({...bioData, rLegFat: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="col-span-2 space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">Tronco</Label>
+                                    <Input type="number" value={bioData.trunkFat} onChange={(e) => setBioData({...bioData, trunkFat: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5">
+                                <p className="text-[9px] font-black uppercase text-green-500/60">Massa Muscular Segmentada (%)</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">B. Esq</Label>
+                                    <Input type="number" value={bioData.lArmMuscle} onChange={(e) => setBioData({...bioData, lArmMuscle: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">B. Dir</Label>
+                                    <Input type="number" value={bioData.rArmMuscle} onChange={(e) => setBioData({...bioData, rArmMuscle: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">P. Esq</Label>
+                                    <Input type="number" value={bioData.lLegMuscle} onChange={(e) => setBioData({...bioData, lLegMuscle: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">P. Dir</Label>
+                                    <Input type="number" value={bioData.rLegMuscle} onChange={(e) => setBioData({...bioData, rLegMuscle: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                  <div className="col-span-2 space-y-1">
+                                    <Label className="text-[8px] uppercase text-white/40">Tronco</Label>
+                                    <Input type="number" value={bioData.trunkMuscle} onChange={(e) => setBioData({...bioData, trunkMuscle: e.target.value})} className="bg-black/20 border-none h-9 text-xs" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className="space-y-2">
                             <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">Observações da Avaliação</Label>
                             <Textarea value={bioData.notes} onChange={(e) => setBioData({...bioData, notes: e.target.value})} placeholder="Anote percepções subjetivas..." className="bg-white/5 border-none rounded-2xl min-h-[100px]" />
@@ -561,19 +652,22 @@ function StudentDetailsContent() {
 
                       <DialogFooter className="p-8 border-t border-white/5">
                         <Button onClick={handleSaveBio} disabled={isUpdating} className="w-full bg-primary h-16 rounded-[1.8rem] font-black uppercase text-lg shadow-xl shadow-primary/20">
-                          {isUpdating ? <Loader2 className="animate-spin h-6 w-6" /> : "FINALIZAR E SALVAR AVALIAÇÃO"}
+                          {isUpdating ? <Loader2 className="animate-spin h-6 w-6" /> : selectedBioId ? "ATUALIZAR AVALIAÇÃO" : "FINALIZAR E SALVAR AVALIAÇÃO"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                </CardHeader>
-                <CardContent className="p-0">
+
                   {bioReports && bioReports.length > 0 ? (
                     <div className="divide-y divide-white/5">
                       {bioReports.map(report => (
-                        <div key={report.id} className="p-8 flex items-center justify-between hover:bg-white/[0.01] transition-colors">
+                        <div 
+                          key={report.id} 
+                          onClick={() => handleOpenBioModal(report)}
+                          className="p-8 flex items-center justify-between hover:bg-white/[0.03] transition-all cursor-pointer group"
+                        >
                           <div className="flex items-center gap-5">
-                            <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black shadow-inner">
+                            <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black shadow-inner group-hover:scale-110 transition-transform">
                               <Scale className="h-7 w-7" />
                             </div>
                             <div>
@@ -583,15 +677,18 @@ function StudentDetailsContent() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-8">
-                            <div className="text-right">
-                              <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Gordura</p>
-                              <p className="text-xl font-black text-primary">{report.fatTotal}%</p>
+                          <div className="flex items-center gap-8">
+                            <div className="hidden md:flex gap-8">
+                              <div className="text-right">
+                                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Gordura</p>
+                                <p className="text-xl font-black text-primary">{report.fatTotal}%</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Músculo</p>
+                                <p className="text-xl font-black text-green-500">{report.muscleTotal}kg</p>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Músculo</p>
-                              <p className="text-xl font-black text-green-500">{report.muscleTotal}kg</p>
-                            </div>
+                            <ChevronRight className="h-5 w-5 text-white/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                           </div>
                         </div>
                       ))}
@@ -730,7 +827,7 @@ function StudentDetailsContent() {
                       </div>
                       <DialogFooter>
                         <Button onClick={handleSaveBilling} disabled={isUpdating} className="w-full bg-primary h-14 rounded-2xl font-black uppercase">
-                          {isUpdating ? <Loader2 className="animate-spin" /> : "Salvar Alterações"}
+                          {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : "Salvar Alterações"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>

@@ -1,9 +1,8 @@
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Dumbbell, Activity, User, Utensils, Clock, Wallet } from 'lucide-react';
+import { LayoutDashboard, Dumbbell, Activity, User, Utensils, Clock, Wallet, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 
@@ -14,8 +13,16 @@ export function BottomNav() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { href: '/workouts', label: 'Treinos', icon: Dumbbell },
-    { href: '/activity', label: 'Logs', icon: Clock },
-    { href: profile?.userType === 'trainer' ? '/trainer/students' : '/billing', label: profile?.userType === 'trainer' ? 'Alunos' : 'Pagar', icon: profile?.userType === 'trainer' ? User : Wallet },
+    { 
+      href: profile?.userType === 'trainer' ? '/trainer/workouts/builder' : '/chat', 
+      label: profile?.userType === 'trainer' ? 'Montar' : 'Chat', 
+      icon: profile?.userType === 'trainer' ? Clock : MessageCircle 
+    },
+    { 
+      href: profile?.userType === 'trainer' ? '/trainer/students' : '/billing', 
+      label: profile?.userType === 'trainer' ? 'Alunos' : 'Pagar', 
+      icon: profile?.userType === 'trainer' ? User : Wallet 
+    },
     { href: '/profile', label: 'Perfil', icon: User },
   ];
 

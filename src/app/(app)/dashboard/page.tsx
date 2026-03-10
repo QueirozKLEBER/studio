@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Utensils,
   CheckCircle2,
-  CalendarDays
+  CalendarDays,
+  MessageCircle
 } from 'lucide-react';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, where, Timestamp } from 'firebase/firestore';
@@ -142,12 +143,13 @@ export default function Dashboard() {
       </Card>
 
       {/* Quick Access Grid */}
-      <div className="grid grid-cols-3 gap-4 md:grid-cols-5 w-full">
+      <div className="grid grid-cols-3 gap-4 md:grid-cols-6 w-full">
         {[
           { icon: Dumbbell, label: 'Treinos', href: '/workouts' },
-          { icon: Clock, label: 'Atividades', href: '/activity' },
+          { icon: MessageCircle, label: 'Chat', href: '/chat' },
           { icon: Utensils, label: 'Dieta', href: '/diet' },
           { icon: TrendingUp, label: 'Avaliação', href: '/assessment' },
+          { icon: Clock, label: 'Atividades', href: '/activity' },
           { icon: ChevronRight, label: 'Histórico', href: '/profile' },
         ].map((item, i) => (
           <Link key={i} href={item.href} className="flex flex-col items-center gap-3 group">

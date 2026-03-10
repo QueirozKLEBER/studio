@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Logo } from '../icons/logo';
@@ -15,7 +14,8 @@ import {
   Settings,
   Utensils,
   Clock,
-  Wallet
+  Wallet,
+  MessageCircle
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useAuth, useUser } from '@/firebase';
@@ -56,6 +56,7 @@ export const AppSidebar = () => {
     return [
       { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
       { href: '/workouts', label: 'Meus Treinos', icon: Dumbbell },
+      { href: '/chat', label: 'Chat Professor', icon: MessageCircle },
       { href: '/activity', label: 'Atividades', icon: Clock },
       { href: '/diet', label: 'Minha Dieta', icon: Utensils },
       { href: '/assessment', label: 'Avaliação Física', icon: Activity },

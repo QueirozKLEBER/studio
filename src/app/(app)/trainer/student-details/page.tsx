@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useMemo, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy, updateDoc, limit, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, collection, query, orderBy, updateDoc, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   ArrowLeft, 
   Dumbbell, 
@@ -97,16 +96,13 @@ function StudentDetailsContent() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [mounted, setMounted] = useState(false);
   
-  // Estados para edição financeira
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [editFee, setEditFee] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
 
-  // Estado para Dieta
   const [isDietModalOpen, setIsDietModalOpen] = useState(false);
   const [dietData, setDietData] = useState({ title: '', description: '' });
 
-  // Estados para Bioimpedância Avançada
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
   const [selectedBioId, setSelectedBioId] = useState<string | null>(null);
   const [bioData, setBioData] = useState(INITIAL_BIO_DATA);
@@ -233,8 +229,6 @@ function StudentDetailsContent() {
     try {
       const today = new Date();
       const currentDue = student.paymentDueDate ? new Date(student.paymentDueDate) : today;
-      
-      // Se o vencimento já passou, renovamos a partir de hoje. Se não, somamos 30 dias ao vencimento atual.
       const baseDate = currentDue < today ? today : currentDue;
       const nextDue = new Date(baseDate);
       nextDue.setDate(nextDue.getDate() + 30);
@@ -288,7 +282,6 @@ function StudentDetailsContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Coluna Lateral */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 shadow-2xl overflow-hidden">
             <CardContent className="p-8 flex flex-col items-center text-center">
@@ -351,7 +344,6 @@ function StudentDetailsContent() {
           </Card>
         </div>
 
-        {/* Coluna Principal */}
         <div className="lg:col-span-8">
           <Tabs defaultValue="report" className="w-full">
             <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full border border-white/5 gap-1 mb-8 overflow-x-auto overflow-y-hidden no-scrollbar">
@@ -372,7 +364,6 @@ function StudentDetailsContent() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Aba de Dieta */}
             <TabsContent value="diet" className="space-y-6">
               <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
@@ -447,7 +438,6 @@ function StudentDetailsContent() {
               </Card>
             </TabsContent>
 
-            {/* Aba de Bioimpedância Avançada */}
             <TabsContent value="bio" className="space-y-6">
               <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
@@ -470,7 +460,6 @@ function StudentDetailsContent() {
                       
                       <ScrollArea className="flex-1">
                         <div className="p-8 space-y-10">
-                          {/* Seção 1: Básicos */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                               <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">Data da Avaliação</Label>
@@ -486,7 +475,6 @@ function StudentDetailsContent() {
                             </div>
                           </div>
 
-                          {/* Seção 2: Composição Massa e Gordura */}
                           <div className="p-6 bg-white/5 rounded-[2rem] border border-white/5 space-y-6">
                             <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
                               <Dna className="h-4 w-4" /> Composição Corporal
@@ -511,7 +499,6 @@ function StudentDetailsContent() {
                             </div>
                           </div>
 
-                          {/* Seção 3: Metabolismo e Água */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-4">
                               <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
@@ -562,7 +549,6 @@ function StudentDetailsContent() {
                             </div>
                           </div>
 
-                          {/* Seção 4: Antropometria */}
                           <div className="space-y-4">
                             <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
                               <Layers className="h-4 w-4" /> Antropometria
@@ -583,7 +569,6 @@ function StudentDetailsContent() {
                             </div>
                           </div>
 
-                          {/* Seção 5: Segmentação */}
                           <div className="space-y-6">
                             <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
                               <Activity className="h-4 w-4" /> Distribuição Segmentada

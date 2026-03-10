@@ -31,7 +31,6 @@ export default function WorkoutsPage() {
 
   const { data: plans, isLoading } = useCollection(plansQuery);
 
-  // Se for Professor ou ADM, mostra a biblioteca de exercícios
   if (profile?.userType === 'trainer' || profile?.userType === 'admin') {
     return (
       <div className="flex flex-col gap-8 w-full">
@@ -68,7 +67,6 @@ export default function WorkoutsPage() {
     );
   }
 
-  // Se for Aluno, mostra apenas os treinos que o professor montou
   return (
     <div className="flex flex-col gap-8 w-full">
       <PageHeader
@@ -102,7 +100,7 @@ export default function WorkoutsPage() {
                   Foco total na técnica e progressão de carga conforme orientado pelo seu personal.
                 </p>
                 <Button asChild className="w-full h-14 rounded-2xl font-black text-lg bg-primary text-white shadow-lg transition-transform active:scale-95 uppercase tracking-tighter">
-                  <Link href={`/workouts/plan/${plan.id}`}>
+                  <Link href={`/workouts/plan?id=${plan.id}`}>
                     INICIAR TREINO
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

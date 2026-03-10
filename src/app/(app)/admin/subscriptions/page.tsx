@@ -27,7 +27,6 @@ export default function AdminSubscriptionsPage() {
       const matchesSearch = `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesSearch;
     }).sort((a, b) => {
-      // Ordena por vencimento (vencidos primeiro)
       const dateA = a.paymentDueDate ? new Date(a.paymentDueDate).getTime() : Infinity;
       const dateB = b.paymentDueDate ? new Date(b.paymentDueDate).getTime() : Infinity;
       return dateA - dateB;

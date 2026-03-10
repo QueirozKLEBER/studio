@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, updateDoc, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
@@ -34,7 +35,11 @@ import {
   DollarSign,
   Edit2,
   Plus,
-  User
+  User,
+  Droplets,
+  Flame,
+  Dna,
+  Layers
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -49,6 +54,7 @@ import {
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 function StudentDetailsContent() {
   const searchParams = useSearchParams();
@@ -65,17 +71,36 @@ function StudentDetailsContent() {
   const [editFee, setEditFee] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
 
-  // Estados para Bioimpedância
+  // Estados para Bioimpedância Avançada
   const [isBioModalOpen, setIsBioModalOpen] = useState(false);
-  const [bioData, setBioBioData] = useState({
+  const [bioData, setBioData] = useState({
+    date: new Date().toISOString().split('T')[0],
     weight: '',
+    bmi: '',
     fatTotal: '',
+    fatMass: '',
+    leanMass: '',
+    skeletalMuscle: '',
     muscleTotal: '',
-    lArmFat: '', lArmMuscle: '',
-    rArmFat: '', rArmMuscle: '',
-    trunkFat: '', trunkMuscle: '',
-    lLegFat: '', lLegMuscle: '',
-    rLegFat: '', rLegMuscle: ''
+    waterTotal: '',
+    waterPercentage: '',
+    visceralFat: '',
+    bmr: '',
+    metabolicAge: '',
+    boneMass: '',
+    protein: '',
+    abdominalCirc: '',
+    waistHipRatio: '',
+    skinfolds: '',
+    notes: '',
+    // Segmentar Gordura
+    lArmFat: '', rArmFat: '',
+    lLegFat: '', rLegFat: '',
+    trunkFat: '',
+    // Segmentar Músculo
+    lArmMuscle: '', rArmMuscle: '',
+    lLegMuscle: '', rLegMuscle: '',
+    trunkMuscle: ''
   });
 
   useEffect(() => {
@@ -92,7 +117,6 @@ function StudentDetailsContent() {
   const { data: history } = useCollection(workoutHistoryQuery);
   const { data: bioReports } = useCollection(bioQuery);
 
-  // Inicializa campos de edição quando o modal abre
   useEffect(() => {
     if (student) {
       setEditFee(student.monthlyFee?.toString() || '0');
@@ -136,15 +160,11 @@ function StudentDetailsContent() {
     try {
       await addDoc(collection(db, 'users', id, 'bioimpedance'), {
         ...bioData,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        trainerId: student?.trainerId
       });
-      toast({ title: "Relatório de Bioimpedância Salvo! 📊" });
+      toast({ title: "Avaliação de Bioimpedância Salva! 📊" });
       setIsBioModalOpen(false);
-      setBioBioData({
-        weight: '', fatTotal: '', muscleTotal: '',
-        lArmFat: '', lArmMuscle: '', rArmFat: '', rArmMuscle: '',
-        trunkFat: '', trunkMuscle: '', lLegFat: '', lLegMuscle: '', rLegFat: '', rLegMuscle: ''
-      });
     } catch (e) {
       toast({ variant: 'destructive', title: "Erro ao salvar bioimpedância" });
     } finally {
@@ -174,17 +194,14 @@ function StudentDetailsContent() {
 
   const reportStats = useMemo(() => {
     if (!history) return { totalTime: 0, sessionsWeek: 0 };
-    
     const totalTime = history.reduce((acc, h) => acc + (Number(h.duration) || 0), 0);
     const now = new Date();
     const weekAgo = new Date();
     weekAgo.setDate(now.getDate() - 7);
-    
     const sessionsWeek = history.filter(h => {
       const date = h.completedAt?.toDate ? h.completedAt.toDate() : null;
       return date && date >= weekAgo;
     }).length;
-    
     return { totalTime, sessionsWeek };
   }, [history]);
 
@@ -207,11 +224,11 @@ function StudentDetailsContent() {
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-12 w-12" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <PageHeader title={student.fullName || 'Atleta'} subtitle="Gestão técnica, financeira e análise de performance." />
+        <PageHeader title={student.fullName || 'Atleta'} subtitle="Gestão técnica, financeira e análise de performance avançada." />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Coluna Lateral: Resumo */}
+        {/* Coluna Lateral */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 shadow-2xl overflow-hidden">
             <CardContent className="p-8 flex flex-col items-center text-center">
@@ -258,21 +275,11 @@ function StudentDetailsContent() {
               </Button>
               
               {student.status === 'blocked' || isExpired ? (
-                <Button 
-                  onClick={() => handleUpdateStatus('active')} 
-                  disabled={isUpdating}
-                  variant="outline" 
-                  className="w-full h-14 rounded-2xl border-green-500/30 text-green-500 font-black uppercase hover:bg-green-500/10"
-                >
+                <Button onClick={() => handleUpdateStatus('active')} disabled={isUpdating} variant="outline" className="w-full h-14 rounded-2xl border-green-500/30 text-green-500 font-black uppercase hover:bg-green-500/10">
                   {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <ShieldCheck className="mr-2 h-5 w-5" />} LIBERAR ACESSO
                 </Button>
               ) : (
-                <Button 
-                  onClick={() => handleUpdateStatus('blocked')} 
-                  disabled={isUpdating}
-                  variant="outline" 
-                  className="w-full h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase hover:bg-primary/10 hover:text-primary transition-all"
-                >
+                <Button onClick={() => handleUpdateStatus('blocked')} disabled={isUpdating} variant="outline" className="w-full h-14 rounded-2xl border-white/10 text-white/40 font-black uppercase hover:bg-primary/10 hover:text-primary transition-all">
                   {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <ShieldBan className="mr-2 h-5 w-5" />} BLOQUEAR ALUNO
                 </Button>
               )}
@@ -280,23 +287,271 @@ function StudentDetailsContent() {
           </Card>
         </div>
 
-        {/* Coluna Principal: Abas */}
+        {/* Coluna Principal */}
         <div className="lg:col-span-8">
           <Tabs defaultValue="report" className="w-full">
             <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full border border-white/5 gap-1 mb-8">
-              <TabsTrigger value="report" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="report" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
                 <Activity className="mr-2 h-4 w-4" /> Relatório
               </TabsTrigger>
-              <TabsTrigger value="bio" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="bio" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
                 <Scale className="mr-2 h-4 w-4" /> Bioimpedância
               </TabsTrigger>
-              <TabsTrigger value="evolution" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="evolution" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
                 <TrendingUp className="mr-2 h-4 w-4" /> Evolução
               </TabsTrigger>
-              <TabsTrigger value="financial" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white">
+              <TabsTrigger value="financial" className="flex-1 font-black text-[10px] uppercase h-full rounded-xl data-[state=active]:bg-primary">
                 <CreditCard className="mr-2 h-4 w-4" /> Financeiro
               </TabsTrigger>
             </TabsList>
+
+            {/* Aba de Bioimpedância Avançada */}
+            <TabsContent value="bio" className="space-y-6">
+              <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
+                <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Avaliações Clínicas</CardTitle>
+                    <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Registre dados detalhados de composição e metabolismo.</CardDescription>
+                  </div>
+                  <Dialog open={isBioModalOpen} onOpenChange={setIsBioModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
+                        <Plus className="h-4 w-4 mr-2" /> Nova Avaliação
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-4xl max-h-[90vh]">
+                      <DialogHeader>
+                        <DialogTitle className="uppercase font-black flex items-center gap-2">
+                          <Scale className="h-6 w-6 text-primary" /> Registrar Bioimpedância de Elite
+                        </DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="pr-4 py-4">
+                        <div className="space-y-10 px-1">
+                          {/* Seção 1: Básicos */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                              <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">Data da Avaliação</Label>
+                              <Input type="date" value={bioData.date} onChange={(e) => setBioData({...bioData, date: e.target.value})} className="bg-white/5 border-none h-12 rounded-xl font-bold" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">Peso Corporal (kg)</Label>
+                              <Input type="number" value={bioData.weight} onChange={(e) => setBioData({...bioData, weight: e.target.value})} className="bg-white/5 border-none h-12 rounded-xl font-bold" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">IMC</Label>
+                              <Input type="number" value={bioData.bmi} onChange={(e) => setBioData({...bioData, bmi: e.target.value})} className="bg-white/5 border-none h-12 rounded-xl font-bold" />
+                            </div>
+                          </div>
+
+                          {/* Seção 2: Composição Massa e Gordura */}
+                          <div className="p-6 bg-white/5 rounded-[2rem] border border-white/5 space-y-6">
+                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                              <Dna className="h-4 w-4" /> Composição Corporal
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Gordura Corporal (%)</Label>
+                                <Input type="number" value={bioData.fatTotal} onChange={(e) => setBioData({...bioData, fatTotal: e.target.value})} className="bg-black/20 border-none h-10 rounded-lg text-xs" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Massa de Gordura (kg)</Label>
+                                <Input type="number" value={bioData.fatMass} onChange={(e) => setBioData({...bioData, fatMass: e.target.value})} className="bg-black/20 border-none h-10 rounded-lg text-xs" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Massa Magra (kg)</Label>
+                                <Input type="number" value={bioData.leanMass} onChange={(e) => setBioData({...bioData, leanMass: e.target.value})} className="bg-black/20 border-none h-10 rounded-lg text-xs" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Massa Muscular Total (kg)</Label>
+                                <Input type="number" value={bioData.muscleTotal} onChange={(e) => setBioData({...bioData, muscleTotal: e.target.value})} className="bg-black/20 border-none h-10 rounded-lg text-xs" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Seção 3: Metabolismo e Água */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                              <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <Flame className="h-4 w-4" /> Metabolismo & Ósseo
+                              </h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Taxa Metabólica Basal</Label>
+                                  <Input type="number" value={bioData.bmr} onChange={(e) => setBioData({...bioData, bmr: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Idade Metabólica</Label>
+                                  <Input type="number" value={bioData.metabolicAge} onChange={(e) => setBioData({...bioData, metabolicAge: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Gordura Visceral</Label>
+                                  <Input type="number" value={bioData.visceralFat} onChange={(e) => setBioData({...bioData, visceralFat: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Massa Óssea (kg)</Label>
+                                  <Input type="number" value={bioData.boneMass} onChange={(e) => setBioData({...bioData, boneMass: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-4">
+                              <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                <Droplets className="h-4 w-4" /> Hidratação & Proteína
+                              </h4>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Água Corporal (L)</Label>
+                                  <Input type="number" value={bioData.waterTotal} onChange={(e) => setBioData({...bioData, waterTotal: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Água (%)</Label>
+                                  <Input type="number" value={bioData.waterPercentage} onChange={(e) => setBioData({...bioData, waterPercentage: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Proteína Corporal (kg)</Label>
+                                  <Input type="number" value={bioData.protein} onChange={(e) => setBioData({...bioData, protein: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase font-bold text-white/20">Massa Muscular Esq. (kg)</Label>
+                                  <Input type="number" value={bioData.skeletalMuscle} onChange={(e) => setBioData({...bioData, skeletalMuscle: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Seção 4: Antropometria */}
+                          <div className="space-y-4">
+                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                              <Layers className="h-4 w-4" /> Antropometria
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Circunferência Abdominal (cm)</Label>
+                                <Input type="number" value={bioData.abdominalCirc} onChange={(e) => setBioData({...bioData, abdominalCirc: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Relação Cintura/Quadril</Label>
+                                <Input type="number" step="0.01" value={bioData.waistHipRatio} onChange={(e) => setBioData({...bioData, waistHipRatio: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[8px] uppercase font-bold text-white/20">Dobras Cutâneas (Opcional)</Label>
+                                <Input type="text" value={bioData.skinfolds} onChange={(e) => setBioData({...bioData, skinfolds: e.target.value})} placeholder="Ex: Tricipital 12mm..." className="bg-white/5 border-none h-10 rounded-lg" />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Seção 5: Distribuição Segmentar */}
+                          <div className="space-y-6">
+                            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest">Distribuição Segmentar (Massa Muscular / Gordura %)</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              {/* Membros Superiores */}
+                              <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 space-y-4">
+                                <p className="text-[9px] font-black uppercase text-white/40">Membros Superiores</p>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <Label className="text-[8px] uppercase">Braço Esq. (G% | M%)</Label>
+                                    <div className="flex gap-1">
+                                      <Input placeholder="G%" type="number" value={bioData.lArmFat} onChange={(e) => setBioData({...bioData, lArmFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                      <Input placeholder="M%" type="number" value={bioData.lArmMuscle} onChange={(e) => setBioData({...bioData, lArmMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-[8px] uppercase">Braço Dir. (G% | M%)</Label>
+                                    <div className="flex gap-1">
+                                      <Input placeholder="G%" type="number" value={bioData.rArmFat} onChange={(e) => setBioData({...bioData, rArmFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                      <Input placeholder="M%" type="number" value={bioData.rArmMuscle} onChange={(e) => setBioData({...bioData, rArmMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Tronco */}
+                              <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 space-y-4">
+                                <p className="text-[9px] font-black uppercase text-white/40">Tronco</p>
+                                <div className="space-y-2">
+                                  <Label className="text-[8px] uppercase">Tronco (G% | M%)</Label>
+                                  <div className="flex gap-2">
+                                    <Input placeholder="Gordura %" type="number" value={bioData.trunkFat} onChange={(e) => setBioData({...bioData, trunkFat: e.target.value})} className="bg-white/5 border-none h-10 text-[10px]" />
+                                    <Input placeholder="Músculo %" type="number" value={bioData.trunkMuscle} onChange={(e) => setBioData({...bioData, trunkMuscle: e.target.value})} className="bg-white/5 border-none h-10 text-[10px]" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Membros Inferiores */}
+                              <div className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 space-y-4 md:col-span-2">
+                                <p className="text-[9px] font-black uppercase text-white/40">Membros Inferiores</p>
+                                <div className="grid grid-cols-2 gap-8">
+                                  <div className="space-y-2">
+                                    <Label className="text-[8px] uppercase">Perna Esq. (G% | M%)</Label>
+                                    <div className="flex gap-1">
+                                      <Input placeholder="G%" type="number" value={bioData.lLegFat} onChange={(e) => setBioData({...bioData, lLegFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                      <Input placeholder="M%" type="number" value={bioData.lLegMuscle} onChange={(e) => setBioData({...bioData, lLegMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label className="text-[8px] uppercase">Perna Dir. (G% | M%)</Label>
+                                    <div className="flex gap-1">
+                                      <Input placeholder="G%" type="number" value={bioData.rLegFat} onChange={(e) => setBioData({...bioData, rLegFat: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                      <Input placeholder="M%" type="number" value={bioData.rLegMuscle} onChange={(e) => setBioData({...bioData, rLegMuscle: e.target.value})} className="bg-white/5 border-none h-9 text-[10px]" />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[9px] uppercase font-black text-white/40 tracking-widest">Observações da Avaliação</Label>
+                            <Textarea value={bioData.notes} onChange={(e) => setBioData({...bioData, notes: e.target.value})} placeholder="Anote percepções subjetivas, recomendações ou metas específicas..." className="bg-white/5 border-none rounded-2xl min-h-[100px]" />
+                          </div>
+                        </div>
+                      </ScrollArea>
+                      <DialogFooter className="pt-4">
+                        <Button onClick={handleSaveBio} disabled={isUpdating} className="w-full bg-primary h-16 rounded-[1.8rem] font-black uppercase text-lg shadow-xl shadow-primary/20">
+                          {isUpdating ? <Loader2 className="animate-spin h-6 w-6" /> : "FINALIZAR E SALVAR AVALIAÇÃO"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {bioReports && bioReports.length > 0 ? (
+                    <div className="divide-y divide-white/5">
+                      {bioReports.map(report => (
+                        <div key={report.id} className="p-8 flex items-center justify-between hover:bg-white/[0.01] transition-colors">
+                          <div className="flex items-center gap-5">
+                            <div className="h-14 w-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black shadow-inner">
+                              <Scale className="h-7 w-7" />
+                            </div>
+                            <div>
+                              <p className="font-black text-white uppercase text-lg tracking-tight">Avaliação Clínica</p>
+                              <p className="text-[10px] text-white/40 font-bold uppercase mt-1">
+                                Realizada em {new Date(report.date || report.createdAt?.toDate()).toLocaleDateString('pt-BR')} • {report.weight}kg
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-8">
+                            <div className="text-right">
+                              <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Gordura</p>
+                              <p className="text-xl font-black text-primary">{report.fatTotal}%</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">Músculo</p>
+                              <p className="text-xl font-black text-green-500">{report.muscleTotal}kg</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-24 text-center opacity-20">
+                      <Scale className="h-16 w-16 mx-auto mb-4" />
+                      <p className="font-black uppercase text-[10px] tracking-widest">Nenhuma avaliação detalhada lançada.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="report" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -348,138 +603,6 @@ function StudentDetailsContent() {
                         <History className="h-8 w-8 text-white/10" />
                       </div>
                       <div className="text-white/20 uppercase font-black text-[10px] tracking-widest italic">Nenhum treino realizado ainda.</div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="bio" className="space-y-6">
-              <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-2xl">
-                <CardHeader className="bg-white/5 p-8 border-b border-white/5 flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Relatórios de Bioimpedância</CardTitle>
-                    <CardDescription className="text-[10px] font-bold text-white/20 uppercase mt-1">Registre dados detalhados de massa e gordura.</CardDescription>
-                  </div>
-                  <Dialog open={isBioModalOpen} onOpenChange={setIsBioModalOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="rounded-xl bg-primary font-black text-[10px] uppercase px-6">
-                        <Plus className="h-4 w-4 mr-2" /> Novo Relatório
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-card border-white/10 text-white rounded-[2.5rem] max-w-2xl overflow-y-auto max-h-[90vh]">
-                      <DialogHeader>
-                        <DialogTitle className="uppercase font-black">Lançar Bioimpedância</DialogTitle>
-                      </DialogHeader>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] font-black text-primary uppercase">Totais</h4>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] uppercase opacity-40">Peso Total (kg)</Label>
-                            <Input type="number" value={bioData.weight} onChange={(e) => setBioBioData({...bioData, weight: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">% Gordura</Label>
-                              <Input type="number" value={bioData.fatTotal} onChange={(e) => setBioBioData({...bioData, fatTotal: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">% Massa Muscular</Label>
-                              <Input type="number" value={bioData.muscleTotal} onChange={(e) => setBioBioData({...bioData, muscleTotal: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] font-black text-primary uppercase">Membros Superiores</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">Braço Esq. (G/M %)</Label>
-                              <div className="flex gap-1">
-                                <Input placeholder="G" type="number" value={bioData.lArmFat} onChange={(e) => setBioBioData({...bioData, lArmFat: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                                <Input placeholder="M" type="number" value={bioData.lArmMuscle} onChange={(e) => setBioBioData({...bioData, lArmMuscle: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">Braço Dir. (G/M %)</Label>
-                              <div className="flex gap-1">
-                                <Input placeholder="G" type="number" value={bioData.rArmFat} onChange={(e) => setBioBioData({...bioData, rArmFat: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                                <Input placeholder="M" type="number" value={bioData.rArmMuscle} onChange={(e) => setBioBioData({...bioData, rArmMuscle: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] font-black text-primary uppercase">Tronco</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">Tronco Gordura %</Label>
-                              <Input type="number" value={bioData.trunkFat} onChange={(e) => setBioBioData({...bioData, trunkFat: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">Tronco Massa %</Label>
-                              <Input type="number" value={bioData.trunkMuscle} onChange={(e) => setBioBioData({...bioData, trunkMuscle: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <h4 className="text-[10px] font-black text-primary uppercase">Membros Inferiores</h4>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">Perna Esq. (G/M %)</Label>
-                              <div className="flex gap-1">
-                                <Input placeholder="G" type="number" value={bioData.lLegFat} onChange={(e) => setBioBioData({...bioData, lLegFat: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                                <Input placeholder="M" type="number" value={bioData.lLegMuscle} onChange={(e) => setBioBioData({...bioData, lLegMuscle: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-[10px] uppercase opacity-40">Perna Dir. (G/M %)</Label>
-                              <div className="flex gap-1">
-                                <Input placeholder="G" type="number" value={bioData.rLegFat} onChange={(e) => setBioBioData({...bioData, rLegFat: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                                <Input placeholder="M" type="number" value={bioData.rLegMuscle} onChange={(e) => setBioBioData({...bioData, rLegMuscle: e.target.value})} className="bg-white/5 border-none h-10 rounded-lg" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button onClick={handleSaveBio} disabled={isUpdating} className="w-full bg-primary h-14 rounded-2xl font-black uppercase">
-                          {isUpdating ? <Loader2 className="animate-spin" /> : "Salvar Bioimpedância"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {bioReports && bioReports.length > 0 ? (
-                    <div className="divide-y divide-white/5">
-                      {bioReports.map(report => (
-                        <div key={report.id} className="p-6 flex items-center justify-between hover:bg-white/[0.02]">
-                          <div>
-                            <p className="font-black text-white uppercase text-sm">Bioimpedância #{report.id.slice(0, 5)}</p>
-                            <p className="text-[10px] text-white/40 font-bold uppercase mt-1">
-                              {report.createdAt?.toDate().toLocaleDateString('pt-BR')} • {report.weight}kg
-                            </p>
-                          </div>
-                          <div className="flex gap-4">
-                            <div className="text-right">
-                              <p className="text-[8px] font-black text-white/20 uppercase">Gordura</p>
-                              <p className="text-xs font-black text-primary">{report.fatTotal}%</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-[8px] font-black text-white/20 uppercase">Músculo</p>
-                              <p className="text-xs font-black text-green-500">{report.muscleTotal}%</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-20 text-center opacity-20">
-                      <Scale className="h-12 w-12 mx-auto mb-4" />
-                      <p className="font-black uppercase text-[10px] tracking-widest">Nenhuma bioimpedância lançada.</p>
                     </div>
                   )}
                 </CardContent>
@@ -598,11 +721,7 @@ function StudentDetailsContent() {
                         </p>
                       </div>
                     </div>
-                    <Button 
-                      onClick={handleConfirmPayment} 
-                      disabled={isUpdating}
-                      className="w-full md:w-auto h-14 px-8 font-black bg-white text-black hover:bg-white/90 shadow-xl rounded-xl text-xs tracking-tight uppercase transition-all active:scale-95" 
-                    >
+                    <Button onClick={handleConfirmPayment} disabled={isUpdating} className="w-full md:w-auto h-14 px-8 font-black bg-white text-black hover:bg-white/90 shadow-xl rounded-xl text-xs tracking-tight uppercase transition-all active:scale-95" >
                       {isUpdating ? <Loader2 className="animate-spin h-5 w-5" /> : <><CreditCard className="mr-2 h-5 w-5" /> CONFIRMAR PAGAMENTO</>}
                     </Button>
                   </div>

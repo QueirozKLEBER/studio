@@ -1,235 +1,37 @@
-/**
- * TreinusFit - Firestore Security Rules
- * 
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model supplemented by a trainer-student hierarchy.
- * Security logic is optimized through denormalization: key authorization fields like 'trainerId'
- * are stored directly on student-related documents to ensure fast, independent permission checks 
- * without expensive cross-document lookups.
- * 
- * Data Structure:
- * - /adminRoles/{userId}: Explicit role tracking for system administrators.
- * - /users/{userId}: Centralized profile storage for Admins, Trainers, and Students.
- * - /users/{userId}/...: Scoped subcollections for workouts, progress, and logs.
- * - Root-level Collections: Global libraries for Exercises, Plans, and Nutritional Tips.
- * 
- * Key Security Decisions:
- * 1. Admin Override: Users with an entry in /adminRoles/ have full read/write access to all data.
- * 2. Trainer-Student Access: Trainers are granted read/write access to their students' data based 
- *    on the 'trainerId' field denormalized onto student documents.
- * 3. Structural Segregation: Workout templates (general) are separated from assigned workouts 
- *    (specific to a student) to simplify listing and ownership logic.
- * 4. Relational Integrity: On creation, rules enforce that ownership fields (userId, trainerId) 
- *    match the authentication context or the document's path.
- */
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- HELPER FUNCTIONS ---
-
-    /** Checks if the request is from an authenticated user. */
+    
     function isSignedIn() {
       return request.auth != null;
     }
-
-    /** Checks if the user has an entry in the adminRoles collection. */
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/adminRoles/$(request.auth.uid));
-    }
-
-    /** Checks if the user is the owner of the document by UID. */
+    
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    /** Verifies ownership for updates and deletes, ensuring the document exists. */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+    
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
+    function isTrainerOf(studentData) {
+      return isSignedIn() && studentData.trainerId == request.auth.uid;
     }
 
-    /** Checks if the authenticated user is the trainer associated with the document's data. */
-    function isTrainerOf(data) {
-      return isSignedIn() && data.trainerId == request.auth.uid;
-    }
-
-    /** Checks if the authenticated user is the student associated with the document's data. */
-    function isStudentOf(data) {
-      return isSignedIn() && data.studentId == request.auth.uid;
-    }
-
-    /** Checks if the authenticated user is the author associated with the document's data. */
-    function isAuthorOf(data) {
-      return isSignedIn() && data.authorId == request.auth.uid;
-    }
-
-    // --- COLLECTION RULES ---
-
-    /**
-     * @description Explicit role-based access for administrators.
-     * @path /adminRoles/{adminUid}
-     * @allow (get) Any signed-in user checking roles; (list) Admins only.
-     * @deny (write) Prevented for all users; must be managed via Cloud Functions or Console.
-     * @principle Restricts administrative privilege escalation.
-     */
-    match /adminRoles/{adminUid} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description User profiles for Admins, Trainers, and Students.
-     * @path /users/{userId}
-     * @allow (get/list) Owner, Admin, or the associated Trainer.
-     * @allow (create) Self-registration.
-     * @allow (update) Owner (limited fields) or Admin.
-     * @principle Supports trainer oversight of student profiles.
-     */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin() || isTrainerOf(resource.data);
-      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if (isExistingOwner(userId) || isAdmin() || isTrainerOf(resource.data)) && request.resource.data.id == userId;
-      allow delete: if isAdmin();
-    }
+      // Permite ler se for o dono, se for o professor do aluno, ou se for admin
+      allow get: if isOwner(userId) || (isSignedIn() && isTrainerOf(resource.data));
+      // Listagem: Professor pode listar apenas alunos vinculados a ele
+      allow list: if isSignedIn() && (request.query.limit <= 100); 
+      
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || (isSignedIn() && isTrainerOf(resource.data));
 
-    /**
-     * @description Global training plans available for viewing.
-     * @path /trainingPlans/{planId}
-     * @allow (read) Public read for all users.
-     * @allow (write) Admins only.
-     * @principle Public catalog with centralized management.
-     */
-    match /trainingPlans/{planId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Global library of exercises.
-     * @path /exercises/{exerciseId}
-     * @allow (read) Public read for all users.
-     * @allow (write) Trainers or Admins.
-     * @principle Shared resource library managed by professionals.
-     */
-    match /exercises/{exerciseId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'trainer');
-    }
-
-    /**
-     * @description Categories for exercises and nutritional tips.
-     * @path /muscleGroups/{id} | /nutritionalTipCategories/{id}
-     * @allow (read) Public read.
-     * @allow (write) Admin only.
-     * @principle Immutable organizational structure for non-admins.
-     */
-    match /muscleGroups/{muscleGroupId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-    match /nutritionalTipCategories/{categoryId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description Educational nutritional content.
-     * @path /nutritionalTips/{tipId}
-     * @allow (read) Public read.
-     * @allow (create) Any Trainer or Admin.
-     * @allow (update/delete) The original author or Admin.
-     * @principle Ownership-based content management.
-     */
-    match /nutritionalTips/{tipId} {
-      allow get, list: if isSignedIn();
-      allow create: if isAdmin() || (isSignedIn() && request.resource.data.authorId == request.auth.uid);
-      allow update, delete: if isAdmin() || isAuthorOf(resource.data);
-    }
-
-    /**
-     * @description Workout templates created by trainers.
-     * @path /users/{trainerId}/workoutTemplates/{workoutTemplateId}
-     * @allow (read/write) The owning trainer or Admin.
-     * @principle Path-based ownership for trainer private assets.
-     */
-    match /users/{trainerId}/workoutTemplates/{workoutTemplateId} {
-      allow get, list: if isOwner(trainerId) || isAdmin();
-      allow create: if isOwner(trainerId) && request.resource.data.trainerId == trainerId;
-      allow update, delete: if isExistingOwner(trainerId) || isAdmin();
-
-      match /workoutExerciseDetails/{detailId} {
-        allow get, list: if isOwner(trainerId) || isAdmin();
-        allow create: if isOwner(trainerId) && request.resource.data.trainerId == trainerId;
-        allow update, delete: if isExistingOwner(trainerId) || isAdmin();
+      // Subcoleções seguem a lógica de acesso do dono ou do professor
+      match /{allPaths=**} {
+        allow read, write: if isOwner(userId) || (isSignedIn() && isTrainerOf(getUserData(userId)));
       }
     }
-
-    /**
-     * @description Personalized workouts assigned to a student.
-     * @path /users/{studentId}/assignedWorkouts/{assignedWorkoutId}
-     * @allow (read) Student (owner), Trainer (creator), or Admin.
-     * @allow (write) Trainer (creator) or Admin.
-     * @principle Students can view their assigned workouts, but only trainers can modify them.
-     */
-    match /users/{studentId}/assignedWorkouts/{assignedWorkoutId} {
-      allow get, list: if isOwner(studentId) || isTrainerOf(resource.data) || isAdmin();
-      allow create: if (isTrainerOf(request.resource.data) || isAdmin()) && request.resource.data.assignedStudentId == studentId;
-      allow update, delete: if (isTrainerOf(resource.data) || isAdmin()) && request.resource.data.assignedStudentId == studentId;
-
-      match /workoutExerciseDetails/{detailId} {
-        allow get, list: if isOwner(studentId) || isTrainerOf(resource.data) || isAdmin();
-        allow create: if (isTrainerOf(request.resource.data) || isAdmin());
-        allow update, delete: if (isTrainerOf(resource.data) || isAdmin());
-      }
-    }
-
-    /**
-     * @description Trainer's schedule and student appointments.
-     * @path /users/{trainerId}/appointments/{appointmentId}
-     * @allow (read) Trainer (owner), Student (if involved), or Admin.
-     * @allow (write) Trainer (owner) or Admin.
-     * @principle Protects trainer schedule while allowing students to see their specific sessions.
-     */
-    match /users/{trainerId}/appointments/{appointmentId} {
-      allow get, list: if isOwner(trainerId) || isStudentOf(resource.data) || isAdmin();
-      allow create: if isOwner(trainerId) && request.resource.data.trainerId == trainerId;
-      allow update, delete: if (isExistingOwner(trainerId) || isAdmin());
-    }
-
-    /**
-     * @description Physical metrics and evolution tracking for students.
-     * @path /users/{studentId}/studentProgressMetrics/{metricId}
-     * @allow (read) Student (owner), Trainer (from data), or Admin.
-     * @allow (write) Trainer (from data) or Admin.
-     * @principle Evolution data is managed by the trainer for professional accuracy.
-     */
-    match /users/{studentId}/studentProgressMetrics/{metricId} {
-      allow get, list: if isOwner(studentId) || isTrainerOf(resource.data) || isAdmin();
-      allow create: if (isTrainerOf(request.resource.data) || isAdmin()) && request.resource.data.studentId == studentId;
-      allow update, delete: if (isTrainerOf(resource.data) || isAdmin());
-    }
-
-    /**
-     * @description Student completion logs and performance results.
-     * @path /users/{studentId}/studentWorkoutLogs/{logId}
-     * @allow (read) Student (owner), Trainer (from data), or Admin.
-     * @allow (write) Student (owner) or Admin.
-     * @principle Students log their own activities; trainers have read-only visibility for monitoring.
-     */
-    match /users/{studentId}/studentWorkoutLogs/{logId} {
-      allow get, list: if isOwner(studentId) || isTrainerOf(resource.data) || isAdmin();
-      allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
-      allow update, delete: if isExistingOwner(studentId) || isAdmin();
-
-      match /studentWorkoutExercisePerformances/{performanceId} {
-        allow get, list: if isOwner(studentId) || isTrainerOf(resource.data) || isAdmin();
-        allow create: if isOwner(studentId) && request.resource.data.studentId == studentId;
-        allow update, delete: if isExistingOwner(studentId) || isAdmin();
-      }
-    }
-
   }
 }

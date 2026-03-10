@@ -1,34 +1,38 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: Verifica se o usuário logado é o dono do documento
+    // Helper: Verifica se o usuário é o dono do documento
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Helper: Verifica se o usuário logado é o professor do aluno alvo
-    function isTrainerOf(studentId) {
-      return request.auth != null && get(/databases/$(database)/documents/users/$(studentId)).data.trainerId == request.auth.uid;
-    }
-
     match /users/{userId} {
-      // Aluno acessa seu próprio perfil. Professor acessa perfis de seus alunos.
-      allow read, write: if isOwner(userId) || isTrainerOf(userId);
+      // O usuário sempre pode ler e editar seu próprio perfil
+      allow read, write: if isOwner(userId);
 
-      // Subcoleções (Agendamentos, Treinos, Medidas, Histórico)
+      // O Professor pode ler e editar o perfil dos seus alunos vinculados
+      // Usamos resource.data para permitir queries filtradas
+      allow read, write: if request.auth != null && 
+        (resource != null && resource.data.trainerId == request.auth.uid);
+
+      // Subcoleções (Treinos, Medidas, Histórico)
       match /{allPaths=**} {
-        allow read, write: if isOwner(userId) || isTrainerOf(userId);
+        // Acesso para o dono da subcoleção
+        allow read, write: if isOwner(userId);
+        
+        // Acesso para o professor do aluno dono da subcoleção
+        // Verificamos o trainerId no documento pai (user)
+        allow read, write: if request.auth != null && 
+          get(/databases/$(database)/documents/users/$(userId)).data.trainerId == request.auth.uid;
       }
     }
 
-    // Permitir que professores busquem seus próprios alunos na coleção users
+    // Permite que professores listem a coleção users usando o filtro trainerId
     match /users {
       allow list: if request.auth != null && (
-        resource == null || 
         resource.data.trainerId == request.auth.uid || 
-        request.auth.uid == resource.id
+        resource.id == request.auth.uid
       );
     }
   }

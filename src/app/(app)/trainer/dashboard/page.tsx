@@ -1,13 +1,11 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { 
   Users, 
   AlertTriangle, 
@@ -16,15 +14,15 @@ import {
   DollarSign,
   Activity,
   Dumbbell,
-  Clock,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 export default function TrainerDashboard() {
-  const { user } = useUser();
+  const { user, profile } = useUser();
   const db = useFirestore();
   const [mounted, setMounted] = useState(false);
 
@@ -34,9 +32,9 @@ export default function TrainerDashboard() {
 
   // Busca todos os alunos vinculados a este professor
   const studentsQuery = useMemoFirebase(() => {
-    if (!user) return null;
+    if (!user || profile?.userType !== 'trainer') return null;
     return query(collection(db, 'users'), where('trainerId', '==', user.uid));
-  }, [db, user]);
+  }, [db, user, profile]);
 
   const { data: students, isLoading: isStudentsLoading } = useCollection(studentsQuery);
 
@@ -72,6 +70,15 @@ export default function TrainerDashboard() {
 
   if (!mounted) return null;
 
+  if (profile?.userType !== 'trainer') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-white/40 font-black uppercase text-[10px] tracking-widest">Validando credenciais de professor...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-none pb-24">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -97,7 +104,7 @@ export default function TrainerDashboard() {
             </div>
             <div>
               <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Alunos Ativos</p>
-              <p className="text-2xl font-black text-white mt-1">{stats.active}</p>
+              <p className="text-2xl font-black text-white mt-1">{isStudentsLoading ? '...' : stats.active}</p>
             </div>
           </CardContent>
         </Card>
@@ -109,7 +116,7 @@ export default function TrainerDashboard() {
             </div>
             <div>
               <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Inadimplentes</p>
-              <p className="text-2xl font-black text-white mt-1">{stats.late}</p>
+              <p className="text-2xl font-black text-white mt-1">{isStudentsLoading ? '...' : stats.late}</p>
             </div>
           </CardContent>
         </Card>
@@ -121,7 +128,7 @@ export default function TrainerDashboard() {
             </div>
             <div>
               <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">Novos no Mês</p>
-              <p className="text-2xl font-black text-white mt-1">{stats.newThisMonth}</p>
+              <p className="text-2xl font-black text-white mt-1">{isStudentsLoading ? '...' : stats.newThisMonth}</p>
             </div>
           </CardContent>
         </Card>
@@ -133,7 +140,7 @@ export default function TrainerDashboard() {
             </div>
             <div>
               <p className="text-[9px] font-black text-white/60 uppercase tracking-[0.2em]">Receita Bruta</p>
-              <p className="text-2xl font-black text-white mt-1">R$ {stats.revenue.toFixed(2)}</p>
+              <p className="text-2xl font-black text-white mt-1">R$ {isStudentsLoading ? '...' : stats.revenue.toFixed(2)}</p>
             </div>
           </CardContent>
         </Card>
@@ -167,7 +174,7 @@ export default function TrainerDashboard() {
                             {student.firstName?.[0]}
                           </div>
                           <div>
-                            <p className="font-black text-white uppercase tracking-tight">{student.fullName}</p>
+                            <p className="font-black text-white uppercase tracking-tight">{student.fullName || `${student.firstName} ${student.lastName}`}</p>
                             <p className="text-[10px] font-bold text-primary uppercase">Vencido em {new Date(student.paymentDueDate).toLocaleDateString('pt-BR')}</p>
                           </div>
                         </div>
@@ -192,7 +199,7 @@ export default function TrainerDashboard() {
               <CardTitle className="text-sm font-black uppercase text-white">Ferramentas Rápidas</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <Button asChild variant="outline" className="w-full h-16 rounded-2xl border-white/10 hover:bg-primary hover:text-white transition-all justify-between px-6 group">
+              <Button asChild variant="outline" className="w-full h-16 rounded-2xl border-white/10 hover:bg-primary hover:border-primary hover:text-white transition-all justify-between px-6 group bg-white/5">
                 <Link href="/trainer/workouts/builder" className="flex items-center gap-4 w-full">
                   <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-white/20">
                     <Dumbbell className="h-5 w-5 text-primary group-hover:text-white" />
@@ -205,7 +212,7 @@ export default function TrainerDashboard() {
                 </Link>
               </Button>
 
-              <Button asChild variant="outline" className="w-full h-16 rounded-2xl border-white/10 hover:bg-primary hover:text-white transition-all justify-between px-6 group">
+              <Button asChild variant="outline" className="w-full h-16 rounded-2xl border-white/10 hover:bg-primary hover:border-primary hover:text-white transition-all justify-between px-6 group bg-white/5">
                 <Link href="/profile" className="flex items-center gap-4 w-full">
                   <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-white/20">
                     <DollarSign className="h-5 w-5 text-primary group-hover:text-white" />

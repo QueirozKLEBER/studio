@@ -8,11 +8,6 @@ service cloud.firestore {
       match /appointments/{appointmentId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
-      
-      // Permitir acesso a outras subcoleções para o dono (opcional, mas seguro para teste)
-      match /{allPaths=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
 
   }

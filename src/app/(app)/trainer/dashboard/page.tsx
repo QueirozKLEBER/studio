@@ -35,7 +35,7 @@ export default function TrainerDashboard() {
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   
-  // QUERY DA AGENDA - CAMINHO AUTORIZADO: /users/{uid}/appointments
+  // QUERY DA AGENDA - CAMINHO: /users/{uid}/appointments
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -109,24 +109,30 @@ export default function TrainerDashboard() {
                 <DialogHeader><DialogTitle className="font-black uppercase tracking-tight">Novo Agendamento</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddAppointment} className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40">Título</Label>
+                    <Label className="font-black text-[10px] uppercase text-white/40">Título do Evento</Label>
                     <Input name="title" placeholder="Ex: Treino Personal" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="font-black text-[10px] uppercase text-white/40">Aluno</Label>
+                    <Label className="font-black text-[10px] uppercase text-white/40">Nome do Aluno</Label>
                     <Input name="studentName" placeholder="Nome do Aluno" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <Input name="time" type="time" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
-                    <Select name="type" defaultValue="presencial">
-                      <SelectTrigger className="rounded-xl bg-white/5 border-none h-12 font-bold"><SelectValue /></SelectTrigger>
-                      <SelectContent className="rounded-xl bg-card border-white/10 text-white">
-                        <SelectItem value="presencial">PRESENCIAL</SelectItem>
-                        <SelectItem value="online">ONLINE</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40">Horário</Label>
+                      <Input name="time" type="time" required className="rounded-xl bg-white/5 border-none h-12 font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="font-black text-[10px] uppercase text-white/40">Tipo</Label>
+                      <Select name="type" defaultValue="presencial">
+                        <SelectTrigger className="rounded-xl bg-white/5 border-none h-12 font-bold"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-xl bg-card border-white/10 text-white">
+                          <SelectItem value="presencial">PRESENCIAL</SelectItem>
+                          <SelectItem value="online">ONLINE</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <DialogFooter><Button type="submit" className="w-full h-14 rounded-2xl bg-primary font-black uppercase" disabled={isAddingAppointment}>{isAddingAppointment ? <Loader2 className="animate-spin" /> : 'SALVAR'}</Button></DialogFooter>
+                  <DialogFooter><Button type="submit" className="w-full h-14 rounded-2xl bg-primary font-black uppercase shadow-lg shadow-primary/20" disabled={isAddingAppointment}>{isAddingAppointment ? <Loader2 className="animate-spin" /> : 'SALVAR COMPROMISSO'}</Button></DialogFooter>
                 </form>
               </DialogContent>
             </Dialog>

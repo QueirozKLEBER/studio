@@ -35,7 +35,7 @@ export default function TrainerDashboard() {
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   
-  // QUERY DA AGENDA - CAMINHO EXATO: /users/{uid}/appointments
+  // QUERY DA AGENDA - CAMINHO AUTORIZADO: /users/{uid}/appointments
   const appointmentsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -89,7 +89,7 @@ export default function TrainerDashboard() {
     <div className="flex flex-col gap-8 w-full max-w-none pb-24 px-1">
       <PageHeader 
         title="Minha Agenda" 
-        subtitle="Gerencie seus compromissos técnicos de hoje." 
+        subtitle="Gerencie seus compromissos pessoais de hoje." 
       />
 
       <div className="grid grid-cols-1 gap-8">
@@ -97,7 +97,7 @@ export default function TrainerDashboard() {
           <CardHeader className="bg-white/5 p-6 border-b border-white/5 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-black uppercase text-white flex items-center gap-3">
               <Calendar className="h-5 w-5 text-primary" />
-              Compromissos ({new Date().toLocaleDateString('pt-BR')})
+              Compromissos do Dia
             </CardTitle>
             <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
               <DialogTrigger asChild>
@@ -156,7 +156,7 @@ export default function TrainerDashboard() {
                 ))
               ) : (
                 <div className="col-span-full py-16 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
-                  <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhum compromisso agendado para hoje.</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhum compromisso agendado.</p>
                 </div>
               )}
             </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -49,7 +48,7 @@ import { cn } from '@/lib/utils';
 const BodyMap = ({ data }: { data: any }) => {
   if (!data) return null;
 
-  const Label = ({ title, fat, musc, pos }: { title: string, fat: string, musc: string, pos: string }) => (
+  const BodyLabel = ({ title, fat, musc, pos }: { title: string, fat: string, musc: string, pos: string }) => (
     <div className={cn("absolute flex flex-col items-center text-center", pos)}>
       <div className="flex items-center gap-1.5 mb-1">
         <div className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(255,0,0,0.8)]" />
@@ -68,11 +67,11 @@ const BodyMap = ({ data }: { data: any }) => {
         <path fill="currentColor" d="M100,20 c-10,0-15,10-15,20s5,20,15,20s15-10,15-20S110,20,100,20z M85,65 c-10,0-20,5-25,15 c-5,10-5,30-5,40s0,50,5,60c2,5,5,10,10,10h5v80c0,5,5,10,10,10s10-5,10-10v-80h10v80c0,5,5,10,10,10s10-5,10-10v-80h5 c5,0,8-5,10-10c5-10,5-50,5-60s0-30-5-40C120,70,110,65,100,65H85z" />
       </svg>
 
-      <Label title="Braço Esq" fat={data.lArmFat} musc={data.lArmMuscle} pos="top-[25%] left-0" />
-      <Label title="Braço Dir" fat={data.rArmFat} musc={data.rArmMuscle} pos="top-[25%] right-0" />
-      <Label title="Tronco" fat={data.trunkFat} musc={data.trunkMuscle} pos="top-[45%] left-[-10px]" />
-      <Label title="Perna Esq" fat={data.lLegFat} musc={data.lLegMuscle} pos="bottom-[15%] left-0" />
-      <Label title="Perna Dir" fat={data.rLegFat} musc={data.rLegMuscle} pos="bottom-[15%] right-0" />
+      <BodyLabel title="Braço Esq" fat={data.lArmFat} musc={data.lArmMuscle} pos="top-[25%] left-0" />
+      <BodyLabel title="Braço Dir" fat={data.rArmFat} musc={data.rArmMuscle} pos="top-[25%] right-0" />
+      <BodyLabel title="Tronco" fat={data.trunkFat} musc={data.trunkMuscle} pos="top-[45%] left-[-10px]" />
+      <BodyLabel title="Perna Esq" fat={data.lLegFat} musc={data.lLegMuscle} pos="bottom-[15%] left-0" />
+      <BodyLabel title="Perna Dir" fat={data.rLegFat} musc={data.rLegMuscle} pos="bottom-[15%] right-0" />
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-12">
         <span className="text-[10px] font-black text-white/20 uppercase italic">L</span>
@@ -175,7 +174,6 @@ export default function AssessmentPage() {
 
         <TabsContent value="bio" className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Mapa Corporal e Resumo */}
             <Card className="lg:col-span-7 rounded-[2.5rem] bg-[#1a1d24] border border-white/5 shadow-2xl overflow-hidden min-h-[600px] flex flex-col relative">
               <div className="absolute inset-0 bg-primary/5 blur-[100px] rounded-full" />
               <CardHeader className="bg-white/5 p-8 border-b border-white/5 z-10 flex flex-row items-center justify-between">
@@ -233,10 +231,9 @@ export default function AssessmentPage() {
               )}
             </Card>
 
-            {/* Relatório Clínico Detalhado */}
             <div className="lg:col-span-5 space-y-6">
               {currentBio ? (
-                <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-xl h-full flex flex-col">
+                <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 overflow-hidden shadow-xl min-h-[500px] flex flex-col">
                   <CardHeader className="bg-white/5 p-6 border-b border-white/5">
                     <CardTitle className="text-sm font-black uppercase text-primary tracking-widest flex items-center gap-2">
                       <Dna className="h-4 w-4" /> Relatório Clínico
@@ -244,7 +241,6 @@ export default function AssessmentPage() {
                   </CardHeader>
                   <ScrollArea className="flex-1">
                     <div className="p-6 space-y-8">
-                      {/* Metabolismo */}
                       <div className="space-y-4">
                         <p className="text-[9px] font-black uppercase text-white/20 tracking-[0.2em]">Metabolismo & Saúde</p>
                         <div className="grid grid-cols-2 gap-3">
@@ -255,7 +251,6 @@ export default function AssessmentPage() {
                         </div>
                       </div>
 
-                      {/* Hidratação */}
                       <div className="space-y-4">
                         <p className="text-[9px] font-black uppercase text-white/20 tracking-[0.2em]">Hidratação & Ósseo</p>
                         <div className="grid grid-cols-2 gap-3">
@@ -266,7 +261,6 @@ export default function AssessmentPage() {
                         </div>
                       </div>
 
-                      {/* Antropometria */}
                       <div className="space-y-4">
                         <p className="text-[9px] font-black uppercase text-white/20 tracking-[0.2em]">Antropometria</p>
                         <div className="grid grid-cols-2 gap-3">
@@ -285,9 +279,9 @@ export default function AssessmentPage() {
                   </ScrollArea>
                 </Card>
               ) : (
-                <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 p-8 shadow-xl flex flex-col items-center justify-center text-center opacity-20">
+                <Card className="rounded-[2.5rem] bg-[#1a1d24] border border-white/5 p-8 shadow-xl flex flex-col items-center justify-center text-center opacity-20 min-h-[400px]">
                   <Info className="h-12 w-12 mb-4" />
-                  <p className="font-black uppercase text-xs tracking-widest">Os dados clínicos detalhados aparecerão aqui após sua primeira avaliação de bioimpedância.</p>
+                  <p className="font-black uppercase text-xs tracking-widest">Os dados clínicos detalhados aparecerão aqui após sua primeira avaliação.</p>
                 </Card>
               )}
             </div>

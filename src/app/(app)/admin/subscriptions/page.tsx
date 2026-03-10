@@ -10,6 +10,7 @@ import { CreditCard, Calendar, User, ArrowRight, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 export default function AdminSubscriptionsPage() {
   const db = useFirestore();

@@ -1,15 +1,14 @@
 
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { BottomNav } from '@/components/layout/bottom-nav';
 import { useUser, useAuth, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { ShieldBan, LogOut, CreditCard, AlertTriangle } from 'lucide-react';
+import { ShieldBan, LogOut, Loader2 } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -18,28 +17,33 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const db = useFirestore();
   const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
 
-  // Lógica de verificação de vencimento automática
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lógica de verificação de vencimento automática (Client-side)
   const isExpired = useMemo(() => {
-    if (profile?.userType !== 'student' || !profile?.paymentDueDate) return false;
+    if (!mounted || !profile || profile.userType !== 'student' || !profile.paymentDueDate) return false;
     const dueDate = new Date(profile.paymentDueDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today > dueDate;
-  }, [profile]);
+  }, [profile, mounted]);
 
-  // Efeito para bloquear o aluno se o pagamento vencer
+  // Bloqueio automático se o pagamento vencer
   useEffect(() => {
-    if (isExpired && profile?.status === 'active') {
-      const updateStatus = async () => {
+    if (isExpired && profile?.status === 'active' && profile?.id) {
+      const autoBlock = async () => {
         try {
           await updateDoc(doc(db, 'users', profile.id), { status: 'blocked' });
-          toast({ variant: 'destructive', title: "Acesso Bloqueado", description: "Vencimento detectado pelo sistema." });
+          toast({ variant: 'destructive', title: "Acesso Suspenso", description: "Mensalidade vencida no sistema." });
         } catch (e) {
-          console.error("Erro ao auto-bloquear aluno", e);
+          // Silencioso para não interromper a navegação
         }
       };
-      updateStatus();
+      autoBlock();
     }
   }, [isExpired, profile, db, toast]);
 
@@ -49,9 +53,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading) {
+  if (!mounted || isUserLoading) {
     return (
-      <div className="flex min-h-screen w-full bg-background items-center justify-center p-8">
+      <div className="flex min-h-screen w-full bg-background items-center justify-center">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -59,13 +63,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (!user) return null;
 
-  // Tela de Bloqueio
+  // Tela de Bloqueio para Alunos Inadimplentes
   if (profile?.status === 'blocked') {
     return (
-      <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 overflow-hidden relative">
+      <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full -z-10" />
         <div className="text-center space-y-10 flex flex-col items-center max-w-sm animate-in fade-in zoom-in duration-500">
-          <div className="h-32 w-32 bg-primary/10 text-primary rounded-[3rem] flex items-center justify-center shadow-2xl border border-primary/20 animate-pulse">
+          <div className="h-32 w-32 bg-primary/10 text-primary rounded-[3rem] flex items-center justify-center shadow-2xl border border-primary/20">
             <ShieldBan className="h-16 w-16" />
           </div>
           <div className="space-y-4">
@@ -73,8 +77,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               ACESSO <span className="text-primary">RESTRITO</span>
             </h2>
             <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 backdrop-blur-sm">
-              <p className="text-primary font-black uppercase text-xs tracking-[0.15em] leading-relaxed">
-                Detectamos pendências na sua conta. Entre em contato com seu professor para regularizar seu acesso.
+              <p className="text-primary font-black uppercase text-[10px] tracking-[0.2em] leading-relaxed">
+                Mensalidade pendente ou vencida.<br />Entre em contato com seu personal para liberar o acesso.
               </p>
             </div>
           </div>
@@ -100,5 +104,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-import { Loader2 } from 'lucide-react';

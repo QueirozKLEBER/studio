@@ -2,35 +2,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-    
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-    
-    function isTrainerOf(studentData) {
-      return isSignedIn() && studentData.trainerId == request.auth.uid;
-    }
 
+    // Regras Simplificadas para Teste e Estabilidade
     match /users/{userId} {
-      // Permite ler se for o dono, se for o professor do aluno, ou se for admin
-      allow get: if isOwner(userId) || (isSignedIn() && isTrainerOf(resource.data));
-      // Listagem: Professor pode listar apenas alunos vinculados a ele
-      allow list: if isSignedIn() && (request.query.limit <= 100); 
-      
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || (isSignedIn() && isTrainerOf(resource.data));
+      // 1. O dono da conta tem acesso total ao seu perfil
+      allow read, write: if request.auth != null && request.auth.uid == userId;
 
-      // Subcoleções seguem a lógica de acesso do dono ou do professor
+      // 2. O professor pode listar e ler perfis de alunos que tenham seu trainerId
+      // Usamos resource.data para evitar o uso de get() na listagem
+      allow get, list: if request.auth != null && resource.data.trainerId == request.auth.uid;
+
+      // 3. Subcoleções (Agendamentos, Treinos, Medidas)
       match /{allPaths=**} {
-        allow read, write: if isOwner(userId) || (isSignedIn() && isTrainerOf(getUserData(userId)));
+        // Dono acessa suas subcoleções
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        // Professor acessa subcoleções dos seus alunos (usa get() no documento pai para validar)
+        allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(userId)).data.trainerId == request.auth.uid;
       }
     }
   }

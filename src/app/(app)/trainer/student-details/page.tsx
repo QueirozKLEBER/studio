@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useMemo } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,18 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy, updateDoc, serverTimestamp, where, limit } from 'firebase/firestore';
+import { doc, collection, query, orderBy, updateDoc, limit } from 'firebase/firestore';
 import { 
   ArrowLeft, 
   Dumbbell, 
   TrendingUp, 
   CreditCard, 
-  Settings, 
   History, 
   ShieldCheck, 
   ShieldBan, 
   Scale, 
-  Ruler,
   Calendar,
   Save,
   Loader2,
@@ -49,8 +47,12 @@ function StudentDetailsContent() {
   const router = useRouter();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Queries
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const studentRef = useMemoFirebase(() => id ? doc(db, 'users', id) : null, [db, id]);
   const measurementsQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'bodyMeasurements'), orderBy('createdAt', 'asc')) : null, [db, id]);
   const workoutHistoryQuery = useMemoFirebase(() => id ? query(collection(db, 'users', id, 'workoutHistory'), orderBy('completedAt', 'desc'), limit(20)) : null, [db, id]);
@@ -64,9 +66,9 @@ function StudentDetailsContent() {
     setIsUpdating(true);
     try {
       await updateDoc(studentRef, { status: newStatus });
-      toast({ title: "Status atualizado" });
+      toast({ title: newStatus === 'active' ? "Acesso Liberado! ✅" : "Acesso Bloqueado! 🚫" });
     } catch (e) {
-      toast({ variant: 'destructive', title: "Erro ao atualizar" });
+      toast({ variant: 'destructive', title: "Erro ao atualizar permissão" });
     } finally {
       setIsUpdating(false);
     }
@@ -80,12 +82,12 @@ function StudentDetailsContent() {
     try {
       await updateDoc(studentRef, {
         paymentDueDate: formData.get('paymentDueDate'),
-        monthlyFee: parseFloat(formData.get('monthlyFee') as string),
+        monthlyFee: Number(formData.get('monthlyFee')),
         status: 'active'
       });
-      toast({ title: "Financeiro atualizado!", description: "Acesso liberado automaticamente." });
+      toast({ title: "Financeiro Atualizado!", description: "O acesso foi liberado automaticamente." });
     } catch (e) {
-      toast({ variant: 'destructive', title: "Erro ao salvar" });
+      toast({ variant: 'destructive', title: "Erro ao salvar financeiro" });
     } finally {
       setIsUpdating(false);
     }
@@ -99,7 +101,7 @@ function StudentDetailsContent() {
     }));
   }, [measurements]);
 
-  if (isLoading) return <div className="p-8 animate-pulse bg-background h-screen" />;
+  if (!mounted || isLoading) return <div className="p-8 animate-pulse bg-background h-screen" />;
   if (!student) return <div className="p-8 text-center py-20 text-white font-black uppercase">Aluno não encontrado.</div>;
 
   const isExpired = student.paymentDueDate && new Date(student.paymentDueDate) < new Date();
@@ -110,11 +112,11 @@ function StudentDetailsContent() {
         <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full h-12 w-12" onClick={() => router.back()}>
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <PageHeader title={student.fullName} subtitle="GESTÃO TÉCNICA E EVOLUÇÃO." />
+        <PageHeader title={student.fullName || 'Detalhes do Aluno'} subtitle="Gestão técnica, financeira e evolução." />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Perfil e Ações Rápidas */}
+        {/* Coluna Lateral: Resumo e Ações */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl overflow-hidden">
             <CardContent className="p-8 flex flex-col items-center text-center">
@@ -122,7 +124,16 @@ function StudentDetailsContent() {
                 {student.firstName?.[0]}
               </div>
               <h3 className="text-2xl font-black text-white uppercase tracking-tight">{student.fullName}</h3>
-              <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-1 mb-6">{student.email}</p>
+              <div className="flex flex-col gap-1 mt-2 mb-6">
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                  <Mail className="h-3 w-3" /> {student.email}
+                </p>
+                {student.phone && (
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                    <Phone className="h-3 w-3" /> {student.phone}
+                  </p>
+                )}
+              </div>
               
               <div className="grid grid-cols-2 gap-3 w-full">
                 <div className="bg-white/5 p-4 rounded-2xl">
@@ -130,15 +141,20 @@ function StudentDetailsContent() {
                   <p className="text-xl font-black text-white">{student.weight || '--'} kg</p>
                 </div>
                 <div className="bg-white/5 p-4 rounded-2xl">
-                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Altura</p>
-                  <p className="text-xl font-black text-white">{student.height || '--'} cm</p>
+                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Status</p>
+                  <Badge variant="outline" className={cn(
+                    "text-[8px] font-black uppercase mt-1",
+                    isExpired ? "border-primary text-primary" : "border-green-500/30 text-green-500"
+                  )}>
+                    {isExpired ? 'INADIMPLENTE' : 'EM DIA'}
+                  </Badge>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="rounded-[2.5rem] bg-card border border-white/5 shadow-2xl p-6 space-y-4">
-            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest px-2">Ações de Controle</h4>
+            <h4 className="text-[10px] font-black uppercase text-white/40 tracking-widest px-2">Controle de Acesso</h4>
             <div className="flex flex-col gap-3">
               {student.status === 'blocked' ? (
                 <Button onClick={() => handleUpdateStatus('active')} className="w-full h-14 rounded-2xl bg-green-600 font-black uppercase shadow-lg shadow-green-900/20" disabled={isUpdating}>
@@ -151,14 +167,14 @@ function StudentDetailsContent() {
               )}
               <Button asChild variant="outline" className="w-full h-14 rounded-2xl border-white/10 font-black uppercase tracking-widest hover:bg-primary hover:border-primary transition-all">
                 <Link href={`/trainer/workouts/builder?studentId=${id}`}>
-                  <Dumbbell className="mr-2 h-5 w-5" /> ATUALIZAR TREINO
+                  <Dumbbell className="mr-2 h-5 w-5" /> MONTAR NOVO TREINO
                 </Link>
               </Button>
             </div>
           </Card>
         </div>
 
-        {/* Detalhes e Métricas */}
+        {/* Coluna Principal: Abas de Gestão */}
         <div className="lg:col-span-8">
           <Tabs defaultValue="evolution" className="w-full">
             <TabsList className="bg-white/5 p-1.5 rounded-2xl h-16 w-full border border-white/5 gap-1 mb-8">
@@ -180,7 +196,7 @@ function StudentDetailsContent() {
                     <Scale className="h-6 w-6 text-primary" /> Curva de Peso
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 h-[300px]">
+                <CardContent className="p-8 h-[350px]">
                   {chartData.length > 1 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
@@ -194,7 +210,7 @@ function StudentDetailsContent() {
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center opacity-20">
                       <TrendingUp className="h-12 w-12 mb-2" />
-                      <p className="text-[10px] font-black uppercase tracking-widest">Sem registros suficientes</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest">Sem registros suficientes para gráfico</p>
                     </div>
                   )}
                 </CardContent>
@@ -204,14 +220,14 @@ function StudentDetailsContent() {
             <TabsContent value="financial">
               <Card className="rounded-[2.5rem] bg-card border border-white/5 overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 p-8">
-                  <CardTitle className="text-xl font-black uppercase text-white">Controle de Mensalidade</CardTitle>
-                  <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Gerencie valores e vencimentos.</CardDescription>
+                  <CardTitle className="text-xl font-black uppercase text-white">Controle de Assinatura</CardTitle>
+                  <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Ajuste valores e datas de vencimento.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-8">
                   <form onSubmit={handleUpdateFinancial} className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2">
-                        <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Vencimento da Mensalidade</Label>
+                        <Label className="font-black text-[10px] uppercase text-white/40 tracking-widest">Próximo Vencimento</Label>
                         <Input name="paymentDueDate" type="date" defaultValue={student.paymentDueDate || ''} className="rounded-xl h-14 bg-white/5 border-none font-black text-white" />
                       </div>
                       <div className="space-y-2">
@@ -227,9 +243,9 @@ function StudentDetailsContent() {
                       <div className="flex items-center gap-4">
                         {isExpired ? <AlertTriangle className="h-8 w-8 text-primary" /> : <ShieldCheck className="h-8 w-8 text-green-500" />}
                         <div>
-                          <p className="font-black text-white uppercase tracking-tight">Status de Acesso</p>
+                          <p className="font-black text-white uppercase tracking-tight">Status de Pagamento</p>
                           <p className={cn("text-sm font-bold uppercase", isExpired ? "text-primary" : "text-green-500")}>
-                            {isExpired ? 'PAGAMENTO VENCIDO - ACESSO RESTRITO' : 'REGULARIZADO - ACESSO LIBERADO'}
+                            {isExpired ? 'PAGAMENTO ATRASADO' : 'MENSALIDADE EM DIA'}
                           </p>
                         </div>
                       </div>
@@ -254,19 +270,19 @@ function StudentDetailsContent() {
                               <History className="h-6 w-6" />
                             </div>
                             <div>
-                              <p className="font-black text-white uppercase tracking-tight">{log.planName || 'Treino'}</p>
+                              <p className="font-black text-white uppercase tracking-tight">{log.planName || 'Treino Realizado'}</p>
                               <p className="text-[10px] font-bold text-white/40 uppercase">
-                                Concluído em {log.completedAt?.toDate().toLocaleString('pt-BR')}
+                                {log.completedAt?.toDate().toLocaleString('pt-BR')}
                               </p>
                             </div>
                           </div>
                           <Badge variant="outline" className="border-green-500/30 text-green-500 font-black text-[8px] uppercase">
-                            {log.duration} MIN
+                            {log.duration || '--'} MIN
                           </Badge>
                         </div>
                       ))
                     ) : (
-                      <div className="p-20 text-center opacity-20 italic font-black uppercase text-xs tracking-widest">Nenhuma atividade registrada.</div>
+                      <div className="p-20 text-center opacity-20 italic font-black uppercase text-xs tracking-widest">Nenhuma atividade registrada ainda.</div>
                     )}
                   </div>
                 </CardContent>

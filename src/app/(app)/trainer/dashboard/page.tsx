@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, limit, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { 
   Users, 
   Dumbbell, 
@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Trash2,
   Video,
-  Loader2
+  Loader2,
+  DollarSign
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -33,11 +34,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 
 export default function TrainerDashboard() {
-  const { user, profile } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isAddingAppointment, setIsAddingAppointment] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 1. Query para buscar todos os alunos vinculados a este professor
   const studentsQuery = useMemoFirebase(() => {
@@ -47,7 +53,7 @@ export default function TrainerDashboard() {
 
   const { data: students, isLoading: isStudentsLoading } = useCollection(studentsQuery);
 
-  // 2. Query para a Agenda de hoje
+  // 2. Query para a Agenda de hoje do PROFESSOR (Subcoleção do próprio UID)
   const todayStr = new Date().toISOString().split('T')[0];
   const agendaQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -60,7 +66,7 @@ export default function TrainerDashboard() {
 
   const { data: appointments, isLoading: isAgendaLoading } = useCollection(agendaQuery);
 
-  // Cálculos de métricas
+  // Cálculos de métricas reais
   const stats = useMemo(() => {
     if (!students) return { active: 0, pending: 0, blocked: 0, revenue: 0, expired: 0 };
     
@@ -72,7 +78,7 @@ export default function TrainerDashboard() {
       if (s.status === 'pending') acc.pending++;
       if (s.status === 'blocked') acc.blocked++;
       
-      if (s.monthlyFee) acc.revenue += s.monthlyFee;
+      if (s.monthlyFee) acc.revenue += Number(s.monthlyFee);
       
       if (s.paymentDueDate && new Date(s.paymentDueDate) < today) {
         acc.expired++;
@@ -99,45 +105,39 @@ export default function TrainerDashboard() {
         createdAt: serverTimestamp()
       });
       
-      toast({ title: "Agendado!", description: "Seu compromisso foi salvo." });
+      toast({ title: "Compromisso Salvo! 📅" });
       setIsAppointmentModalOpen(false);
     } catch (error) {
-      toast({ variant: 'destructive', title: "Erro ao salvar" });
+      toast({ variant: 'destructive', title: "Erro ao salvar na agenda" });
     } finally {
       setIsAddingAppointment(false);
     }
   };
 
-  const handleDeleteAppointment = async (id: string) => {
-    if (!user) return;
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'appointments', id));
-      toast({ title: "Removido" });
-    } catch (e) {
-      toast({ variant: 'destructive', title: "Erro ao excluir" });
-    }
-  };
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-none pb-24 px-1">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <PageHeader 
-          title="Painel do Professor" 
-          subtitle="Gestão técnica e financeira de atletas de elite." 
+          title="Painel de Controle" 
+          subtitle="Gestão técnica e financeira de alunos de elite." 
         />
-        <Button asChild className="rounded-2xl h-14 px-8 font-black bg-primary text-white shadow-xl shadow-primary/20 uppercase tracking-widest transition-all active:scale-95">
-          <Link href="/trainer/workouts/builder">
-            <Plus className="mr-2 h-5 w-5" /> NOVO TREINO
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild className="rounded-2xl h-14 px-8 font-black bg-primary text-white shadow-xl shadow-primary/20 uppercase tracking-widest transition-all active:scale-95">
+            <Link href="/trainer/workouts/builder">
+              <Plus className="mr-2 h-5 w-5" /> NOVO TREINO
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Cards de Métricas */}
+      {/* Grid de Métricas Reais */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Alunos Ativos', value: stats.active, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
           { label: 'Inadimplentes', value: stats.expired, icon: AlertTriangle, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-          { label: 'Receita Mensal', value: `R$ ${stats.revenue.toFixed(2)}`, icon: CreditCard, color: 'text-green-500', bg: 'bg-green-500/10' },
+          { label: 'Receita Mensal', value: `R$ ${stats.revenue.toFixed(2)}`, icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10' },
           { label: 'Acessos Bloqueados', value: stats.blocked, icon: TrendingUp, color: 'text-white', bg: 'bg-white/5' },
         ].map((stat, i) => (
           <Card key={i} className="rounded-[2rem] border border-white/5 bg-card overflow-hidden shadow-xl">
@@ -160,8 +160,8 @@ export default function TrainerDashboard() {
           <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl h-full">
             <CardHeader className="bg-white/5 p-8 flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Atletas Vinculados</CardTitle>
-                <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Seus alunos em ordem de atividade.</CardDescription>
+                <CardTitle className="text-sm font-black uppercase text-white tracking-widest">Meus Atletas</CardTitle>
+                <CardDescription className="text-[10px] font-bold text-white/40 uppercase">Acompanhamento em tempo real.</CardDescription>
               </div>
               <Button variant="ghost" asChild className="text-primary hover:text-primary/80 font-black text-[10px] uppercase">
                 <Link href="/trainer/students">Ver Todos</Link>
@@ -173,49 +173,52 @@ export default function TrainerDashboard() {
                   {[1, 2, 3].map(i => <div key={i} className="h-16 bg-white/5 rounded-2xl" />)}
                 </div>
               ) : (
-                <>
-                  <div className="grid grid-cols-1 gap-4">
-                    {students && students.length > 0 ? (
-                      students.slice(0, 5).map(student => (
-                        <Link key={student.id} href={`/trainer/student-details?id=${student.id}`}>
-                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all group">
-                            <div className="flex items-center gap-4">
-                              <div className="h-12 w-12 rounded-xl bg-primary text-white flex items-center justify-center font-black text-lg shadow-lg">
-                                {student.firstName?.[0]}
-                              </div>
-                              <div>
-                                <p className="font-black text-white uppercase tracking-tight">{student.firstName} {student.lastName}</p>
-                                <Badge variant="outline" className={cn(
-                                  "text-[8px] font-black uppercase px-2 mt-1",
-                                  student.paymentDueDate && new Date(student.paymentDueDate) < new Date() 
-                                    ? "border-red-500 text-red-500" 
-                                    : "border-green-500/30 text-green-500"
-                                )}>
-                                  {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'VENCIDO' : 'EM DIA'}
-                                </Badge>
-                              </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {students && students.length > 0 ? (
+                    students.slice(0, 5).map(student => (
+                      <Link key={student.id} href={`/trainer/student-details?id=${student.id}`}>
+                        <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-primary/30 transition-all group">
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-xl bg-primary text-white flex items-center justify-center font-black text-lg shadow-lg">
+                              {student.firstName?.[0]}
                             </div>
-                            <ChevronRight className="h-5 w-5 text-white/20 group-hover:text-primary transition-colors" />
+                            <div>
+                              <p className="font-black text-white uppercase tracking-tight">{student.firstName} {student.lastName}</p>
+                              <Badge variant="outline" className={cn(
+                                "text-[8px] font-black uppercase px-2 mt-1",
+                                student.paymentDueDate && new Date(student.paymentDueDate) < new Date() 
+                                  ? "border-red-500 text-red-500" 
+                                  : "border-green-500/30 text-green-500"
+                              )}>
+                                {student.paymentDueDate && new Date(student.paymentDueDate) < new Date() ? 'VENCIDO' : 'EM DIA'}
+                              </Badge>
+                            </div>
                           </div>
-                        </Link>
-                      ))
-                    ) : (
-                      <p className="text-center py-10 text-[10px] font-black uppercase text-white/20 italic tracking-widest">Nenhum aluno encontrado ou vinculado.</p>
-                    )}
-                  </div>
-                </>
+                          <ChevronRight className="h-5 w-5 text-white/20 group-hover:text-primary transition-colors" />
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <p className="text-[10px] font-black uppercase text-white/20 italic tracking-widest">Nenhum aluno vinculado ainda.</p>
+                      <Button asChild variant="link" className="text-primary font-black uppercase text-[10px] mt-2">
+                        <Link href="/trainer/students">Vincular Primeiro Aluno</Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Agenda e Alertas */}
+        {/* Agenda do Professor */}
         <div className="lg:col-span-4 space-y-6">
           <Card className="rounded-[2.5rem] border border-white/5 bg-card overflow-hidden shadow-2xl">
             <CardHeader className="bg-white/5 p-6 border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-black uppercase text-white flex items-center gap-3">
                 <Calendar className="h-5 w-5 text-primary" />
-                Sua Agenda
+                Minha Agenda
               </CardTitle>
               <Dialog open={isAppointmentModalOpen} onOpenChange={setIsAppointmentModalOpen}>
                 <DialogTrigger asChild>
@@ -245,7 +248,7 @@ export default function TrainerDashboard() {
                           <SelectTrigger className="rounded-xl bg-white/5 border-none h-12 font-bold"><SelectValue /></SelectTrigger>
                           <SelectContent className="rounded-xl bg-card border-white/10 text-white">
                             <SelectItem value="presencial">PRESENCIAL</SelectItem>
-                            <SelectItem value="online">ONLINE (MEET)</SelectItem>
+                            <SelectItem value="online">ONLINE</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -256,11 +259,13 @@ export default function TrainerDashboard() {
               </Dialog>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="space-y-4">
-                {isAgendaLoading ? (
-                  [1, 2].map(i => <div key={i} className="h-16 bg-white/5 animate-pulse rounded-2xl" />)
-                ) : appointments && appointments.length > 0 ? (
-                  appointments.map((apt) => (
+              {isAgendaLoading ? (
+                <div className="space-y-4 animate-pulse">
+                  {[1, 2].map(i => <div key={i} className="h-16 bg-white/5 rounded-2xl" />)}
+                </div>
+              ) : appointments && appointments.length > 0 ? (
+                <div className="space-y-4">
+                  {appointments.map((apt) => (
                     <div key={apt.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border-l-4 border-primary group">
                       <div className="flex items-start gap-4">
                         <div className="text-center">
@@ -269,46 +274,15 @@ export default function TrainerDashboard() {
                         </div>
                         <div>
                           <p className="text-xs font-black text-white uppercase">{apt.title}</p>
-                          <p className="text-[9px] text-white/40 font-bold uppercase flex items-center gap-1">
-                            {apt.studentName} • {apt.type === 'online' ? <Video className="h-2 w-2" /> : <Users className="h-2 w-2" />} {apt.type}
-                          </p>
+                          <p className="text-[9px] text-white/40 font-bold uppercase">{apt.studentName}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteAppointment(apt.id)} className="opacity-0 group-hover:opacity-100 h-8 w-8 text-white/20 hover:text-red-500">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
                     </div>
-                  ))
-                ) : (
-                  <div className="py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
-                    <p className="text-[9px] font-black uppercase tracking-widest">Agenda livre para hoje</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[2.5rem] border border-white/5 bg-primary text-white overflow-hidden shadow-2xl p-2">
-            <CardHeader>
-              <CardTitle className="text-xs font-black uppercase flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Alertas do Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-0">
-              {stats.expired > 0 ? (
-                <Link href="/trainer/students">
-                  <div className="bg-white/10 p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-white/20 transition-all">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-white" />
-                      <p className="text-[10px] font-black uppercase tracking-tight">{stats.expired} ALUNOS BLOQUEADOS</p>
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 opacity-50" />
-                  </div>
-                </Link>
+                  ))}
+                </div>
               ) : (
-                <div className="p-4 rounded-2xl border border-white/20 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest">Sem pendências financeiras</p>
+                <div className="py-10 text-center opacity-20 border-2 border-dashed border-white/10 rounded-[2rem]">
+                  <p className="text-[9px] font-black uppercase tracking-widest">Agenda livre para hoje</p>
                 </div>
               )}
             </CardContent>

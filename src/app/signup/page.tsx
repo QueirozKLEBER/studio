@@ -73,6 +73,7 @@ export default function SignupPage() {
                 lastName: lastName || '',
                 dateJoined: new Date().toISOString(),
                 userType: role,
+                status: 'active'
             });
 
             toast({
@@ -117,18 +118,18 @@ export default function SignupPage() {
         footerLink="/login"
         footerLinkText="Entrar"
         >
-        <div className="mb-6">
+        <div className="mb-8">
             <Tabs value={role} onValueChange={(v) => setRole(v as any)} className="w-full">
-                <TabsList className="grid grid-cols-3 w-full h-12 rounded-2xl bg-muted p-1">
-                    <TabsTrigger value="student" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <TabsList className="grid grid-cols-3 w-full h-14 rounded-2xl bg-black/40 p-1.5 border border-white/5">
+                    <TabsTrigger value="student" className="rounded-xl font-black text-[10px] uppercase data-[state=active]:bg-white data-[state=active]:text-primary transition-all">
                         <UserCircle className="h-4 w-4 mr-2" />
                         Aluno
                     </TabsTrigger>
-                    <TabsTrigger value="trainer" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    <TabsTrigger value="trainer" className="rounded-xl font-black text-[10px] uppercase data-[state=active]:bg-white data-[state=active]:text-primary transition-all">
                         <GraduationCap className="h-4 w-4 mr-2" />
                         Prof
                     </TabsTrigger>
-                    <TabsTrigger value="admin" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                    <TabsTrigger value="admin" className="rounded-xl font-black text-[10px] uppercase data-[state=active]:bg-white data-[state=active]:text-primary transition-all">
                         <ShieldAlert className="h-4 w-4 mr-2" />
                         ADM
                     </TabsTrigger>
@@ -138,29 +139,28 @@ export default function SignupPage() {
 
         <form className="space-y-4" onSubmit={handleSignUp}>
             <div className="space-y-2">
-                <Label htmlFor="name">Nome completo</Label>
-                <Input id="name" type="text" placeholder="Seu nome" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} className="rounded-xl" />
+                <Label htmlFor="name" className="text-white/40 font-black text-[10px] uppercase tracking-widest ml-1">Nome completo</Label>
+                <Input id="name" type="text" placeholder="Seu nome" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading} className="rounded-2xl h-14 border-none bg-black/20 text-white font-bold px-6 focus-visible:ring-primary" />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <Input id="email" type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className="rounded-xl" />
+                <Label htmlFor="email" className="text-white/40 font-black text-[10px] uppercase tracking-widest ml-1">E-mail</Label>
+                <Input id="email" type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} className="rounded-2xl h-14 border-none bg-black/20 text-white font-bold px-6 focus-visible:ring-primary" />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
-                <Input id="password" type="password" placeholder="Mínimo 6 caracteres" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className="rounded-xl" />
+                <Label htmlFor="password" className="text-white/40 font-black text-[10px] uppercase tracking-widest ml-1">Senha</Label>
+                <Input id="password" type="password" placeholder="Mínimo 6 caracteres" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} className="rounded-2xl h-14 border-none bg-black/20 text-white font-bold px-6 focus-visible:ring-primary" />
             </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-2xl font-bold shadow-lg" disabled={isLoading}>
-                {isLoading ? 'Criando conta...' : 'Criar minha conta'}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white h-16 rounded-[1.8rem] font-black text-xl shadow-2xl shadow-primary/20 transition-all active:scale-95 uppercase tracking-tight mt-4" disabled={isLoading}>
+                {isLoading ? 'Criando conta...' : 'CRIAR MINHA CONTA'}
             </Button>
             
-            <div className="flex items-center space-x-2 py-2">
-                <Separator className="flex-1" />
-                <span className="text-xs text-muted-foreground">OU</span>
-                <Separator className="flex-1" />
+            <div className="relative flex items-center justify-center my-8">
+                <Separator className="bg-white/5" />
+                <span className="absolute bg-card px-4 text-[9px] font-black text-white/20 uppercase tracking-[0.3em]">Ou</span>
             </div>
 
-            <Button variant="outline" className="w-full rounded-2xl h-11" type="button" disabled={isLoading}>
-                <GoogleIcon className="mr-2 h-4 w-4" />
+            <Button variant="outline" className="w-full rounded-2xl h-14 border-white/5 font-black text-xs uppercase tracking-widest hover:bg-white/5 text-white bg-black/20 shadow-xl" type="button" disabled={isLoading}>
+                <GoogleIcon className="mr-3 h-5 w-5" />
                 Continuar com Google
             </Button>
         </form>

@@ -61,7 +61,6 @@ export const AppSidebar = () => {
       { href: '/diet', label: 'Minha Dieta', icon: Utensils },
       { href: '/assessment', label: 'Avaliação Física', icon: Activity },
       { href: '/billing', label: 'Pagamento', icon: Wallet },
-      { href: '/pricing', label: 'Planos', icon: CreditCard },
     ];
   };
 

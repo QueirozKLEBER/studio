@@ -1,6 +1,6 @@
 /**
- * Este arquivo existe apenas para evitar erros de compilação durante o 'next export'.
- * O aplicativo utiliza a rota '/workouts/plan?id=...' para execução de treinos.
+ * Este arquivo é um Server Component para satisfazer os requisitos de 'output: export' do Next.js.
+ * Ele não utiliza 'use client' para evitar conflitos com generateStaticParams durante o build.
  */
 export async function generateStaticParams() {
   return [];

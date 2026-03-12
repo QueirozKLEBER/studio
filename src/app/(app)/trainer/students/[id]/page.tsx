@@ -1,6 +1,6 @@
 /**
- * Este arquivo existe apenas para evitar erros de compilação durante o 'next export'.
- * O aplicativo utiliza a rota '/trainer/student-details?id=...' para gerenciar alunos.
+ * Este arquivo é um Server Component para satisfazer os requisitos de 'output: export' do Next.js.
+ * Ele não utiliza 'use client' para evitar conflitos com generateStaticParams durante o build.
  */
 export async function generateStaticParams() {
   return [];

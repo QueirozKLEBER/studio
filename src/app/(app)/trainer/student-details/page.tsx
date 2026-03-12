@@ -1,7 +1,6 @@
-
 'use client';
 
-import { Suspense, useState, useMemo, useEffect, use } from 'react';
+import { Suspense, useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useDoc, useUser, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, updateDoc, limit, addDoc, serverTimestamp } from 'firebase/firestore';
 import { 
   ArrowLeft, 
@@ -23,7 +22,6 @@ import {
   ShieldBan, 
   Scale, 
   Calendar,
-  Save,
   Loader2,
   AlertTriangle,
   Mail,

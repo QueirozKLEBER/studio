@@ -31,7 +31,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today > dueDate;
-  }, [profile, mounted]);
+  }, [profile?.paymentDueDate, profile?.userType, mounted]);
 
   // Executa o bloqueio no banco caso detecte vencimento
   useEffect(() => {
@@ -50,18 +50,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       };
       autoBlock();
     }
-  }, [isExpired, profile, db, toast]);
+  }, [isExpired, profile?.status, profile?.id, db, toast]);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (!isUserLoading && !user && mounted) {
       router.push('/login');
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, mounted]);
 
   if (!mounted || isUserLoading) {
     return (
       <div className="flex min-h-screen w-full bg-background items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">TreinusFit Personal</span>
+        </div>
       </div>
     );
   }
@@ -101,12 +104,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background overflow-x-hidden relative">
+    <div className="flex min-h-screen w-full bg-background overflow-x-hidden relative selection:bg-primary/30">
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r border-primary/10 bg-card z-50">
         <AppSidebar />
       </div>
       <div className="flex flex-col flex-1 md:pl-64 w-full min-w-0">
-        <main className="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-full overflow-x-hidden">
+        <main className="flex-1 w-full p-4 md:p-8 lg:p-10 max-w-full overflow-x-hidden animate-in fade-in duration-500">
           {children}
         </main>
         <BottomNav />

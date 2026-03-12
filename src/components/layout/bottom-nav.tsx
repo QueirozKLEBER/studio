@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Dumbbell, Activity, User, Utensils, Clock, Wallet, MessageCircle } from 'lucide-react';
+import { useMemo } from 'react';
+import { LayoutDashboard, Dumbbell, User, Clock, Wallet, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/firebase';
 
@@ -10,7 +11,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const { profile } = useUser();
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { href: '/workouts', label: 'Treinos', icon: Dumbbell },
     { 
@@ -24,11 +25,11 @@ export function BottomNav() {
       icon: profile?.userType === 'trainer' ? User : Wallet 
     },
     { href: '/profile', label: 'Perfil', icon: User },
-  ];
+  ], [profile?.userType]);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card/90 backdrop-blur-xl border-t border-primary/10 h-20 md:hidden pb-safe">
-      <div className="flex items-center justify-around h-full px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] bg-card/95 backdrop-blur-xl border-t border-primary/10 h-20 md:hidden pb-safe">
+      <div className="flex items-center justify-around h-full px-2 max-w-lg mx-auto">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
@@ -41,13 +42,13 @@ export function BottomNav() {
               )}
             >
               <div className={cn(
-                "p-2 rounded-xl transition-colors",
+                "p-2 rounded-xl transition-colors duration-200",
                 isActive ? "bg-primary/10" : "bg-transparent"
               )}>
                 <item.icon className={cn("h-6 w-6", isActive && "stroke-[2.5px]")} />
               </div>
               <span className={cn(
-                "text-[9px] font-black uppercase tracking-tighter",
+                "text-[9px] font-black uppercase tracking-tighter transition-opacity duration-200",
                 isActive ? "opacity-100" : "opacity-60"
               )}>
                 {item.label}

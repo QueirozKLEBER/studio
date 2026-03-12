@@ -44,7 +44,7 @@ export default function Dashboard() {
       orderBy('createdAt', 'desc'),
       limit(1)
     );
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const historyQuery = useMemoFirebase(() => {
     if (!user) return null;
@@ -55,12 +55,12 @@ export default function Dashboard() {
       where('completedAt', '>=', Timestamp.fromDate(sevenDaysAgo)),
       orderBy('completedAt', 'asc')
     );
-  }, [db, user]);
+  }, [db, user?.uid]);
 
   const { data: latestPlans, isLoading: isPlanLoading } = useCollection(plansQuery);
   const { data: history } = useCollection(historyQuery);
 
-  const activePlan = latestPlans && latestPlans.length > 0 ? latestPlans[0] : null;
+  const activePlan = useMemo(() => latestPlans && latestPlans.length > 0 ? latestPlans[0] : null, [latestPlans]);
 
   const weeklyData = useMemo(() => {
     if (!mounted) return [];
@@ -104,10 +104,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-none pb-20">
+    <div className="flex flex-col gap-6 w-full max-w-none pb-24">
       <header className="flex flex-col gap-1">
         <h1 className="text-3xl font-black font-headline text-white uppercase tracking-tight">TreinusFit <span className="text-primary">Personal</span></h1>
-        <p className="text-primary font-black italic text-[10px] uppercase tracking-[0.2em]">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0]}"</p>
+        <p className="text-primary font-black italic text-[10px] uppercase tracking-[0.2em]">"Sua evolução começa hoje, {user?.displayName?.split(' ')[0] || 'Atleta'}"</p>
       </header>
 
       {/* Alerta de Treino do Dia */}
@@ -118,7 +118,7 @@ export default function Dashboard() {
         <CardContent className="p-8 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className={cn(
-              "p-4 rounded-2xl shadow-sm",
+              "p-4 rounded-2xl shadow-sm transition-colors",
               trainedToday ? "bg-green-500/10 text-green-500" : "bg-primary/10 text-primary"
             )}>
               {trainedToday ? <CheckCircle2 className="h-8 w-8" /> : <CalendarDays className="h-8 w-8" />}
@@ -135,7 +135,7 @@ export default function Dashboard() {
             </div>
           </div>
           {!trainedToday && (
-            <Button asChild className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg bg-primary text-white hover:bg-primary/90 transition-transform active:scale-95 uppercase tracking-tighter">
+            <Button asChild className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg bg-primary text-white hover:bg-primary/90 transition-all active:scale-95 uppercase tracking-tighter hidden sm:inline-flex">
               <Link href="/activity">REGISTRAR</Link>
             </Button>
           )}
@@ -150,10 +150,10 @@ export default function Dashboard() {
           { icon: Utensils, label: 'Dieta', href: '/diet' },
           { icon: TrendingUp, label: 'Avaliação', href: '/assessment' },
           { icon: Clock, label: 'Atividades', href: '/activity' },
-          { icon: ChevronRight, label: 'Histórico', href: '/profile' },
+          { icon: ChevronRight, label: 'Perfil', href: '/profile' },
         ].map((item, i) => (
           <Link key={i} href={item.href} className="flex flex-col items-center gap-3 group">
-            <div className="p-6 rounded-[2rem] shadow-xl bg-card border border-white/5 transition-all group-active:scale-90 w-full aspect-square flex items-center justify-center hover:bg-primary hover:text-white group-hover:border-primary/50">
+            <div className="p-6 rounded-[2rem] shadow-xl bg-card border border-white/5 transition-all group-active:scale-90 w-full aspect-square flex items-center justify-center hover:bg-primary hover:text-white group-hover:border-primary/50 group-hover:scale-105">
               <item.icon className="h-8 w-8" />
             </div>
             <span className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40 group-hover:text-primary transition-colors text-center">{item.label}</span>
@@ -205,7 +205,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Workout of the Day */}
-        <Card className="rounded-[2.5rem] border-none shadow-2xl bg-primary text-white p-2">
+        <Card className="rounded-[2.5rem] border-none shadow-2xl bg-primary text-white p-2 transition-transform hover:scale-[1.01]">
           <CardHeader>
             <CardTitle className="text-xs font-black flex items-center gap-2 uppercase tracking-[0.2em] text-white/70">
               <Dumbbell className="h-5 w-5" />
@@ -221,7 +221,7 @@ export default function Dashboard() {
             ) : activePlan ? (
               <>
                 <div>
-                  <h3 className="text-4xl font-black uppercase tracking-tighter leading-none">{activePlan.name}</h3>
+                  <h3 className="text-4xl font-black uppercase tracking-tighter leading-none break-words">{activePlan.name}</h3>
                   <p className="text-white/80 text-[10px] mt-4 font-black uppercase tracking-widest italic">
                     Foque na intensidade e técnica perfeita hoje.
                   </p>

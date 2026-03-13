@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { MainLayoutWrapper } from "@/components/layout/MainLayoutWrapper";
 
 export const metadata: Metadata = {
   title: "TreinusFit Personal",
@@ -22,7 +23,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased font-sans bg-background text-foreground min-h-screen">
         <FirebaseClientProvider>
-          {children}
+          <MainLayoutWrapper>
+            {children}
+          </MainLayoutWrapper>
           <Toaster />
         </FirebaseClientProvider>
       </body>

@@ -12,9 +12,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 
 /**
- * MainLayoutWrapper centraliza a lógica que antes ficava em (app)/layout.tsx.
- * Ele decide se exibe o layout autenticado (Sidebar/Nav) ou o layout público
- * baseado na rota atual.
+ * MainLayoutWrapper decide se exibe o layout autenticado ou o layout público.
  */
 export function MainLayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, profile, isUserLoading } = useUser();
@@ -31,10 +29,11 @@ export function MainLayoutWrapper({ children }: { children: React.ReactNode }) {
 
   // Rotas que NÃO devem exibir Sidebar/BottomNav
   const isPublicRoute = useMemo(() => {
-    return ['/', '/login', '/signup', '/forgot-password'].includes(pathname);
+    const publics = ['/', '/login', '/signup', '/forgot-password'];
+    return publics.includes(pathname);
   }, [pathname]);
 
-  // Lógica de verificação de vencimento automática (Auto-Bloqueio)
+  // Lógica de verificação de vencimento automática
   const isExpired = useMemo(() => {
     if (!mounted || !profile || profile.userType !== 'student' || !profile.paymentDueDate) return false;
     const dueDate = new Date(profile.paymentDueDate);
@@ -61,12 +60,10 @@ export function MainLayoutWrapper({ children }: { children: React.ReactNode }) {
     }
   }, [isExpired, profile?.status, profile?.id, db, toast]);
 
-  // Se for rota pública, renderiza apenas o conteúdo
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // Se não for pública e estiver carregando ou sem usuário
   if (!mounted || isUserLoading) {
     return (
       <div className="flex min-h-screen w-full bg-background items-center justify-center">
@@ -78,13 +75,11 @@ export function MainLayoutWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Redirecionamento se não autenticado em rota privada
   if (!user) {
     router.push('/login');
     return null;
   }
 
-  // Tela de Bloqueio para Alunos Inadimplentes
   if (profile?.status === 'blocked' && profile?.userType === 'student' && pathname !== '/billing') {
     return (
       <div className="flex min-h-screen w-full bg-background items-center justify-center p-8 relative overflow-hidden text-center">

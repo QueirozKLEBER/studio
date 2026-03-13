@@ -20,10 +20,11 @@ export default function AdminSubscriptionsPage() {
   const { data: students, isLoading } = useCollection(studentsQuery);
 
   const filtered = useMemo(() => {
+    if (!students) return [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    return students?.filter(s => {
+    return students.filter(s => {
       const matchesSearch = `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesSearch;
     }).sort((a, b) => {
